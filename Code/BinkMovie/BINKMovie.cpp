@@ -24,9 +24,9 @@
 #include "texture.h"
 #include "subtitlemanager.h"
 #include "wwaudio.h"
-#include <mmsystem.h>
+#include "platform/platform.h"
+#include <SDL3/SDL.h>
 #include <algorithm>
-#include <array>
 #include <vector>
 
 class BINKMovieClass
@@ -39,28 +39,22 @@ public:
 	bool Is_Complete();
 
 private:
-	struct AudioBuffer {
-		WAVEHDR Header{};
-		std::vector<int16_t> Samples;
-		bool Prepared = false;
-	};
-	AudioBuffer* Get_Free_Audio_Buffer();
 	void Close_Audio();
 	bool Audio_Done() const;
-	double Elapsed() const { return (GetTickCount64() - StartTime) / 1000.0; }
+	double Elapsed() const { return (Platform::Ticks() - StartTime) / 1000.0; }
 
 	BinkDecoder Decoder;
 	YUVbuffer Planes{};
 	TextureClass* Texture = nullptr;
 	Render2DClass Renderer;
 	SubTitleManagerClass* Subtitles = nullptr;
-	HWAVEOUT AudioDevice = nullptr;
-	std::array<AudioBuffer, 8> AudioBuffers;
+	SDL_AudioStream* AudioDevice = nullptr;
+	std::vector<int16_t> AudioSamples;
 	unsigned AudioBufferBytes = 0;
 	unsigned AudioBlockAlign = 0;
 	unsigned TotalFrames = 0;
 	double FrameRate = 0;
-	ULONGLONG StartTime = 0;
+	std::uint64_t StartTime = 0;
 	bool Ready = false;
 	bool FrameChanged = false;
 };
@@ -120,32 +114,26 @@ BINKMovieClass::BINKMovieClass(const char* filename, const char* subtitlename, F
 	if (Decoder.GetNumAudioTracks()) {
 		const AudioInfo info = Decoder.GetAudioTrackDetails(0);
 		if (info.sampleRate && (info.nChannels == 1 || info.nChannels == 2) && info.idealBufferSize) {
-			WAVEFORMATEX format{};
-			format.wFormatTag = WAVE_FORMAT_PCM;
-			format.nChannels = static_cast<WORD>(info.nChannels);
-			format.nSamplesPerSec = info.sampleRate;
-			format.wBitsPerSample = 16;
-			format.nBlockAlign = format.nChannels * sizeof(int16_t);
-			format.nAvgBytesPerSec = format.nSamplesPerSec * format.nBlockAlign;
-			if (waveOutOpen(&AudioDevice, WAVE_MAPPER, &format, 0, 0, CALLBACK_NULL) == MMSYSERR_NOERROR) {
-				AudioBufferBytes = info.idealBufferSize;
-				AudioBlockAlign = format.nBlockAlign;
-				for (auto& buffer : AudioBuffers) buffer.Samples.resize((AudioBufferBytes + 1) / 2);
-				float volume = WWAudioClass::Get_Instance() ? WWAudioClass::Get_Instance()->Get_Cinematic_Volume() : 1.0f;
-				const DWORD level = static_cast<DWORD>(std::clamp(volume, 0.0f, 1.0f) * 65535);
-				waveOutSetVolume(AudioDevice, level | (level << 16));
-				waveOutPause(AudioDevice);
-			} else {
-				AudioDevice = nullptr;
-			}
+            SDL_AudioSpec format{};
+            format.format = SDL_AUDIO_S16;
+            format.channels = info.nChannels;
+            format.freq = info.sampleRate;
+            AudioDevice = SDL_OpenAudioDeviceStream(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &format, nullptr, nullptr);
+            if (AudioDevice) {
+                AudioBufferBytes = info.idealBufferSize;
+                AudioBlockAlign = info.nChannels * sizeof(int16_t);
+                AudioSamples.resize((AudioBufferBytes + 1) / 2);
+                float volume = WWAudioClass::Get_Instance() ? WWAudioClass::Get_Instance()->Get_Cinematic_Volume() : 1.0f;
+                SDL_SetAudioStreamGain(AudioDevice, std::clamp(volume, 0.0f, 1.0f));
+            }
 		}
 	}
 	if (subtitlename && font) Subtitles = SubTitleManagerClass::Create(filename, subtitlename, font);
 	Ready = true;
-	StartTime = GetTickCount64();
+	StartTime = Platform::Ticks();
 	Update(); // Decode the first frame and queue its audio before starting the clock.
-	StartTime = GetTickCount64();
-	if (AudioDevice) waveOutRestart(AudioDevice);
+	StartTime = Platform::Ticks();
+	if (AudioDevice) SDL_ResumeAudioStreamDevice(AudioDevice);
 }
 
 BINKMovieClass::~BINKMovieClass()
@@ -157,39 +145,14 @@ BINKMovieClass::~BINKMovieClass()
 
 void BINKMovieClass::Close_Audio()
 {
-	if (!AudioDevice) return;
-	waveOutReset(AudioDevice);
-	for (auto& buffer : AudioBuffers) {
-		if (buffer.Prepared) {
-			waveOutUnprepareHeader(AudioDevice, &buffer.Header, sizeof(WAVEHDR));
-			buffer.Prepared = false;
-		}
-	}
-	waveOutClose(AudioDevice);
-	AudioDevice = nullptr;
-}
-
-BINKMovieClass::AudioBuffer* BINKMovieClass::Get_Free_Audio_Buffer()
-{
-	for (auto& buffer : AudioBuffers) {
-		if (!buffer.Prepared) return &buffer;
-		if (buffer.Header.dwFlags & WHDR_DONE) {
-			if (waveOutUnprepareHeader(AudioDevice, &buffer.Header, sizeof(WAVEHDR)) == MMSYSERR_NOERROR) {
-				buffer.Prepared = false;
-				return &buffer;
-			}
-		}
-	}
-	return nullptr;
+    if (AudioDevice) SDL_DestroyAudioStream(AudioDevice);
+    AudioDevice = nullptr;
 }
 
 bool BINKMovieClass::Audio_Done() const
 {
-	if (!AudioDevice) return true;
-	for (const auto& buffer : AudioBuffers) {
-		if (buffer.Prepared && !(buffer.Header.dwFlags & WHDR_DONE)) return false;
-	}
-	return true;
+    return !AudioDevice || (SDL_GetAudioStreamQueued(AudioDevice) == 0 &&
+        SDL_GetAudioStreamAvailable(AudioDevice) == 0);
 }
 
 void BINKMovieClass::Update()
@@ -197,25 +160,16 @@ void BINKMovieClass::Update()
 	if (!Ready) return;
 	while (Decoder.GetCurrentFrameNum() < TotalFrames &&
 		Decoder.GetCurrentFrameNum() / FrameRate <= Elapsed()) {
-		AudioBuffer* audio = AudioDevice ? Get_Free_Audio_Buffer() : nullptr;
-		if (AudioDevice && !audio) break;
-		Decoder.GetNextFrame(Planes);
-		FrameChanged = true;
-		if (audio) {
-			unsigned bytes = std::min(Decoder.GetAudioData(0, audio->Samples.data()), AudioBufferBytes);
-			bytes -= bytes % AudioBlockAlign;
-			if (bytes) {
-				audio->Header = {};
-				audio->Header.lpData = reinterpret_cast<LPSTR>(audio->Samples.data());
-				audio->Header.dwBufferLength = bytes;
-				if (waveOutPrepareHeader(AudioDevice, &audio->Header, sizeof(WAVEHDR)) == MMSYSERR_NOERROR) {
-					audio->Prepared = true;
-					if (waveOutWrite(AudioDevice, &audio->Header, sizeof(WAVEHDR)) != MMSYSERR_NOERROR) Close_Audio();
-				} else {
-					Close_Audio();
-				}
-			}
-		}
+        // Keep the same bounded queue as the original eight-buffer player.
+        if (AudioDevice && SDL_GetAudioStreamQueued(AudioDevice) >= static_cast<int>(AudioBufferBytes * 8)) break;
+        Decoder.GetNextFrame(Planes);
+        FrameChanged = true;
+        if (AudioDevice) {
+            unsigned bytes = std::min(Decoder.GetAudioData(0, AudioSamples.data()), AudioBufferBytes);
+            bytes -= bytes % AudioBlockAlign;
+            if (bytes && !SDL_PutAudioStreamData(AudioDevice, AudioSamples.data(), bytes)) Close_Audio();
+            if (AudioDevice && Decoder.GetCurrentFrameNum() == TotalFrames) SDL_FlushAudioStream(AudioDevice);
+        }
 	}
 }
 

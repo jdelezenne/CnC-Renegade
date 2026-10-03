@@ -36,6 +36,8 @@
 
 
 #include "wwuiinput.h"
+#include "platform/sdl/key_mapping.h"
+#include <SDL3/SDL.h>
 #include "dialogmgr.h"
 #include "wwmemlog.h"
 
@@ -90,14 +92,6 @@ bool WWUIInputClass::ProcessMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 	result = 0;
 
 	switch (msg) {
-		case WM_KEYDOWN:
-			return DialogMgrClass::On_Key_Down(wParam, lParam);
-			break;
-
-		case WM_KEYUP:
-			return DialogMgrClass::On_Key_Up(wParam);
-			break;
-
 		case WM_CHAR:
 			DialogMgrClass::On_Unicode_Char((wchar_t)wParam);
 			return true;
@@ -110,6 +104,24 @@ bool WWUIInputClass::ProcessMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 	return false;
 }
 
+
+// SDL gameplay input is updated before the dialog receives this key. This
+// preserves controls-list rebinding, which reads the last physical key ID.
+bool WWUIInputClass::ProcessSDLKeyEvent(const SDL_KeyboardEvent& event)
+{
+    const unsigned scan = Legacy_Key_ID(event.scancode);
+    if (!scan) return false;
+    unsigned key = MapVirtualKeyW((scan & 0x7f) | ((scan & 0x80) ? 0xe000 : 0), MAPVK_VSC_TO_VK);
+    if (event.scancode == SDL_SCANCODE_PAUSE) key = VK_PAUSE;
+    if (event.scancode == SDL_SCANCODE_PRINTSCREEN) key = VK_SNAPSHOT;
+    if (!key) return false;
+    if (!event.down) return DialogMgrClass::On_Key_Up(key);
+    unsigned data = 1 | ((scan & 0x7f) << 16);
+    if (scan & 0x80) data |= 1u << 24;
+    if (event.mod & SDL_KMOD_ALT) data |= 1u << 29;
+    if (event.repeat) data |= 1u << 30;
+    return DialogMgrClass::On_Key_Down(key, data);
+}
 
 void WWUIInputClass::HandleNotification(IME::UnicodeChar& unicode)
 {

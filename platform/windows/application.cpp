@@ -43,6 +43,10 @@
 
 
 #include "winmain.h"
+#include "platform/platform.h"
+#include "platform/windows/legacy_messages.h"
+#include <SDL3/SDL.h>
+#include <filesystem>
 #define _WIN32_WINDOWS 0x0401
 #include "win.h"
 #include "resource.h"
@@ -71,6 +75,7 @@
 #include "combatgmode.h"
 #include "registry.h"
 #include "init.h"
+#include "mainloop.h"
 #include "_globals.h"
 #include "buildnum.h"
 #include "dx8wrapper.h"
@@ -113,7 +118,9 @@ extern "C"
 //	Local functions
 //----------------------------------------------------------------------------
 static BOOL Create_Main_Window(HANDLE hInstance, int nCmdShow);
-long FAR PASCAL Main_Window_Proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
+static Uint32 NativeTextEvent = 0;
+static void Application_Event(const SDL_Event& event);
+static bool Native_Game_Message(MSG& message);
 void On_Focus_Loss(void);
 void On_Focus_Restore(void);
 void Split_Command_Line_Args(HINSTANCE instance, char *path_to_exe, char *command_line);
@@ -492,6 +499,7 @@ int Start_Application( HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /
 #endif //WWDEBUG
 
 	Unregister_Thread_ID(GetCurrentThreadId(), "Main Thread");
+	Platform::Shutdown();
 
    //Debug_Say(("Finished logging at time %s", cMiscUtil::Get_Text_Time()));
 
@@ -514,165 +522,55 @@ int Start_Application( HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /
  * HISTORY:                                                                                    *
  *   07/18/1997 GH  : Created.                                                                 *
  *=============================================================================================*/
-long FAR PASCAL Main_Window_Proc( HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam )
+static bool Native_Game_Message(MSG& msg)
 {
-	static bool _reset = false;
-
-	/*
-	**	Pass this message through to the input handler. If the message
-	**	was processed and requires no further action, then return with
-	**	this information.
-	*/
-	if (_TheWWUIInput && Input::Is_Console_Enabled () == false) {
-		LRESULT result = 0;
-
-		//DialogWalker->Process_Message(hwnd, message, wParam, lParam, result);
-
-		if (_TheWWUIInput->ProcessMessage(hwnd, message, wParam, lParam, result)) {
-			return result;
-		}
-	}
-
-	switch (message )
-	{
-		/*
-		** basic management messages
-		*/
-		case WM_ACTIVATEAPP:
-			if (wParam && !GameInFocus) {
-				WWDEBUG_SAY(("***** FOCUS GAINED *****\n"));
-				GameInFocus = true;
-				On_Focus_Restore();
-			} else if (!wParam && GameInFocus) {
-				WWDEBUG_SAY(("***** FOCUS LOST *****\n"));
-				GameInFocus = false;
-				On_Focus_Loss();
-			}
-			return(0);
-
-		case WM_ERASEBKGND:
-			return 1;
-
-		case WM_PAINT:
-			ValidateRect(hwnd, NULL);
-			break;
-
-		/*
-		** minimize/maximize
-		*/
-		case WM_SYSKEYDOWN:
-
-			if (wParam == VK_RETURN && ((lParam>>16) & KF_ALTDOWN) && !((lParam>>16) & KF_REPEAT))
-			{
-				if (WIN_fullscreen) {
-					WIN_fullscreen = false;
-				} else {
-					WIN_fullscreen = true;
-				}
-			}
-
-			break;
-
-		/*
-		** getch()
-		*/
-		case WM_CHAR:
-			//Debug_Say(("WM_CHAR %d\n", wParam));
-			Input::Console_Add_Key( wParam );
-			break;
-
-		/*
-		** Main window creation
-		*/
-		case WM_CREATE:
-			break;
-
-		/*
-		** Main window destruction
-		*/
-		case WM_DESTROY:
-			ReleaseCapture ();
-			PostQuitMessage (0);
-			break;
-
-		case WM_SYSCOMMAND:
-			switch (wParam) {
-
-				case SC_CLOSE:
-					/*
-					** Windows sent us a close message. Probably in response to Alt-F4. Ignore it by
-					** pretending to handle the message and returning true;
-					*/
-					return (0);
-
-				case SC_KEYMENU:
-					/*
-					** Ignore all "menu-activation" commands.
-					*/
-					return (0);
-
-				case SC_SCREENSAVE:
-					/*
-					** Windoze is about to start the screen saver. If we just return without passing
-					** this message to DefWindowProc then the screen saver will not be allowed to start.
-					*/
-					return (0);
-			}
-			break;
-
-// Denzil - Using WM_xxxFOCUS messages to switch to windowed / fullscreen fails.
-#if(0)
-		case WM_KILLFOCUS:
-		{
-			if (WW3D::Is_Initted ()) {
-
-				// Get the current state of the redendering device
-				int width = 0;
-				int height = 0;
-				int bits = 0;
-				bool bwindowed = false;
-				WW3D::Get_Device_Resolution (width, height, bits, bwindowed);
-
-				// If we are running fullscreen, then toggle to 'windowed'
-				// and minimze the window.
-				if (bwindowed == false) {
-					//Debug_Say(("WM_KILLFOCUS minimize"));
-					WW3D::Set_Device_Resolution (-1, -1, -1, true);
-					::ShowWindow (hwnd, SW_MINIMIZE);
-					_reset = true;
-				}
-			}
-		}
-		break;
-
-		case WM_SETFOCUS:
-
-			// If we need to reset the app to 'fullscreen' mode then
-			// do so an restore the window.
-			if (_reset == true) {
-				WW3D::Set_Device_Resolution (-1, -1, -1, false);
-				::ShowWindow (hwnd, SW_RESTORE);
-				_reset = false;
-			}
-			break;
-#endif
-
-		case WM_COMMAND:
-			if (LOWORD (wParam) == IDM_TOGGLE_FULLSCREEN) {
-
-				// Ask WW3D to toggle the fullscreen mode for us.
-				WW3D::Toggle_Windowed ();
-			}
-
-			break;
-
-		default:
-			break;
-	}
-
-	return DefWindowProc(hwnd, message, wParam, lParam);
+    if (msg.hwnd != MainWindow) return false;
+    // Put retained IME text into SDL's queue so text follows its key event.
+    if (msg.message == WM_CHAR) {
+        SDL_Event event{};
+        event.type = NativeTextEvent;
+        event.user.code = static_cast<int>(msg.wParam);
+        event.user.data1 = reinterpret_cast<void*>(msg.lParam);
+        return SDL_PushEvent(&event);
+    }
+    bool handled = false;
+    if (_TheWWUIInput && !Input::Is_Console_Enabled()) {
+        LRESULT result = 0;
+        handled = _TheWWUIInput->ProcessMessage(msg.hwnd, msg.message, msg.wParam, msg.lParam, result);
+    }
+    return handled;
 }
 
+static void Application_Event(const SDL_Event& event)
+{
+    if (event.type == NativeTextEvent) {
+        LRESULT result = 0;
+        if (!_TheWWUIInput || Input::Is_Console_Enabled() ||
+            !_TheWWUIInput->ProcessMessage(MainWindow, WM_CHAR, event.user.code,
+                reinterpret_cast<LPARAM>(event.user.data1), result)) {
+            Input::Console_Add_Key(event.user.code);
+        }
+        return;
+    }
+    switch (event.type) {
+    case SDL_EVENT_QUIT:
+    case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
+        Stop_Main_Loop(EXIT_SUCCESS);
+        break;
+    case SDL_EVENT_WINDOW_FOCUS_GAINED:
+        if (!GameInFocus) { GameInFocus = true; On_Focus_Restore(); }
+        break;
+    case SDL_EVENT_WINDOW_FOCUS_LOST:
+        if (GameInFocus) { GameInFocus = false; On_Focus_Loss(); }
+        break;
+    case SDL_EVENT_KEY_DOWN:
+    case SDL_EVENT_KEY_UP:
+        if (_TheWWUIInput && !Input::Is_Console_Enabled()) _TheWWUIInput->ProcessSDLKeyEvent(event.key);
+        if (event.key.down && !event.key.repeat && event.key.scancode == SDL_SCANCODE_RETURN &&
+            (event.key.mod & SDL_KMOD_ALT) && WW3D::Is_Initted()) WW3D::Toggle_Windowed();
+        break;
+    }
+}
 
 /***********************************************************************************************
  * Create_Main_Window -- Creates the main game window                                          *
@@ -691,43 +589,27 @@ long FAR PASCAL Main_Window_Proc( HWND hwnd, UINT message, WPARAM wParam, LPARAM
  * HISTORY:                                                                                    *
  *   07/18/1997 GH  : Created.                                                                 *
  *=============================================================================================*/
-static BOOL Create_Main_Window(HANDLE hInstance, int nCmdShow)
+static BOOL Create_Main_Window(HANDLE hInstance, int /*nCmdShow*/)
 {
-	WNDCLASS    wc;
-	BOOL        rc;
-
-	ProgramInstance = (HINSTANCE)hInstance;
-
-	if (!ConsoleBox.Is_Exclusive()) {
-		wc.style			= CS_HREDRAW | CS_VREDRAW | CS_DBLCLKS;
-		wc.lpfnWndProc		= Main_Window_Proc;
-		wc.cbClsExtra		= 0;
-		wc.cbWndExtra		= 0;
-		wc.hInstance		= (HINSTANCE)hInstance;
-		wc.hIcon				= LoadIcon( NULL, IDI_APPLICATION);
-		wc.hCursor			= LoadCursor( NULL, IDC_ARROW);
-		wc.hbrBackground	= (HBRUSH)GetStockObject( BLACK_BRUSH);
-		wc.lpszMenuName	= NULL;
-		wc.lpszClassName	= SingletonInstanceKeeperClass::Get_GUID ();
-
-		rc = RegisterClass( &wc);
-		if (!rc ) return FALSE;
-
-		// Assume windowed mode
-		MainWindow = CreateWindowEx(0, SingletonInstanceKeeperClass::Get_GUID(), "Renegade",
-			WS_SYSMENU|WS_CAPTION|WS_MINIMIZEBOX|WS_CLIPCHILDREN,
-				0, 0, 0, 0, NULL, NULL, ProgramInstance, NULL);
-
-		if (!MainWindow) {
-			return FALSE;
-		}
-
-		SetFocus(MainWindow);
-	}
-
-	return TRUE;
+    ProgramInstance = (HINSTANCE)hInstance;
+    if (!Platform::Initialize()) {
+        MessageBox(NULL, SDL_GetError(), "SDL initialization failed", MB_OK | MB_ICONERROR);
+        return FALSE;
+    }
+    if (!ConsoleBox.Is_Exclusive()) {
+        if (!Platform::CreateGameWindow("Renegade", 800, 600)) {
+            MessageBox(NULL, SDL_GetError(), "Window creation failed", MB_OK | MB_ICONERROR);
+            Platform::Shutdown();
+            return FALSE;
+        }
+        MainWindow = static_cast<HWND>(Platform::NativeWindowHandle());
+    }
+    NativeTextEvent = SDL_RegisterEvents(1);
+    if (!NativeTextEvent) { Platform::Shutdown(); return FALSE; }
+    Platform::SetEventHandler(Application_Event);
+    Install_Windows_Message_Hook(Native_Game_Message);
+    return TRUE;
 }
-
 
 /***********************************************************************************************
  * On_Focus_Loss -- this function is called when the application loses focus                   *
@@ -788,15 +670,9 @@ void Prog_End(void)
  * HISTORY:                                                                                    *
  *   11/6/2001 12:11PM ST : Created                                                            *
  *=============================================================================================*/
-void Set_Working_Directory(HINSTANCE instance)
+void Set_Working_Directory(HINSTANCE /*instance*/)
 {
-	char path_to_exe[256];
-	char drive[_MAX_DRIVE];
-	char dir[_MAX_DIR];
-	char path[_MAX_PATH];
-
-	GetModuleFileName(instance, path_to_exe, sizeof(path_to_exe));
-	_splitpath(path_to_exe, drive, dir, NULL, NULL);
-	_makepath(path, drive, dir, NULL, NULL);
-	SetCurrentDirectory(path);
+    if (const char* path = SDL_GetBasePath()) {
+        std::filesystem::current_path(std::filesystem::u8path(path));
+    }
 }

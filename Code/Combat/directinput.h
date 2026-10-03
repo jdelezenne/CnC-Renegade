@@ -41,6 +41,8 @@
 	#include "always.h"
 #endif
 
+union SDL_Event;
+
 #include "vector3.h"
 #include "vector2.h"
 
@@ -101,6 +103,8 @@ public:
 	/*
 	**
 	*/
+	// Legacy interface and binding IDs; implemented by SDL3.
+	static void Process_Event(const SDL_Event& event);
 	static void Init( void );
 	static void Shutdown( void );
 	static void Read( void );
@@ -160,15 +164,15 @@ private:
 	static	Vector3					CursorPos;
 	static	bool						EatMouseHeld;
 
-	static	void *					DirectInputLibrary;
+
 
 	static	int						LastKeyPressed;
 
 	static bool Captured;
 
-	static	void ReadKeyboard( void );
-	static	void ReadMouse( void );
-	static	void ReadJoystick( void );
+
+
+
 
 };
 

@@ -13,6 +13,7 @@ function(ren_add_legacy_target name kind)
         add_library(${name} ${kind} ${sources})
     endif()
     ren_legacy_settings(${name})
+    target_link_libraries(${name} PRIVATE ren_platform)
     target_compile_options(${name} PRIVATE "$<$<COMPILE_LANGUAGE:C,CXX>:/W3;/MP4>")
     target_compile_features(${name} PRIVATE cxx_std_17)
     target_compile_definitions(${name} PRIVATE _CRT_SECURE_NO_WARNINGS _CRT_NONSTDC_NO_WARNINGS
@@ -54,7 +55,7 @@ foreach(header IN LISTS dx8_headers)
     get_filename_component(filename "${header}" NAME)
     configure_file("${header}" "${directx_headers}/${filename}" COPYONLY)
 endforeach()
-foreach(lib d3dx8 dinput dxguid dsound)
+foreach(lib d3dx8 dxguid dsound)
     ren_import_sdk(Vendor::${lib} "${REN_DIRECTX_${lib}_LIBRARY}" "${directx_headers}")
 endforeach()
 # D3DX8 requests the discontinued single-thread CRT. Use the selected modern
@@ -77,14 +78,14 @@ foreach(name IN LISTS REN_GAME_LIBRARIES)
     ren_add_legacy_target(${name} STATIC)
     target_link_libraries(${name} PRIVATE Vendor::d3dx8 Vendor::Miles)
 endforeach()
-target_link_libraries(binkmovie PRIVATE Vendor::BinkDecoder winmm)
+target_link_libraries(binkmovie PRIVATE Vendor::BinkDecoder)
 target_include_directories(binkmovie PRIVATE "${PROJECT_SOURCE_DIR}/Code/wwaudio")
 ren_add_legacy_target(renegade WIN32)
 set_target_properties(renegade PROPERTIES OUTPUT_NAME Renegade)
 # Scripts is loaded at runtime; BandTest exports use its import library.
 add_dependencies(renegade scripts)
 target_link_libraries(renegade PRIVATE ${REN_GAME_LIBRARIES} ${REN_CORE_LIBRARIES}
-    bandtest Vendor::d3dx8 Vendor::dinput Vendor::dxguid Vendor::dsound
+    bandtest Vendor::d3dx8 Vendor::dxguid Vendor::dsound
     Vendor::Miles kernel32 user32 gdi32 winspool comdlg32 advapi32
     shell32 ole32 oleaut32 uuid winmm vfw32 wsock32 version)
 if(REN_ENABLE_GAMESPY)

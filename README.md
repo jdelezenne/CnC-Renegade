@@ -9,6 +9,7 @@ This repository includes source code for Command & Conquer Renegade. This releas
 If you wish to rebuild the source code and tools successfully you will need to find or write new replacements (or remove the code using them entirely) for the following libraries;
 
 - DirectX SDK (Version 8.0 or higher) (expected path `\Code\DirectX\`)
+- SDL3 - pinned source release fetched by CMake (`vendors/sdl3`)
 - Bink video decoder - bundled in `vendors/libbinkdec` (LGPL-2.1-or-later)
 - RAD Miles Sound System SDK - (expected path `\Code\Miles6\`)
 - NvDXTLib SDK - (expected path `\Code\NvDXTLib\`)
@@ -49,8 +50,19 @@ DirectX, Miles, and GNU regex remain required. Audio uses the real Miles runtime
 from the installed game.
 
 Bink movies use the bundled libbinkdec decoder, the game's Direct3D 8 renderer,
-and Windows PCM audio playback. No Bink SDK, `binkw32.dll`, or FFmpeg installation
+and SDL3 PCM audio playback. No Bink SDK, `binkw32.dll`, or FFmpeg installation
 is required. Keep the original `Data/Movies` files alongside the other game data.
+
+SDL3 3.4.18 is fetched from its official release archive with a SHA-256 check
+and built statically. The first configure requires network access. SDL owns
+the main window, event pump, gameplay keyboard/mouse/joystick input, game timer,
+and movie audio. Existing control bindings keep their original key IDs.
+
+Retained native implementations live under `platform/windows/`: the Windows
+entry point, registry, single-instance handling, browser/IME message bridge,
+and Direct3D 8 device/renderer implementation. The game still targets Windows;
+Direct3D 8 rendering and Miles game audio remain during this stage. SDL GPU
+is the next renderer migration, using the SDL window and platform layer.
 
 To use the compiled binaries, you must own the game. The C&C Ultimate Collection is available for purchase on [EA App](https://www.ea.com/en-gb/games/command-and-conquer/command-and-conquer-the-ultimate-collection/buy/pc) or [Steam](https://store.steampowered.com/bundle/39394/Command__Conquer_The_Ultimate_Collection/).
 

@@ -42,6 +42,7 @@
 #define WW3D_DEVTYPE D3DDEVTYPE_HAL
 
 #include "dx8wrapper.h"
+#include "platform/platform.h"
 #include "dx8fvf.h"
 #include "dx8vertexbuffer.h"
 #include "dx8indexbuffer.h"
@@ -750,18 +751,7 @@ bool DX8Wrapper::Set_Render_Device(int dev, int width, int height, int bits, int
 	if (IsWindowed) {
 		WWDEBUG_SAY(("Initializing windowed mode\r\n"));
 
-// 10/23/01 - Denzil - DX window initialization
-		/*
-		** Enforce a required set of window styles and size if the main window
-		** IS NOT A CHILD WINDOW.  :)
-		*/
-		if ((::GetWindowLong(_Hwnd, GWL_STYLE) & WS_CHILD) == 0) {
-			::SetWindowLong(_Hwnd, GWL_STYLE, WS_SYSMENU|WS_CAPTION|WS_MINIMIZEBOX|WS_CLIPCHILDREN);
-
-			// Always resize the window to the desired resolution in windowed mode.
-			resize_window = true;
-		}
-// End Denzil - DX window initialzaion
+		Platform::ConfigureRendererWindow(ResolutionWidth, ResolutionHeight, true);
 
 		// In windowed mode, define the bitdepth from desktop mode (as it can't be changed)
 		switch (_PresentParameters.BackBufferFormat) {
@@ -802,21 +792,7 @@ bool DX8Wrapper::Set_Render_Device(int dev, int width, int height, int bits, int
 
 	} else {
 
-// 10/23/01 - Denzil - DX Window initialization
-		// For fullscreen set the window style to WS_POPUP (Recommended in DX docs)
-		SetWindowLong(_Hwnd, GWL_STYLE, WS_POPUP);
-
-		// Set fullscreen window position to top left and resize to cover entire display.
-		// Recommended in DX docs to prevent other windows on the desktop from attempting
-		// to repaint. This also prevents the OS from spending time calculating invalid
-		// rects for windows that will never been seen.
-		SetWindowPos(_Hwnd, HWND_TOPMOST, 0, 0,
-			GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN),
-			SWP_SHOWWINDOW|SWP_NOCOPYBITS);
-
-		// We already resized the window
-		resize_window = false;
-// End Denzil - DX window initialization
+		Platform::ConfigureRendererWindow(ResolutionWidth, ResolutionHeight, false);
 
 		WWDEBUG_SAY(("Initializing full-screen mode\r\n"));
 
@@ -828,58 +804,6 @@ bool DX8Wrapper::Set_Render_Device(int dev, int width, int height, int bits, int
 
 	}
 
-#ifdef _WINDOWS
-	// PWG 4/13/2000 - changed so that if you say to resize the window it resizes
-	// regardless of whether its windowed or not as OpenGL resizes its self around
-	// the caption and edges of the window type you provide, so its important to
-	// push the client area to be the size you really want.
-	// if ( resize_window && windowed ) {
-	if (resize_window) {
-
-		// Get the current dimensions of the 'render area' of the window
-		RECT rect = { 0 };
-		::GetClientRect (_Hwnd, &rect);
-
-#if(0) // Denzil - DX Window initialization
-		// Is the window the correct size for this resolution?
-		if ((rect.right-rect.left) != ResolutionWidth ||
-			 (rect.bottom-rect.top) != ResolutionHeight) {
-
-			// Calculate what the main window's bounding rectangle should be to
-			// accomodate this resolution
-			rect.left = 0;
-			rect.top = 0;
-			rect.right = ResolutionWidth;
-			rect.bottom = ResolutionHeight;
-			DWORD dwstyle = ::GetWindowLong (_Hwnd, GWL_STYLE);
-
-			AdjustWindowRect (&rect, dwstyle, FALSE);
-
-			// Resize the window to fit this resolution
-			::SetWindowPos (_Hwnd,
-								 NULL,
-								 0,
-								 0,
-								 rect.right-rect.left,
-								 rect.bottom-rect.top,
-								 SWP_NOZORDER | SWP_NOMOVE);
-		}
-#else
-		// Adjust the main window's client area to accomodate the resolution
-		DWORD dwstyle = ::GetWindowLong(_Hwnd, GWL_STYLE);
-		DWORD dwexstyle = ::GetWindowLong(_Hwnd, GWL_EXSTYLE);
-
-		rect.right = ResolutionWidth;
-		rect.bottom = ResolutionHeight;
-
-		::AdjustWindowRectEx(&rect, dwstyle, (::GetMenu(_Hwnd) != NULL), dwexstyle);
-
-		::SetWindowPos(_Hwnd, HWND_TOP, 0, 0,
-				(rect.right - rect.left), (rect.bottom - rect.top),
-				SWP_SHOWWINDOW|SWP_NOCOPYBITS);
-#endif
-	}
-#endif
 
 	/*
 	** Time to actually create the device.

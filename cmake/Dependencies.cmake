@@ -14,7 +14,7 @@ function(ren_find_dependencies)
     ren_sdk_root(GAMESPY "${PROJECT_SOURCE_DIR}/Code/GameSpy")
 
     find_path(REN_DIRECTX_INCLUDE_DIR d3dx8.h PATHS "${REN_DIRECTX_ROOT}/include" NO_DEFAULT_PATH)
-    foreach(lib d3dx8 dinput dxguid dsound)
+    foreach(lib d3dx8 dxguid dsound)
         find_library(REN_DIRECTX_${lib}_LIBRARY NAMES ${lib}
             PATHS "${REN_DIRECTX_ROOT}/lib" "${REN_DIRECTX_ROOT}/lib/x86" NO_DEFAULT_PATH)
     endforeach()
@@ -34,7 +34,7 @@ function(ren_find_dependencies)
 
     # Check headers as well as archives; runtime DLLs do not constitute an SDK.
     set(missing "")
-    foreach(item DIRECTX_INCLUDE_DIR DIRECTX_d3dx8_LIBRARY DIRECTX_dinput_LIBRARY
+    foreach(item DIRECTX_INCLUDE_DIR DIRECTX_d3dx8_LIBRARY
             DIRECTX_dxguid_LIBRARY DIRECTX_dsound_LIBRARY MILES_INCLUDE_DIR MILES_LIBRARY
             GAMESPY_HEADER_DIR GAMESPY_LIBRARY_DEBUG GAMESPY_LIBRARY_RELEASE REGEX_SOURCE REGEX_INCLUDE_DIR)
         if((item MATCHES "^(DIRECTX|MILES|REGEX)_") OR
@@ -57,7 +57,7 @@ function(ren_find_dependencies)
         endif()
     endif()
     if(REN_DIRECTX_INCLUDE_DIR)
-        foreach(header d3d8.h dinput.h dsound.h)
+        foreach(header d3d8.h dsound.h)
             if(NOT EXISTS "${REN_DIRECTX_INCLUDE_DIR}/${header}")
                 list(APPEND missing "DirectX/include/${header}")
             endif()

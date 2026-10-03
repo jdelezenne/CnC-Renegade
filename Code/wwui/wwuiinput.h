@@ -41,6 +41,8 @@
 #ifndef __WWUIINPUT_H
 #define __WWUIINPUT_H
 
+struct SDL_KeyboardEvent;
+
 #include "vector3.h"
 #include "refcount.h"
 #include "bittype.h"
@@ -97,6 +99,7 @@ public:
 	virtual void				Enter_Menu_Mode (void)	{};
 	virtual void				Exit_Menu_Mode (void)	{};
 
+	bool ProcessSDLKeyEvent(const SDL_KeyboardEvent& event);
 	bool ProcessMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, LRESULT& result);
 
 	void InitIME(HWND hwnd);

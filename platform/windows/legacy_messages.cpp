@@ -42,6 +42,9 @@
 #include	"always.h"
 #include	"vector.h"
 #include	"win.h"
+#include "platform/platform.h"
+#include "platform/windows/legacy_messages.h"
+#include <SDL3/SDL_system.h>
 
 
 /*
@@ -94,66 +97,34 @@ bool (*Message_Intercept_Handler)(MSG &msg) = NULL;
  * HISTORY:                                                                                    *
  *   05/17/1997 JLB : Created.                                                                 *
  *=============================================================================================*/
-void Windows_Message_Handler(void)
+namespace {
+bool (*GameMessageHandler)(MSG&) = nullptr;
+bool SDLCALL Native_Message_Hook(void*, MSG* message)
 {
-	MSG msg;
-
-	/*
-	**	Process windows messages until the message queue is exhuasted.
-	*/
-	while (PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE)) {
-		if (!GetMessage( &msg, NULL, 0, 0 )) {
-			return;
-		}
-
-		/*
-		**	Pass the message through any loaded accelerators. If the message
-		**	was processed by an accelerator, then it doesn't need to be
-		**	processed by the normal message handling procedure.
-		*/
-		bool processed = false;
-		for (int aindex = 0; aindex < _Accelerators.Count(); aindex++) {
-			if (_Accelerators[aindex].Window) {
-				if (TranslateAccelerator(_Accelerators[aindex].Window, _Accelerators[aindex].Accelerator, &msg)) {
-					processed = true;
-				}
-			}
-			break;
-		}
-		if (processed) continue;
-
-		/*
-		**	Pass the windows message through any modeless dialogs that may
-		**	be active. If one of the dialogs processes the message, then
-		**	it must not be processed by the normal window message handler.
-		*/
-		for (int index = 0; index < _ModelessDialogs.Count(); index++) {
-			if (IsDialogMessage(_ModelessDialogs[index], &msg)) {
-				processed = true;
-				break;
-			}
-		}
-		if (processed) continue;
-
-		/*
-		**	If the message was not handled by any normal intercept handlers, then
-		**	submit the message to a custom message handler if one has been provided.
-		*/
-		if (Message_Intercept_Handler != NULL) {
-			processed = Message_Intercept_Handler(msg);
-		}
-		if (processed) continue;
-
-		/*
-		**	If the message makes it to this point, then it must be a normal message. Process
-		**	it in the normal fashion. The message will appear in the window message handler
-		**	for the window that it was directed to.
-		*/
-		TranslateMessage(&msg);
-		DispatchMessage(&msg);
-	}
+    MSG& msg = *message;
+    for (int index = 0; index < _Accelerators.Count(); ++index) {
+        if (_Accelerators[index].Window && TranslateAccelerator(
+            _Accelerators[index].Window, _Accelerators[index].Accelerator, &msg)) return false;
+    }
+    for (int index = 0; index < _ModelessDialogs.Count(); ++index) {
+        if (IsDialogMessage(_ModelessDialogs[index], &msg)) return false;
+    }
+    if (Message_Intercept_Handler && Message_Intercept_Handler(msg)) return false;
+    if (GameMessageHandler && GameMessageHandler(msg)) return false;
+    return true;
+}
 }
 
+void Install_Windows_Message_Hook(bool (*game_handler)(MSG&))
+{
+    GameMessageHandler = game_handler;
+    SDL_SetWindowsMessageHook(Native_Message_Hook, nullptr);
+}
+
+void Windows_Message_Handler(void)
+{
+    Platform::PumpEvents();
+}
 
 /***********************************************************************************************
  * Add_Modeless_Dialog -- Adds a modeless dialog box to the message handler.                   *

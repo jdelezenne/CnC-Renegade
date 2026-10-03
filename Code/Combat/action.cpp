@@ -73,7 +73,7 @@
 #include "gameobjmanager.h"
 
 #include "colmathaabox.h"
-#include "dinput.h"
+#include "platform/legacy_keycodes.h"
 
 int _ActionActCalls = 0;
 int _ActionCodeChanges = 0;

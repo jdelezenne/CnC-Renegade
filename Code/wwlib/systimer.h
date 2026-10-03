@@ -38,8 +38,7 @@
 #ifndef _SYSTIMER_H
 
 #include "always.h"
-#include <windows.h>
-#include "mmsys.h"
+#include "platform/platform.h"
 
 #define TIMEGETTIME SystemTime.Get
 
@@ -114,7 +113,7 @@ __forceinline unsigned long SysTimeClass::Get(void)
 		is_init = true;
 	}
 
-	unsigned long time = timeGetTime();
+	unsigned long time = static_cast<unsigned long>(Platform::Ticks());
 	if (time > StartTime) {
 		return(time - StartTime);
 	}

@@ -1,3 +1,4 @@
+#include "platform/platform.h"
 /*
 **	Command & Conquer Renegade(tm)
 **	Copyright 2025 Electronic Arts Inc.
@@ -157,7 +158,7 @@ void _Game_Main_Loop_Loop(void)
    Windows_Message_Handler();
 #ifdef WWDEBUG
    // Sometimes it is useful to be able to artificially lower the frame rate
-   Sleep(cDevOptions::DesiredFrameSleepMs.Get());
+   Platform::Sleep(cDevOptions::DesiredFrameSleepMs.Get());
 #endif
 
 #if 0
@@ -186,7 +187,7 @@ void _Game_Main_Loop_Loop(void)
 			unsigned long diff = time2 - time1;
 			if (diff < 16) {
 				unsigned long sleep_time = 16 - (time2 - time1);
-				Sleep(sleep_time);
+				Platform::Sleep(sleep_time);
 			}
 		}
 	}

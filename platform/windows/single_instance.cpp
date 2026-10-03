@@ -124,7 +124,7 @@ SingletonInstanceKeeperClass::Verify_Safe_To_Execute (void)
 			//
 			//	Find the previous instance
 			//
-			HWND main_wnd = ::FindWindow (APP_GUID, NULL);
+			HWND main_wnd = ::FindWindow ("SDL_app", "Renegade");
 			if (main_wnd != NULL) {
 				::SetForegroundWindow (main_wnd);
 				::ShowWindow (main_wnd, SW_RESTORE);

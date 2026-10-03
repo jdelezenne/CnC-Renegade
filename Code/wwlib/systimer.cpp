@@ -55,7 +55,7 @@ SysTimeClass SystemTime;
  *=============================================================================================*/
 void SysTimeClass::Reset(void)
 {
-	StartTime = timeGetTime();
+	StartTime = static_cast<unsigned long>(Platform::Ticks());
 	WrapAdd = 0 - StartTime;
 }
 

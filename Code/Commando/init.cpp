@@ -36,6 +36,7 @@
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 #include "init.h"
+#include "platform/platform.h"
 #include "debug.h"
 #include "wwmath.h"
 #include "ww3d.h"
@@ -857,11 +858,11 @@ bool Game_Init(void)
 	}
 	if (AutoRestart.Get_Restart_Flag() || ServerSettingsClass::Is_Command_Line_Mode() || ConsoleBox.Is_Exclusive()) {
 		if (!ConsoleBox.Is_Exclusive()) {
-			::ShowWindow( MainWindow, SW_MINIMIZE );	// minimize if we are starting automatically.
+			Platform::MinimizeWindow();	// minimize if we are starting automatically.
 		}
 		ConsoleBox.Init();
 	} else {
-		::ShowWindow( MainWindow, SW_SHOW );	// show the (initially hidden) window
+		Platform::ShowWindow();	// show the (initially hidden) window
 	}
 
 	// Clear screen
@@ -995,15 +996,6 @@ bool Game_Init(void)
 	DebugManager::Set_Display_Handler(&TextDisplayHandler);
 
 	//DEADMENU MenuManager::Set_Menu( "Menu_Main" );
-
-	// Load the accelerator table and hand it off to WWLIB.
-	// Note:  Accelerator tables that are loaded from resources (like
-	// we are doing here) do not need to be manually freed.  Windows
-	// will cleanup for us when the process terminates.
-	HACCEL haccel = ::LoadAccelerators (::GetModuleHandle (NULL), MAKEINTRESOURCE (IDR_ACCELERATOR));
-	if (haccel) {
-		::Add_Accelerator (MainWindow, haccel);
-	}
 
 	//WW3D::Set_Texture_Reduction( 1 );
 
