@@ -12,7 +12,6 @@ function(ren_find_dependencies)
     ren_sdk_root(MILES "${PROJECT_SOURCE_DIR}/Code/Miles6")
     ren_sdk_root(REGEX "${PROJECT_SOURCE_DIR}/vendors/regex-0.12")
     ren_sdk_root(GAMESPY "${PROJECT_SOURCE_DIR}/Code/GameSpy")
-    ren_sdk_root(UMBRA "${PROJECT_SOURCE_DIR}/Code/Umbra")
 
     find_path(REN_DIRECTX_INCLUDE_DIR d3dx8.h PATHS "${REN_DIRECTX_ROOT}/include" NO_DEFAULT_PATH)
     foreach(lib d3dx8 dinput dxguid dsound)
@@ -32,19 +31,14 @@ function(ren_find_dependencies)
                 "${PROJECT_SOURCE_DIR}/Code/Libs/${config}" "${REN_GAMESPY_ROOT}/lib"
             NO_DEFAULT_PATH)
     endforeach()
-    find_path(REN_UMBRA_INCLUDE_DIR umbra.hpp PATHS "${REN_UMBRA_ROOT}/interface" NO_DEFAULT_PATH)
-    find_library(REN_UMBRA_LIBRARY NAMES umbra
-        PATHS "${REN_UMBRA_ROOT}/lib/win32-x86" NO_DEFAULT_PATH)
 
     # Check headers as well as archives; runtime DLLs do not constitute an SDK.
     set(missing "")
     foreach(item DIRECTX_INCLUDE_DIR DIRECTX_d3dx8_LIBRARY DIRECTX_dinput_LIBRARY
             DIRECTX_dxguid_LIBRARY DIRECTX_dsound_LIBRARY MILES_INCLUDE_DIR MILES_LIBRARY
-            GAMESPY_HEADER_DIR GAMESPY_LIBRARY_DEBUG GAMESPY_LIBRARY_RELEASE REGEX_SOURCE REGEX_INCLUDE_DIR
-            UMBRA_INCLUDE_DIR UMBRA_LIBRARY)
+            GAMESPY_HEADER_DIR GAMESPY_LIBRARY_DEBUG GAMESPY_LIBRARY_RELEASE REGEX_SOURCE REGEX_INCLUDE_DIR)
         if((item MATCHES "^(DIRECTX|MILES|REGEX)_") OR
-           (REN_ENABLE_GAMESPY AND item MATCHES "^GAMESPY_") OR
-           (REN_ENABLE_UMBRA AND item MATCHES "^UMBRA_"))
+           (REN_ENABLE_GAMESPY AND item MATCHES "^GAMESPY_"))
             if(NOT REN_${item})
                 list(APPEND missing "REN_${item}")
             endif()

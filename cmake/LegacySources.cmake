@@ -354,7 +354,6 @@ set(REN_wwphys_SOURCES
     "${PROJECT_SOURCE_DIR}/Code/wwphys/timeddecophys.cpp"
     "${PROJECT_SOURCE_DIR}/Code/wwphys/trackedvehicle.cpp"
     "${PROJECT_SOURCE_DIR}/Code/wwphys/transitioneffect.cpp"
-    "${PROJECT_SOURCE_DIR}/Code/wwphys/umbrasupport.cpp"
     "${PROJECT_SOURCE_DIR}/Code/wwphys/vehicledazzle.cpp"
     "${PROJECT_SOURCE_DIR}/Code/wwphys/vehiclephys.cpp"
     "${PROJECT_SOURCE_DIR}/Code/wwphys/visoptimizationcontext.cpp"

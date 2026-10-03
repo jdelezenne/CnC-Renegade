@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 4.2)
 
 project(Renegade LANGUAGES C CXX RC)
-option(REN_ENABLE_UMBRA "Enable the experimental legacy Umbra culler" OFF)
 option(REN_ENABLE_GAMESPY "Enable the original GameSpy SDK integration" ON)
 include(cmake/Dependencies.cmake)
 ren_find_dependencies()

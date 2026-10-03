@@ -39,9 +39,7 @@
 #ifndef UMBRASUPPORT_H
 #define UMBRASUPPORT_H
 
-#ifndef UMBRASUPPORT
 #define UMBRASUPPORT		0
-#endif
 
 #include "always.h"
 #include "physlist.h"

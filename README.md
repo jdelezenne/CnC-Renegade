@@ -13,7 +13,6 @@ If you wish to rebuild the source code and tools successfully you will need to f
 - RAD Miles Sound System SDK - (expected path `\Code\Miles6\`)
 - NvDXTLib SDK - (expected path `\Code\NvDXTLib\`)
 - Lightscape SDK - (expected path `\Code\Lightscape\`)
-- Umbra SDK - (expected path `\Code\Umbra\`)
 - GameSpy SDK - (expected path `\Code\GameSpy\`)
 - GNU Regex - (expected path `\Code\WWLib\`)
 - SafeDisk API - (expected path `\Code\Launcher\SafeDisk\`)
@@ -41,12 +40,11 @@ the corresponding `lib/<configuration>` directory. The game uses C++17 and
 the static MSVC runtime.
 
 SDK locations can be set with `-DREN_<SDK>_ROOT=<path>` at configure time:
-`DIRECTX`, `MILES`, `GAMESPY`, `REGEX`, and `UMBRA`. Defaults use the
+`DIRECTX`, `MILES`, `GAMESPY`, and `REGEX`. Defaults use the
 original paths listed above, except GNU regex uses `vendors/regex-0.12`.
 GNU regex may use either `gnu_regex.c`/`gnu_regex.h` or `regex.c`/`regex.h`.
 
 GameSpy services can be disabled with `-DREN_ENABLE_GAMESPY=OFF`.
-Umbra is disabled by default and can be enabled with `-DREN_ENABLE_UMBRA=ON`.
 DirectX, Miles, and GNU regex remain required. Audio uses the real Miles runtime
 from the installed game.
 
