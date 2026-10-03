@@ -9,7 +9,7 @@ This repository includes source code for Command & Conquer Renegade. This releas
 If you wish to rebuild the source code and tools successfully you will need to find or write new replacements (or remove the code using them entirely) for the following libraries;
 
 - DirectX SDK (Version 8.0 or higher) (expected path `\Code\DirectX\`)
-- RAD Bink SDK - (expected path `\Code\BinkMovie\`)
+- Bink video decoder - bundled in `vendors/libbinkdec` (LGPL-2.1-or-later)
 - RAD Miles Sound System SDK - (expected path `\Code\Miles6\`)
 - NvDXTLib SDK - (expected path `\Code\NvDXTLib\`)
 - Lightscape SDK - (expected path `\Code\Lightscape\`)
@@ -41,15 +41,18 @@ the corresponding `lib/<configuration>` directory. The game uses C++17 and
 the static MSVC runtime.
 
 SDK locations can be set with `-DREN_<SDK>_ROOT=<path>` at configure time:
-`DIRECTX`, `MILES`, `BINK`, `GAMESPY`, `REGEX`, and `UMBRA`. Defaults use the
+`DIRECTX`, `MILES`, `GAMESPY`, `REGEX`, and `UMBRA`. Defaults use the
 original paths listed above, except GNU regex uses `vendors/regex-0.12`.
 GNU regex may use either `gnu_regex.c`/`gnu_regex.h` or `regex.c`/`regex.h`.
 
-Missing optional vendors can be disabled with `-DREN_ENABLE_BINK=OFF` or
-`-DREN_ENABLE_GAMESPY=OFF`. These disable movies or GameSpy services respectively.
+GameSpy services can be disabled with `-DREN_ENABLE_GAMESPY=OFF`.
 Umbra is disabled by default and can be enabled with `-DREN_ENABLE_UMBRA=ON`.
 DirectX, Miles, and GNU regex remain required. Audio uses the real Miles runtime
 from the installed game.
+
+Bink movies use the bundled libbinkdec decoder, the game's Direct3D 8 renderer,
+and Windows PCM audio playback. No Bink SDK, `binkw32.dll`, or FFmpeg installation
+is required. Keep the original `Data/Movies` files alongside the other game data.
 
 To use the compiled binaries, you must own the game. The C&C Ultimate Collection is available for purchase on [EA App](https://www.ea.com/en-gb/games/command-and-conquer/command-and-conquer-the-ultimate-collection/buy/pc) or [Steam](https://store.steampowered.com/bundle/39394/Command__Conquer_The_Ultimate_Collection/).
 

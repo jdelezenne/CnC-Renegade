@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 4.2)
 
 project(Renegade LANGUAGES C CXX RC)
-option(REN_ENABLE_BINK "Enable RAD Bink movie playback" ON)
 option(REN_ENABLE_UMBRA "Enable the experimental legacy Umbra culler" OFF)
 option(REN_ENABLE_GAMESPY "Enable the original GameSpy SDK integration" ON)
 include(cmake/Dependencies.cmake)
@@ -23,4 +22,5 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 include(cmake/LegacySources.cmake)
+add_subdirectory(vendors/libbinkdec)
 include(cmake/Targets.cmake)

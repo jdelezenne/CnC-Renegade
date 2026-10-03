@@ -10,7 +10,6 @@ endfunction()
 function(ren_find_dependencies)
     ren_sdk_root(DIRECTX "${PROJECT_SOURCE_DIR}/Code/DirectX")
     ren_sdk_root(MILES "${PROJECT_SOURCE_DIR}/Code/Miles6")
-    ren_sdk_root(BINK "${PROJECT_SOURCE_DIR}/Code/BinkMovie")
     ren_sdk_root(REGEX "${PROJECT_SOURCE_DIR}/vendors/regex-0.12")
     ren_sdk_root(GAMESPY "${PROJECT_SOURCE_DIR}/Code/GameSpy")
     ren_sdk_root(UMBRA "${PROJECT_SOURCE_DIR}/Code/Umbra")
@@ -23,9 +22,6 @@ function(ren_find_dependencies)
     find_path(REN_MILES_INCLUDE_DIR mss.h PATHS "${REN_MILES_ROOT}/include" NO_DEFAULT_PATH)
     find_library(REN_MILES_LIBRARY NAMES mss32
         PATHS "${REN_MILES_ROOT}/lib/win" "${REN_MILES_ROOT}/lib" "${REN_MILES_ROOT}/win" NO_DEFAULT_PATH)
-    find_path(REN_BINK_INCLUDE_DIR bink.h PATHS "${REN_BINK_ROOT}" "${REN_BINK_ROOT}/include" NO_DEFAULT_PATH)
-    find_library(REN_BINK_LIBRARY NAMES binkw32
-        PATHS "${REN_BINK_ROOT}" "${REN_BINK_ROOT}/lib" "${REN_BINK_ROOT}/lib/win32" NO_DEFAULT_PATH)
     find_file(REN_REGEX_SOURCE NAMES gnu_regex.c regex.c PATHS "${REN_REGEX_ROOT}" NO_DEFAULT_PATH)
     find_path(REN_REGEX_INCLUDE_DIR NAMES gnu_regex.h regex.h PATHS "${REN_REGEX_ROOT}" NO_DEFAULT_PATH)
     find_path(REN_GAMESPY_HEADER_DIR gqueryreporting.h PATHS "${REN_GAMESPY_ROOT}" NO_DEFAULT_PATH)
@@ -45,10 +41,9 @@ function(ren_find_dependencies)
     foreach(item DIRECTX_INCLUDE_DIR DIRECTX_d3dx8_LIBRARY DIRECTX_dinput_LIBRARY
             DIRECTX_dxguid_LIBRARY DIRECTX_dsound_LIBRARY MILES_INCLUDE_DIR MILES_LIBRARY
             GAMESPY_HEADER_DIR GAMESPY_LIBRARY_DEBUG GAMESPY_LIBRARY_RELEASE REGEX_SOURCE REGEX_INCLUDE_DIR
-            BINK_INCLUDE_DIR BINK_LIBRARY UMBRA_INCLUDE_DIR UMBRA_LIBRARY)
+            UMBRA_INCLUDE_DIR UMBRA_LIBRARY)
         if((item MATCHES "^(DIRECTX|MILES|REGEX)_") OR
            (REN_ENABLE_GAMESPY AND item MATCHES "^GAMESPY_") OR
-           (REN_ENABLE_BINK AND item MATCHES "^BINK_") OR
            (REN_ENABLE_UMBRA AND item MATCHES "^UMBRA_"))
             if(NOT REN_${item})
                 list(APPEND missing "REN_${item}")
@@ -73,10 +68,6 @@ function(ren_find_dependencies)
                 list(APPEND missing "DirectX/include/${header}")
             endif()
         endforeach()
-    endif()
-    if(REN_ENABLE_BINK AND REN_BINK_INCLUDE_DIR AND
-       NOT EXISTS "${REN_BINK_INCLUDE_DIR}/rad.h")
-        list(APPEND missing "Bink/rad.h")
     endif()
     if(missing)
         list(JOIN missing "\n  " details)

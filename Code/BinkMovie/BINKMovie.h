@@ -34,7 +34,7 @@ class FontCharsClass;
 
 // ----------------------------------------------------------------------------
 //
-// BINK movie player. You'll need to have binkw32.dll in the run directory!
+// BINK movie player using the bundled libbinkdec video and audio decoder.
 //
 // To start a movie call Play("movie.bik","subtitle_name");
 // To end movie playing call Stop();
