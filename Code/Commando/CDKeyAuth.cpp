@@ -36,10 +36,12 @@
  * Functions:                                                                                  *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
+#if !defined(REN_ENABLE_GAMESPY) || REN_ENABLE_GAMESPY
 #include <GameSpy\gcdkeyserver.h>
 #include <GameSpy\gcdkeyclient.h>
 #include <GameSpy\nonport.h>
 #include <GameSpy\gs_md5.h>
+#endif
 #include <stdlib.h>
 #include "wwdebug.h"
 #include "CDKeyAuth.h"
@@ -107,7 +109,9 @@ void CCDKeyAuth::auth_callback(int localid, int authenticated, char *errmsg, voi
 }
 
 void CCDKeyAuth::DisconnectUser(int localid) {
+#if !defined(REN_ENABLE_GAMESPY) || REN_ENABLE_GAMESPY
 	gcd_disconnect_user(localid);
+#endif
 
 }
 
@@ -117,13 +121,17 @@ void CCDKeyAuth::AuthenticateUser(int localid, ULONG ip, char *challenge, char *
 	// Take the response from our challenge that we sent to the client
 	// and send it off to the Authserver along with the original challenge
 
+#if !defined(REN_ENABLE_GAMESPY) || REN_ENABLE_GAMESPY
 	gcd_authenticate_user(localid, ip, challenge, authstring, CCDKeyAuth::auth_callback, NULL);
+#else
+	cGameSpyAuthMgr::Initiate_Auth_Rejection(localid);
+#endif
 
 }
 
 
 void CCDKeyAuth::AuthSerial(const char *challenge, StringClass &resp) {
-
+#if !defined(REN_ENABLE_GAMESPY) || REN_ENABLE_GAMESPY
 	char response[RESPONSE_SIZE];
 	StringClass sserial;
 
@@ -154,6 +162,9 @@ void CCDKeyAuth::AuthSerial(const char *challenge, StringClass &resp) {
 
 	delete [] cdkey;
 	resp = response;
+#else
+	resp = "";
+#endif
 }
 
 void CCDKeyAuth::GetSerialNum(StringClass &serial) {

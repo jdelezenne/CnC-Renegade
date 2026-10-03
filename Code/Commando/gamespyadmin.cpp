@@ -32,7 +32,9 @@
 #include "cnetwork.h"
 #include "dlgmpconnect.h"
 #include "gamespy_qnr.h"
+#if !defined(REN_ENABLE_GAMESPY) || REN_ENABLE_GAMESPY
 #include <Gamespy\ghttp.h>
+#endif
 #include "useroptions.h"
 #include "renegadedialogmgr.h"
 #include "dialogtests.h"
@@ -85,7 +87,9 @@ cGameSpyAdmin::Think
 		}
 	}
 
+#if !defined(REN_ENABLE_GAMESPY) || REN_ENABLE_GAMESPY
 	ghttpThink();
+#endif
 
 
 #ifndef MULTIPLAYERDEMO
@@ -232,11 +236,15 @@ cGameSpyAdmin::Is_Gamespy_Game
 	void
 )
 {
+#if defined(REN_ENABLE_GAMESPY) && !REN_ENABLE_GAMESPY
+	return false;
+#else
 	return 
 		IsUnderGamespyMenuing			||
 		IsLaunchFromGamespyRequested	|| 
 		IsLaunchedFromGamespy			|| 
 		IsServerGamespyListed;
+#endif
 }
 
 //----------------------------------------------------------------------------------

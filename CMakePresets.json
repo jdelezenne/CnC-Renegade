@@ -1,0 +1,26 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": { "major": 3, "minor": 25, "patch": 0 },
+  "configurePresets": [
+    {
+      "name": "debug",
+      "displayName": "Debug",
+      "generator": "NMake Makefiles",
+      "binaryDir": "${sourceDir}/out/build/debug",
+      "toolchainFile": "${sourceDir}/cmake/toolchains/vc6-x86.cmake",
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "Debug" }
+    },
+    {
+      "name": "release",
+      "displayName": "Release",
+      "generator": "NMake Makefiles",
+      "binaryDir": "${sourceDir}/out/build/release",
+      "toolchainFile": "${sourceDir}/cmake/toolchains/vc6-x86.cmake",
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "Release" }
+    }
+  ],
+  "buildPresets": [
+    { "name": "debug", "configurePreset": "debug" },
+    { "name": "release", "configurePreset": "release" }
+  ]
+}

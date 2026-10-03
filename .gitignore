@@ -2,6 +2,10 @@
 # Ignore RUNable folder
 [Rr]un
 
+# CMake builds and machine-specific presets
+/out/
+/CMakeUserPresets.json
+
 # Dependencies
 [Ll]ibs/
 Miles6/

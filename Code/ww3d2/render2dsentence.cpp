@@ -1171,8 +1171,10 @@ FontCharsClass::Blit_Char (WCHAR ch, uint16 *dest_ptr, int dest_stride, int x, i
 const FontCharsClass::CharDataStruct *
 FontCharsClass::Store_GDI_Char (WCHAR ch)
 {
-	int width	= PointSize * 2;
-	int height	= PointSize * 2;
+	BITMAP bitmap = { 0 };
+	::GetObject (GDIBitmap, sizeof (bitmap), &bitmap);
+	int width	= bitmap.bmWidth;
+	int height	= bitmap.bmHeight;
 
 	//
 	//	Get the size of the character we just drew
@@ -1195,6 +1197,7 @@ FontCharsClass::Store_GDI_Char (WCHAR ch)
 	//
 	RECT rect = { 0, 0, width, height };
 	::ExtTextOutW( MemDC, x_pos, 0, ETO_OPAQUE, &rect, &ch, 1, NULL);
+	::GdiFlush (); // Finish drawing before reading the DIB's pixels directly.
 
 	//
 	//	Get a pointer to the surface that this character should use
@@ -1355,18 +1358,26 @@ FontCharsClass::Create_GDI_Font (const char *font_name)
 									CLIP_DEFAULT_PRECIS, ANTIALIASED_QUALITY,
 									VARIABLE_PITCH, font_name);
 
+	// Measure the selected font before allocating its bitmap. At higher display
+	// DPI, its pixel height can exceed the old PointSize * 2 allocation.
+	MemDC = ::CreateCompatibleDC (NULL);
+	OldGDIFont = (HFONT)::SelectObject (MemDC, GDIFont);
+	TEXTMETRIC text_metric = { 0 };
+	::GetTextMetrics (MemDC, &text_metric);
+	CharHeight = text_metric.tmHeight;
+
 	//
 	// Set-up the fields of the BITMAPINFOHEADER
 	//	Note: Top-down DIBs use negative height in Win32.
 	//
 	BITMAPINFOHEADER bitmap_info = { 0 };
 	bitmap_info.biSize				= sizeof (BITMAPINFOHEADER);
-	bitmap_info.biWidth				= PointSize * 2;
-	bitmap_info.biHeight				= -(PointSize * 2);
+	bitmap_info.biWidth				= max (PointSize * 2, text_metric.tmMaxCharWidth + 1);
+	bitmap_info.biHeight				= -max (PointSize * 2, CharHeight);
 	bitmap_info.biPlanes				= 1;
 	bitmap_info.biBitCount			= 24;
 	bitmap_info.biCompression		= BI_RGB;
-	bitmap_info.biSizeImage			= ((PointSize * PointSize * 4) * 3);
+	bitmap_info.biSizeImage			= (((bitmap_info.biWidth * 3) + 3) & ~3) * -bitmap_info.biHeight;
 	bitmap_info.biXPelsPerMeter	= 0;
 	bitmap_info.biYPelsPerMeter	= 0;
 	bitmap_info.biClrUsed			= 0;
@@ -1383,24 +1394,11 @@ FontCharsClass::Create_GDI_Font (const char *font_name)
 													0L);
 
 	//
-	//	Create a device context we can select the font and bitmap into
-	//
-	MemDC = ::CreateCompatibleDC (NULL);
-
-	//
-	//	Now select the BMP and font into the DC
+	//	Now select the BMP into the font's DC
 	//
 	OldGDIBitmap	= (HBITMAP)::SelectObject (MemDC, GDIBitmap);
-	OldGDIFont		= (HFONT)::SelectObject (MemDC, GDIFont);
 	::SetBkColor (MemDC, RGB (0, 0, 0));
 	::SetTextColor (MemDC, RGB (255, 255, 255));
-
-	//
-	//	Lookup the pixel height of the font
-	//
-	TEXTMETRIC text_metric = { 0 };
-	::GetTextMetrics (MemDC, &text_metric);
-	CharHeight = text_metric.tmHeight;
 
 	//
 	// Release our temporary screen DC

@@ -24,6 +24,29 @@ If you wish to rebuild the source code and tools successfully you will need to f
 
 ## Compiling (Win32 Only)
 
+A CMake build for the original 32-bit Visual C++ 6.0 toolchain is available.
+From a VC6 developer command prompt, with CMake 3.25 or newer installed:
+
+```bat
+cmake --preset release
+cmake --build --preset release
+```
+
+Use `debug` for a Debug build. Outputs are written to `out/build/<preset>/bin`
+and `out/build/<preset>/lib`. The presets use NMake because VC6 lacks the header
+dependency reporting needed by Ninja.
+
+SDK locations can be set with `-DREN_<SDK>_ROOT=<path>` at configure time:
+`DIRECTX`, `MILES`, `BINK`, `GAMESPY`, `REGEX`, and `UMBRA`. Defaults use the
+original paths listed above, except GNU regex uses `vendors/regex-0.12`.
+GNU regex may use either `gnu_regex.c`/`gnu_regex.h` or `regex.c`/`regex.h`.
+
+Missing optional vendors can be disabled with `-DREN_ENABLE_BINK=OFF` or
+`-DREN_ENABLE_GAMESPY=OFF`. These disable movies or GameSpy services respectively.
+Umbra is disabled by default and can be enabled with `-DREN_ENABLE_UMBRA=ON`.
+DirectX, Miles, and GNU regex remain required; no compatible audio replacement
+has been validated.
+
 To use the compiled binaries, you must own the game. The C&C Ultimate Collection is available for purchase on [EA App](https://www.ea.com/en-gb/games/command-and-conquer/command-and-conquer-the-ultimate-collection/buy/pc) or [Steam](https://store.steampowered.com/bundle/39394/Command__Conquer_The_Ultimate_Collection/).
 
 ### Renegade
