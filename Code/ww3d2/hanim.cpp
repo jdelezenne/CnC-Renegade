@@ -107,7 +107,7 @@ void NamedPivotMapClass::Update_Pivot_Map(const HTreeClass *Tree)
 /*
 **
 */
-DEFINE_AUTO_POOL(HAnimComboDataClass,256);
+
 
 HAnimComboDataClass::HAnimComboDataClass(bool shared) 
 : Shared(shared), HAnim(0), PivotMap(0), Frame(0), PrevFrame(0), Weight(1) 

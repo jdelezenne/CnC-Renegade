@@ -63,8 +63,8 @@ WeatherMgrClass _TheWeatherMgr;
 
 
 // Static data.
-DEFINE_AUTO_POOL(WeatherSystemClass::RayStruct, WeatherSystemClass::GROWTH_STEP);
-DEFINE_AUTO_POOL(WeatherSystemClass::ParticleStruct, WeatherSystemClass::GROWTH_STEP);
+
+
 
 Random2Class									 WeatherSystemClass::_RandomNumber (0x60486223);
 unsigned											 WeatherSystemClass::_GlobalParticleCount = 0;

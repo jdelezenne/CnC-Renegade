@@ -42,6 +42,7 @@
 #define __SOUNDOBJ_H
 
 #pragma warning (push, 3)
+#include "win.h"
 #include "mss.h"
 #pragma warning (pop)
 

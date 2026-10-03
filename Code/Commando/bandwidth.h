@@ -42,6 +42,7 @@
 #define BANDWIDTH_H
 
 #include "bittype.h"
+#include "win.h"
 
 enum BANDWIDTH_TYPE_ENUM {
 
@@ -68,7 +69,7 @@ class	cBandwidth {
       ~cBandwidth(void) {};
 
 		static ULONG						Get_Bandwidth_Bps_From_Type(BANDWIDTH_TYPE_ENUM bandwidth_type);
-		static const unsigned short *	Get_Bandwidth_String_From_Type(BANDWIDTH_TYPE_ENUM bandwidth_type);
+		static const WCHAR *	Get_Bandwidth_String_From_Type(BANDWIDTH_TYPE_ENUM bandwidth_type);
 		static BANDWIDTH_TYPE_ENUM		Get_Bandwidth_Type_From_String(LPCSTR bandwidth_string);
 };
 

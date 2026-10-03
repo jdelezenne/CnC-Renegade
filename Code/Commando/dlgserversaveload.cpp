@@ -97,7 +97,8 @@ ServerSaveLoadMenuClass::On_Init_Dialog (void)
 		ServerSettingsManagerClass::Scan();
 		int count = ServerSettingsManagerClass::Get_Num_Settings_Files();
 
-		for (int index = 0; index < count; index ++) {
+		int index;
+		for (index = 0; index < count; index ++) {
 
 			//
 			//	Get information about this configuration
@@ -627,7 +628,7 @@ void ServerSaveLoadMenuClass::Save_Now(void)
  * HISTORY:                                                                                    *
  *   12/17/2001 5:11PM ST : Created                                                            *
  *=============================================================================================*/
-ServerSettingsClass::ServerSettingsClass(char *filename, unsigned short *configname, int file_number)
+ServerSettingsClass::ServerSettingsClass(char *filename, WCHAR *configname, int file_number)
 {
 	ConfigName = configname;	//"Default C&C Server Settings";
 	RawFileName = filename;		//"svrcfg_cnc.ini"
@@ -711,13 +712,13 @@ void ServerSettingsManagerClass::Scan(void)
 	/*
 	** Add in the default as the first entry.
 	*/
-	ServerSettingsList.Add(new ServerSettingsClass("def_svrcfg_cnc.ini", (unsigned short *)TRANSLATE(IDS_SERVER_SAVELOAD_DEFAULT), 0));
+	ServerSettingsList.Add(new ServerSettingsClass("def_svrcfg_cnc.ini", (WCHAR *)TRANSLATE(IDS_SERVER_SAVELOAD_DEFAULT), 0));
 	ServerSettingsList[0]->IsCustom = false;
 
 	/*
 	** Add in the custom default as the second entry.
 	*/
-	ServerSettingsList.Add(new ServerSettingsClass("svrcfg_cnc.ini", (unsigned short *)TRANSLATE(IDS_SERVER_SAVELOAD_CUSTOM_DEFAULT), 1));
+	ServerSettingsList.Add(new ServerSettingsClass("svrcfg_cnc.ini", (WCHAR *)TRANSLATE(IDS_SERVER_SAVELOAD_CUSTOM_DEFAULT), 1));
 	ServerSettingsList[1]->IsCustom = true;
 
 	for (int i=2 ; i<MAX_SETTINGS_FILES ; i++) {
@@ -728,11 +729,11 @@ void ServerSettingsManagerClass::Scan(void)
 		if (file.Is_Available()) {
 			INIClass *ini = Get_INI(file_name);
 			if (ini) {
-				description = ini->Get_Wide_String(description, "Settings", "wConfigName", L"");	//(unsigned short *)TRANSLATE(IDS_SERVER_SAVELOAD_DEFAULT));
+				description = ini->Get_Wide_String(description, "Settings", "wConfigName", L"");	//(WCHAR *)TRANSLATE(IDS_SERVER_SAVELOAD_DEFAULT));
 				if (description.Get_Length()) {
 					ServerSettingsList.Add(new ServerSettingsClass(file_name, description.Peek_Buffer(), i));
 				} else {
-					StringClass defaultstr((unsigned short *)TRANSLATE(IDS_SERVER_SAVELOAD_DEFAULT), true);
+					StringClass defaultstr((WCHAR *)TRANSLATE(IDS_SERVER_SAVELOAD_DEFAULT), true);
 					ini->Get_String("Settings", "bConfigName", defaultstr.Peek_Buffer(), char_description.Peek_Buffer(), 128);
 					ServerSettingsList.Add(new ServerSettingsClass(file_name, WideStringClass(char_description, true).Peek_Buffer(), i));
 				}
@@ -900,7 +901,8 @@ ServerSettingsClass *ServerSettingsManagerClass::Add_Configuration(WideStringCla
 			char filename[MAX_PATH];
 			int file_number = -1;
 
-			for (int i=0 ; i<ServerSettingsList.Count() ; i++) {
+			int i;
+			for (i=0 ; i<ServerSettingsList.Count() ; i++) {
 				ServerSettingsClass *settings = ServerSettingsList[i];
 				if (settings) {
 					WWASSERT(settings->FileNumber >= 0);

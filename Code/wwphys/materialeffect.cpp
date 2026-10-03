@@ -80,7 +80,6 @@ void MaterialEffectClass::Timestep_All_Effects(float dt)
 **
 *************************************************************************************************/
 
-DEFINE_AUTO_POOL(SimpleEffectClass, SIMPLE_EFFECT_GROWTH_STEP);
 
 SimpleEffectClass::SimpleEffectClass(MaterialPassClass * matpass) : 
 	MatPass(NULL) 

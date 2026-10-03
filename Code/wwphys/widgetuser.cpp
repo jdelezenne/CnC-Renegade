@@ -96,7 +96,7 @@ protected:
 /*
 ** declare the instance of the pool object for all WidgetRenderOpClass's
 */
-DEFINE_AUTO_POOL(WidgetRenderOpClass,256);
+
 
 
 /*******************************************

@@ -152,7 +152,6 @@ protected:
 
 };
 
-DEFINE_AUTO_POOL(PushRecordClass,32);
 
 
 /*

@@ -1777,6 +1777,7 @@ void cGameData::Add_Bottom_Text(WideStringClass & text)
 //-----------------------------------------------------------------------------
 void cGameData::Show_Game_Settings_Limits(void)
 {
+			int j;
 	if (PTextRenderer == NULL) {
 		return;
 	}
@@ -1835,7 +1836,7 @@ void cGameData::Show_Game_Settings_Limits(void)
 			changed=true;
 		}
 		else {
-			for (int j=0;j<BottomText.Count();++j) {
+			for (j=0;j<BottomText.Count();++j) {
 				if (BottomText[j]!=OldBottomText[j]) {
 					changed=true;
 					break;
@@ -1860,7 +1861,7 @@ void cGameData::Show_Game_Settings_Limits(void)
 	// Re-compose the OldBottomText vector
 
 	OldBottomText.Reset_Active();
-	for (int j=0;j<BottomText.Count();++j) {
+	for (j=0;j<BottomText.Count();++j) {
 		OldBottomText.Add(BottomText[j]);
 	}
 	BottomText.Reset_Active();

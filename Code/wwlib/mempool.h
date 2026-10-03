@@ -125,7 +125,7 @@ protected:
 ** };
 **
 ** ListNode.cpp:
-** DEFINE_AUTO_POOL(ListNodeClass);	
+** The allocator is shared automatically for each pooled type.
 **
 ** function do_stuff(void) {
 **		ListNodeClass * node = new ListNodeClass;
@@ -147,18 +147,11 @@ private:
 	static void *	operator new [] (size_t size);
 	static void		operator delete[] (void * memory);
 
-	// This must be staticly declared by user
-	static ObjectPoolClass<T,BLOCK_SIZE>	Allocator;
+	// One allocator per pooled type, shared across translation units.
+	inline static ObjectPoolClass<T,BLOCK_SIZE> Allocator;
 
 };
 
-/*
-** DEFINE_AUTO_POOL(T,BLOCKSIZE)
-** Macro to declare the allocator for your class.  Put this in the cpp file for
-** the class.
-*/
-#define DEFINE_AUTO_POOL(T,BLOCKSIZE) \
-ObjectPoolClass<T,BLOCKSIZE> AutoPoolClass<T,BLOCKSIZE>::Allocator;
 
 
 /***********************************************************************************************

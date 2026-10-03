@@ -1,4 +1,4 @@
-# Sources and Debug/Release settings from the original VC6 DSP projects.
+# Game sources and feature definitions from the original DSP projects.
 set(REN_wwdebug_SOURCES
     "${PROJECT_SOURCE_DIR}/Code/wwdebug/wwdebug.cpp"
     "${PROJECT_SOURCE_DIR}/Code/wwdebug/wwmemlog.cpp"
@@ -891,7 +891,6 @@ function(ren_legacy_settings target)
     if(target STREQUAL "wwdebug")
         target_compile_definitions(${target} PRIVATE
             "$<$<CONFIG:Release>:NDEBUG>"
-            "$<$<CONFIG:Release>:WINVER=0x400>"
             "$<$<CONFIG:Release>:_WINDOWS>"
             "$<$<CONFIG:Release>:WIN32_LEAN_AND_MEAN>"
             "$<$<CONFIG:Release>:WIN32>"
@@ -899,7 +898,6 @@ function(ren_legacy_settings target)
         target_compile_definitions(${target} PRIVATE
             "$<$<CONFIG:Debug>:_DEBUG>"
             "$<$<CONFIG:Debug>:WWDEBUG>"
-            "$<$<CONFIG:Debug>:WINVER=0x400>"
             "$<$<CONFIG:Debug>:_WINDOWS>"
             "$<$<CONFIG:Debug>:WIN32_LEAN_AND_MEAN>"
             "$<$<CONFIG:Debug>:WIN32>"
@@ -913,7 +911,6 @@ function(ren_legacy_settings target)
     if(target STREQUAL "wwlib")
         target_compile_definitions(${target} PRIVATE
             "$<$<CONFIG:Release>:NDEBUG>"
-            "$<$<CONFIG:Release>:WINVER=0x400>"
             "$<$<CONFIG:Release>:_WINDOWS>"
             "$<$<CONFIG:Release>:WIN32_LEAN_AND_MEAN>"
             "$<$<CONFIG:Release>:WIN32>"
@@ -923,7 +920,6 @@ function(ren_legacy_settings target)
         target_compile_definitions(${target} PRIVATE
             "$<$<CONFIG:Debug>:_DEBUG>"
             "$<$<CONFIG:Debug>:WWDEBUG>"
-            "$<$<CONFIG:Debug>:WINVER=0x400>"
             "$<$<CONFIG:Debug>:_WINDOWS>"
             "$<$<CONFIG:Debug>:WIN32_LEAN_AND_MEAN>"
             "$<$<CONFIG:Debug>:WIN32>"
@@ -942,15 +938,12 @@ function(ren_legacy_settings target)
             "$<$<CONFIG:Debug>:DIRECTX>"
             "$<$<CONFIG:Debug>:_DEBUG>"
             "$<$<CONFIG:Debug>:WWDEBUG>"
-            "$<$<CONFIG:Debug>:WINVER=0x400>"
             "$<$<CONFIG:Debug>:_WINDOWS>"
             "$<$<CONFIG:Debug>:WIN32_LEAN_AND_MEAN>"
             "$<$<CONFIG:Debug>:WIN32>"
-            "$<$<CONFIG:Debug>:_USE_INTEL_COMPILER>"
         )
         target_compile_definitions(${target} PRIVATE
             "$<$<CONFIG:Release>:NDEBUG>"
-            "$<$<CONFIG:Release>:WINVER=0x400>"
             "$<$<CONFIG:Release>:_WINDOWS>"
             "$<$<CONFIG:Release>:WIN32_LEAN_AND_MEAN>"
             "$<$<CONFIG:Release>:WIN32>"
@@ -962,18 +955,6 @@ function(ren_legacy_settings target)
             "${PROJECT_SOURCE_DIR}/Code/wwlib"
             "${PROJECT_SOURCE_DIR}/Code/wwsaveload"
         )
-        set_property(SOURCE "${PROJECT_SOURCE_DIR}/Code/WWMath/colmathobbtri.cpp" APPEND
-            PROPERTY COMPILE_DEFINITIONS "$<$<CONFIG:Release>:_USE_INTEL_COMPILER>")
-        set_property(SOURCE "${PROJECT_SOURCE_DIR}/Code/WWMath/matrix3.cpp" APPEND
-            PROPERTY COMPILE_DEFINITIONS "$<$<CONFIG:Release>:_USE_INTEL_COMPILER>")
-        set_property(SOURCE "${PROJECT_SOURCE_DIR}/Code/WWMath/matrix3d.cpp" APPEND
-            PROPERTY COMPILE_DEFINITIONS "$<$<CONFIG:Release>:_USE_INTEL_COMPILER>")
-        set_property(SOURCE "${PROJECT_SOURCE_DIR}/Code/WWMath/matrix4.cpp" APPEND
-            PROPERTY COMPILE_DEFINITIONS "$<$<CONFIG:Release>:_USE_INTEL_COMPILER>")
-        set_property(SOURCE "${PROJECT_SOURCE_DIR}/Code/WWMath/quat.cpp" APPEND
-            PROPERTY COMPILE_DEFINITIONS "$<$<CONFIG:Release>:_USE_INTEL_COMPILER>")
-        set_property(SOURCE "${PROJECT_SOURCE_DIR}/Code/WWMath/vp.cpp" APPEND
-            PROPERTY COMPILE_DEFINITIONS "$<$<CONFIG:Release>:_USE_INTEL_COMPILER>")
     endif()
     if(target STREQUAL "wwutil")
         target_compile_definitions(${target} PRIVATE
@@ -1004,7 +985,6 @@ function(ren_legacy_settings target)
     if(target STREQUAL "wwbitpack")
         target_compile_definitions(${target} PRIVATE
             "$<$<CONFIG:Release>:NDEBUG>"
-            "$<$<CONFIG:Release>:WINVER=0x400>"
             "$<$<CONFIG:Release>:_WINDOWS>"
             "$<$<CONFIG:Release>:WIN32_LEAN_AND_MEAN>"
             "$<$<CONFIG:Release>:WIN32>"
@@ -1012,7 +992,6 @@ function(ren_legacy_settings target)
         target_compile_definitions(${target} PRIVATE
             "$<$<CONFIG:Debug>:_DEBUG>"
             "$<$<CONFIG:Debug>:WWDEBUG>"
-            "$<$<CONFIG:Debug>:WINVER=0x400>"
             "$<$<CONFIG:Debug>:_WINDOWS>"
             "$<$<CONFIG:Debug>:WIN32_LEAN_AND_MEAN>"
             "$<$<CONFIG:Debug>:WIN32>"
@@ -1028,14 +1007,12 @@ function(ren_legacy_settings target)
     if(target STREQUAL "wwsaveload")
         target_compile_definitions(${target} PRIVATE
             "$<$<CONFIG:Release>:NDEBUG>"
-            "$<$<CONFIG:Release>:WINVER=0x400>"
             "$<$<CONFIG:Release>:_WINDOWS>"
             "$<$<CONFIG:Release>:WIN32>"
         )
         target_compile_definitions(${target} PRIVATE
             "$<$<CONFIG:Debug>:_DEBUG>"
             "$<$<CONFIG:Debug>:WWDEBUG>"
-            "$<$<CONFIG:Debug>:WINVER=0x400>"
             "$<$<CONFIG:Debug>:_WINDOWS>"
             "$<$<CONFIG:Debug>:WIN32>"
         )
@@ -1078,7 +1055,6 @@ function(ren_legacy_settings target)
     if(target STREQUAL "ww3d2")
         target_compile_definitions(${target} PRIVATE
             "$<$<CONFIG:Release>:NDEBUG>"
-            "$<$<CONFIG:Release>:WINVER=0x400>"
             "$<$<CONFIG:Release>:_WINDOWS>"
             "$<$<CONFIG:Release>:WIN32_LEAN_AND_MEAN>"
             "$<$<CONFIG:Release>:WIN32>"
@@ -1086,7 +1062,6 @@ function(ren_legacy_settings target)
         target_compile_definitions(${target} PRIVATE
             "$<$<CONFIG:Debug>:_DEBUG>"
             "$<$<CONFIG:Debug>:WWDEBUG>"
-            "$<$<CONFIG:Debug>:WINVER=0x400>"
             "$<$<CONFIG:Debug>:_WINDOWS>"
             "$<$<CONFIG:Debug>:WIN32_LEAN_AND_MEAN>"
             "$<$<CONFIG:Debug>:WIN32>"
@@ -1100,20 +1075,16 @@ function(ren_legacy_settings target)
             "${PROJECT_SOURCE_DIR}/Code/wwlib"
             "${PROJECT_SOURCE_DIR}/Code/wwsaveload"
         )
-        set_property(SOURCE "${PROJECT_SOURCE_DIR}/Code/ww3d2/w3d_dep.cpp" APPEND
-            PROPERTY COMPILE_OPTIONS "/GX")
     endif()
     if(target STREQUAL "wwphys")
         target_compile_definitions(${target} PRIVATE
             "$<$<CONFIG:Release>:NDEBUG>"
-            "$<$<CONFIG:Release>:WINVER=0x400>"
             "$<$<CONFIG:Release>:_WINDOWS>"
             "$<$<CONFIG:Release>:WIN32>"
         )
         target_compile_definitions(${target} PRIVATE
             "$<$<CONFIG:Debug>:_DEBUG>"
             "$<$<CONFIG:Debug>:WWDEBUG>"
-            "$<$<CONFIG:Debug>:WINVER=0x400>"
             "$<$<CONFIG:Debug>:_WINDOWS>"
             "$<$<CONFIG:Debug>:WIN32>"
         )
@@ -1184,7 +1155,6 @@ function(ren_legacy_settings target)
     if(target STREQUAL "wwui")
         target_compile_definitions(${target} PRIVATE
             "$<$<CONFIG:Release>:NDEBUG>"
-            "$<$<CONFIG:Release>:_WIN32_WINNT=0x400>"
             "$<$<CONFIG:Release>:WIN32>"
             "$<$<CONFIG:Release>:_MBCS>"
             "$<$<CONFIG:Release>:_LIB>"
@@ -1192,7 +1162,6 @@ function(ren_legacy_settings target)
         )
         target_compile_definitions(${target} PRIVATE
             "$<$<CONFIG:Debug>:_DEBUG>"
-            "$<$<CONFIG:Debug>:_WIN32_WINNT=0x400>"
             "$<$<CONFIG:Debug>:WWDEBUG>"
             "$<$<CONFIG:Debug>:WIN32>"
             "$<$<CONFIG:Debug>:_MBCS>"
@@ -1214,7 +1183,6 @@ function(ren_legacy_settings target)
     if(target STREQUAL "combat")
         target_compile_definitions(${target} PRIVATE
             "$<$<CONFIG:Release>:NDEBUG>"
-            "$<$<CONFIG:Release>:_WIN32_WINNT=0x400>"
             "$<$<CONFIG:Release>:WIN32>"
             "$<$<CONFIG:Release>:_MBCS>"
             "$<$<CONFIG:Release>:_LIB>"
@@ -1248,14 +1216,12 @@ function(ren_legacy_settings target)
     if(target STREQUAL "binkmovie")
         target_compile_definitions(${target} PRIVATE
             "$<$<CONFIG:Release>:NDEBUG>"
-            "$<$<CONFIG:Release>:WINVER=0x400>"
             "$<$<CONFIG:Release>:_WINDOWS>"
             "$<$<CONFIG:Release>:WIN32>"
         )
         target_compile_definitions(${target} PRIVATE
             "$<$<CONFIG:Debug>:_DEBUG>"
             "$<$<CONFIG:Debug>:WWDEBUG>"
-            "$<$<CONFIG:Debug>:WINVER=0x400>"
             "$<$<CONFIG:Debug>:_WINDOWS>"
             "$<$<CONFIG:Debug>:WIN32>"
         )
@@ -1292,7 +1258,6 @@ function(ren_legacy_settings target)
     if(target STREQUAL "scripts")
         target_compile_definitions(${target} PRIVATE
             "$<$<CONFIG:Release>:NDEBUG>"
-            "$<$<CONFIG:Release>:WINVER=0x400>"
             "$<$<CONFIG:Release>:_WINDOWS>"
             "$<$<CONFIG:Release>:WIN32>"
             "$<$<CONFIG:Release>:BUILDING_DLL>"
@@ -1300,7 +1265,6 @@ function(ren_legacy_settings target)
         target_compile_definitions(${target} PRIVATE
             "$<$<CONFIG:Debug>:_DEBUG>"
             "$<$<CONFIG:Debug>:WWDEBUG>"
-            "$<$<CONFIG:Debug>:WINVER=0x400>"
             "$<$<CONFIG:Debug>:_WINDOWS>"
             "$<$<CONFIG:Debug>:WIN32>"
             "$<$<CONFIG:Debug>:BUILDING_DLL>"
@@ -1336,14 +1300,12 @@ function(ren_legacy_settings target)
         target_compile_definitions(${target} PRIVATE
             "$<$<CONFIG:Debug>:_DEBUG>"
             "$<$<CONFIG:Debug>:WWDEBUG>"
-            "$<$<CONFIG:Debug>:WINVER=0x400>"
             "$<$<CONFIG:Debug>:_WINDOWS>"
             "$<$<CONFIG:Debug>:DIRECTX>"
             "$<$<CONFIG:Debug>:WIN32>"
         )
         target_compile_definitions(${target} PRIVATE
             "$<$<CONFIG:Release>:NDEBUG>"
-            "$<$<CONFIG:Release>:WINVER=0x400>"
             "$<$<CONFIG:Release>:_WINDOWS>"
             "$<$<CONFIG:Release>:DIRECTX>"
             "$<$<CONFIG:Release>:WIN32>"

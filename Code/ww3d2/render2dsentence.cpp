@@ -1372,7 +1372,7 @@ FontCharsClass::Create_GDI_Font (const char *font_name)
 	//
 	BITMAPINFOHEADER bitmap_info = { 0 };
 	bitmap_info.biSize				= sizeof (BITMAPINFOHEADER);
-	bitmap_info.biWidth				= max (PointSize * 2, text_metric.tmMaxCharWidth + 1);
+	bitmap_info.biWidth				= max (PointSize * 2, static_cast<int>(text_metric.tmMaxCharWidth) + 1);
 	bitmap_info.biHeight				= -max (PointSize * 2, CharHeight);
 	bitmap_info.biPlanes				= 1;
 	bitmap_info.biBitCount			= 24;
@@ -1522,8 +1522,8 @@ FontCharsClass::Grow_Unicode_Array (WCHAR ch)
 		return ;
 	}
 
-	uint16 first_index	= min( FirstUnicodeChar, ch );
-	uint16 last_index		= max( LastUnicodeChar, ch );
+	uint16 first_index	= min( FirstUnicodeChar, static_cast<uint16>(ch) );
+	uint16 last_index		= max( LastUnicodeChar, static_cast<uint16>(ch) );
 	uint16 count			= (last_index - first_index) + 1;
 
 	//

@@ -48,7 +48,6 @@
 ** - The camera should pitch up and down a lot more than it yaws left and right.
 */
 
-DEFINE_AUTO_POOL(CameraShakeSystemClass::CameraShakerClass,256);
 
 const float MIN_OMEGA			= DEG_TO_RADF(12.5f*360.0f);
 const float MAX_OMEGA			= DEG_TO_RADF(15.0f*360.0f);

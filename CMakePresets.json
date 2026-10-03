@@ -1,26 +1,38 @@
 {
   "version": 6,
-  "cmakeMinimumRequired": { "major": 3, "minor": 25, "patch": 0 },
+  "cmakeMinimumRequired": {
+    "major": 4,
+    "minor": 2,
+    "patch": 0
+  },
   "configurePresets": [
     {
       "name": "debug",
       "displayName": "Debug",
-      "generator": "NMake Makefiles",
-      "binaryDir": "${sourceDir}/out/build/debug",
-      "toolchainFile": "${sourceDir}/cmake/toolchains/vc6-x86.cmake",
-      "cacheVariables": { "CMAKE_BUILD_TYPE": "Debug" }
+      "generator": "Visual Studio 18 2026",
+      "architecture": "Win32",
+      "toolset": "v145",
+      "binaryDir": "${sourceDir}/out/build/debug"
     },
     {
       "name": "release",
       "displayName": "Release",
-      "generator": "NMake Makefiles",
-      "binaryDir": "${sourceDir}/out/build/release",
-      "toolchainFile": "${sourceDir}/cmake/toolchains/vc6-x86.cmake",
-      "cacheVariables": { "CMAKE_BUILD_TYPE": "Release" }
+      "generator": "Visual Studio 18 2026",
+      "architecture": "Win32",
+      "toolset": "v145",
+      "binaryDir": "${sourceDir}/out/build/release"
     }
   ],
   "buildPresets": [
-    { "name": "debug", "configurePreset": "debug" },
-    { "name": "release", "configurePreset": "release" }
+    {
+      "name": "debug",
+      "configurePreset": "debug",
+      "configuration": "Debug"
+    },
+    {
+      "name": "release",
+      "configurePreset": "release",
+      "configuration": "Release"
+    }
   ]
 }

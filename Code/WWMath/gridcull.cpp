@@ -65,7 +65,7 @@
 /*
 ** Declare the pool for GridLinks
 */
-DEFINE_AUTO_POOL(GridLinkClass,256);
+
 
 
 /*

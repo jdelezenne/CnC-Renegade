@@ -773,6 +773,7 @@ unsigned short FirewallHelperClass::Get_Mangler_Response(unsigned long packet_id
  *=============================================================================================*/
 FirewallHelperClass::FirewallBehaviorType FirewallHelperClass::Detect_Firewall_Behavior(void)
 {
+		int i;
 	unsigned short mangler_port = 4321;
 	char temp_mangler_name[128];
 	unsigned long packet_id = 0x7f000000;
@@ -888,7 +889,7 @@ FirewallHelperClass::FirewallBehaviorType FirewallHelperClass::Detect_Firewall_B
 		** See if we already have that address in the list.
 		*/
 		bool found = false;
-		for (int i=0 ; i<num_mangler_addresses ; i++) {
+		for (i=0 ; i<num_mangler_addresses ; i++) {
 			if (memcmp(mangler_addresses[i], &host_info->h_addr_list[0][0], 4) == 0) {
 				found = true;
 				break;
@@ -922,7 +923,7 @@ FirewallHelperClass::FirewallBehaviorType FirewallHelperClass::Detect_Firewall_B
 	/*
 	** Convert the mangler addresses to IPAddressClass format.
 	*/
-	for (int i=0 ; i<num_mangler_addresses ; i++) {
+	for (i=0 ; i<num_mangler_addresses ; i++) {
 		unsigned char addr[4];
 		memcpy(addr, &mangler_addresses[i][0], 4);
 		manglers[i].Set_Address(addr, mangler_port);

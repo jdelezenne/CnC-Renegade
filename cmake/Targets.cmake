@@ -16,10 +16,10 @@ function(ren_add_legacy_target name kind)
         add_library(${name} ${kind} ${sources})
     endif()
     ren_legacy_settings(${name})
-    target_compile_options(${name} PRIVATE "$<$<COMPILE_LANGUAGE:C,CXX>:/W3>")
-    # The DSP projects disable C++ unwinding; WinMain uses structured exceptions.
-    # w3d_dep.cpp retains its original per-file /GX override.
-    target_compile_options(${name} PRIVATE "$<$<COMPILE_LANGUAGE:CXX>:/GX->")
+    target_compile_options(${name} PRIVATE "$<$<COMPILE_LANGUAGE:C,CXX>:/W3;/MP4>")
+    target_compile_features(${name} PRIVATE cxx_std_17)
+    target_compile_definitions(${name} PRIVATE _CRT_SECURE_NO_WARNINGS _CRT_NONSTDC_NO_WARNINGS
+        WINVER=0x0A00 _WIN32_WINNT=0x0A00)
     target_compile_definitions(${name} PRIVATE
         REN_ENABLE_BINK=$<BOOL:${REN_ENABLE_BINK}>
         REN_ENABLE_GAMESPY=$<BOOL:${REN_ENABLE_GAMESPY}>
@@ -49,13 +49,33 @@ target_link_libraries(scripts PRIVATE kernel32 user32 gdi32 winspool comdlg32 ad
 target_link_libraries(bandtest PRIVATE kernel32 user32 gdi32 winspool comdlg32 advapi32
     shell32 ole32 oleaut32 uuid odbc32 odbccp32 ws2_32 winmm)
 
-foreach(lib d3dx8 dinput dxguid dsound)
-    ren_import_sdk(Vendor::${lib} "${REN_DIRECTX_${lib}_LIBRARY}" "${REN_DIRECTX_INCLUDE_DIR}")
+# Only stage the DX8 headers. The old SDK also ships Windows headers such as
+# basetsd.h that must not override the Windows SDK selected by Visual Studio.
+set(directx_headers "${CMAKE_BINARY_DIR}/generated/directx8")
+file(MAKE_DIRECTORY "${directx_headers}")
+file(GLOB dx8_headers "${REN_DIRECTX_INCLUDE_DIR}/d3d8*.h"
+    "${REN_DIRECTX_INCLUDE_DIR}/dxfile.h" "${REN_DIRECTX_INCLUDE_DIR}/d3dx8*.h" "${REN_DIRECTX_INCLUDE_DIR}/d3dx8*.inl")
+foreach(header IN LISTS dx8_headers)
+    get_filename_component(filename "${header}" NAME)
+    configure_file("${header}" "${directx_headers}/${filename}" COPYONLY)
 endforeach()
+foreach(lib d3dx8 dinput dxguid dsound)
+    ren_import_sdk(Vendor::${lib} "${REN_DIRECTX_${lib}_LIBRARY}" "${directx_headers}")
+endforeach()
+# D3DX8 requests the discontinued single-thread CRT. Use the selected modern
+# runtime and Microsoft's compatibility definitions for its C stdio imports.
+set_property(TARGET Vendor::d3dx8 APPEND PROPERTY INTERFACE_LINK_OPTIONS
+    /NODEFAULTLIB:libci /NODEFAULTLIB:libc)
+set_property(TARGET Vendor::d3dx8 APPEND PROPERTY INTERFACE_LINK_LIBRARIES
+    legacy_stdio_definitions)
 ren_import_sdk(Vendor::Miles "${REN_MILES_LIBRARY}" "${REN_MILES_INCLUDE_DIR}")
 if(REN_ENABLE_GAMESPY)
     get_filename_component(gamespy_parent "${REN_GAMESPY_HEADER_DIR}" DIRECTORY)
-    ren_import_sdk(Vendor::GameSpy "${REN_GAMESPY_LIBRARY}" "${gamespy_parent}")
+    ren_import_sdk(Vendor::GameSpy "${REN_GAMESPY_LIBRARY_RELEASE}" "${gamespy_parent}")
+    set_target_properties(Vendor::GameSpy PROPERTIES
+        IMPORTED_CONFIGURATIONS "Debug;Release"
+        IMPORTED_LOCATION_DEBUG "${REN_GAMESPY_LIBRARY_DEBUG}"
+        IMPORTED_LOCATION_RELEASE "${REN_GAMESPY_LIBRARY_RELEASE}")
 endif()
 if(REN_ENABLE_BINK)
     ren_import_sdk(Vendor::Bink "${REN_BINK_LIBRARY}" "${REN_BINK_INCLUDE_DIR}")

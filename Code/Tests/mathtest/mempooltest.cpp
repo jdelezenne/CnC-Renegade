@@ -67,7 +67,6 @@ D::~D(void)
 	x = 2; 
 }
 
-DEFINE_AUTO_POOL(B,5);
 ObjectPoolClass<D,5> DAllocator;
 
 

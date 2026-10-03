@@ -73,6 +73,7 @@ static void AddPlayerStats(GameResPacket& stats, cPlayer* player, WOL::Locale lo
 
 void SendGameResults(unsigned long gameID, cGameData* theGame, SList<cPlayer>* playerList)
 	{
+		int index;
 	RefPtr<WWOnline::Session> session = WWOnline::Session::GetInstance(false);
 
 	if (!session.IsValid())
@@ -207,7 +208,7 @@ void SendGameResults(unsigned long gameID, cGameData* theGame, SList<cPlayer>* p
 
 		SLNode<cPlayer>* playerNode = playerList->Head();
 
-		for (int index = 0; index < playerList->Get_Count(); index++)
+		for (index = 0; index < playerList->Get_Count(); index++)
 			{
 			cPlayer* player = playerNode->Data();
 
@@ -247,7 +248,7 @@ void SendGameResults(unsigned long gameID, cGameData* theGame, SList<cPlayer>* p
 	unsigned long numPlayers = 0;
 	SLNode<cPlayer>* playerNode = playerList->Head();
 
-	for (int index = 0; index < playerList->Get_Count(); index++)
+	for (index = 0; index < playerList->Get_Count(); index++)
 		{
 		cPlayer* player = playerNode->Data();
 

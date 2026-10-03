@@ -29,9 +29,13 @@ function(ren_find_dependencies)
     find_file(REN_REGEX_SOURCE NAMES gnu_regex.c regex.c PATHS "${REN_REGEX_ROOT}" NO_DEFAULT_PATH)
     find_path(REN_REGEX_INCLUDE_DIR NAMES gnu_regex.h regex.h PATHS "${REN_REGEX_ROOT}" NO_DEFAULT_PATH)
     find_path(REN_GAMESPY_HEADER_DIR gqueryreporting.h PATHS "${REN_GAMESPY_ROOT}" NO_DEFAULT_PATH)
-    find_library(REN_GAMESPY_LIBRARY NAMES gamespy
-        PATHS "${REN_GAMESPY_ROOT}/lib" "${REN_GAMESPY_ROOT}/lib/${CMAKE_BUILD_TYPE}"
-        "${PROJECT_SOURCE_DIR}/Code/Libs/${CMAKE_BUILD_TYPE}" NO_DEFAULT_PATH)
+    foreach(config Debug Release)
+        string(TOUPPER "${config}" config_upper)
+        find_library(REN_GAMESPY_LIBRARY_${config_upper} NAMES gamespy
+            PATHS "${REN_GAMESPY_ROOT}/lib/${config}"
+                "${PROJECT_SOURCE_DIR}/Code/Libs/${config}" "${REN_GAMESPY_ROOT}/lib"
+            NO_DEFAULT_PATH)
+    endforeach()
     find_path(REN_UMBRA_INCLUDE_DIR umbra.hpp PATHS "${REN_UMBRA_ROOT}/interface" NO_DEFAULT_PATH)
     find_library(REN_UMBRA_LIBRARY NAMES umbra
         PATHS "${REN_UMBRA_ROOT}/lib/win32-x86" NO_DEFAULT_PATH)
@@ -40,7 +44,7 @@ function(ren_find_dependencies)
     set(missing "")
     foreach(item DIRECTX_INCLUDE_DIR DIRECTX_d3dx8_LIBRARY DIRECTX_dinput_LIBRARY
             DIRECTX_dxguid_LIBRARY DIRECTX_dsound_LIBRARY MILES_INCLUDE_DIR MILES_LIBRARY
-            GAMESPY_HEADER_DIR GAMESPY_LIBRARY REGEX_SOURCE REGEX_INCLUDE_DIR
+            GAMESPY_HEADER_DIR GAMESPY_LIBRARY_DEBUG GAMESPY_LIBRARY_RELEASE REGEX_SOURCE REGEX_INCLUDE_DIR
             BINK_INCLUDE_DIR BINK_LIBRARY UMBRA_INCLUDE_DIR UMBRA_LIBRARY)
         if((item MATCHES "^(DIRECTX|MILES|REGEX)_") OR
            (REN_ENABLE_GAMESPY AND item MATCHES "^GAMESPY_") OR

@@ -121,7 +121,7 @@ void Set_Working_Directory(char *old_path, char *new_path);
 int Start_Application( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow );
 void Set_Working_Directory(HINSTANCE hInstance);
 
-#include "packet.h"
+
 
 #ifndef _MSC_VER
 long Top_Level_Exception_Filter(EXCEPTION_POINTERS *e_info)
@@ -417,6 +417,21 @@ static bool Video_Card_Driver_Check()
  * HISTORY:                                                                                    *
  *   09/19/2001 PDS  : Created.                                                                *
  *=============================================================================================*/
+// Keep SEH in a function without C++ objects that require stack unwinding.
+static int Run_Game_Main_Loop_With_Exception_Handler()
+{
+	int exitCode = EXIT_SUCCESS;
+#ifdef _MSC_VER
+	__try {
+		exitCode = Game_Main_Loop();
+	} __except(Exception_Handler(GetExceptionCode(), GetExceptionInformation())) {};
+#else
+	SetUnhandledExceptionFilter((LPTOP_LEVEL_EXCEPTION_FILTER) &Top_Level_Exception_Filter);
+	exitCode = Game_Main_Loop();
+#endif
+	return exitCode;
+}
+
 int Start_Application( HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpCmdLine*/, int nCmdShow )
 {
 	{
@@ -470,29 +485,8 @@ int Start_Application( HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /
 		Register_Application_Exception_Callback(&Application_Exception_Callback);
 		Register_Application_Version_Callback(&BuildInfoClass::Composite_Build_Info);
 
-#ifdef _MSC_VER
-		/*
-		** The __try/__except construct is part of the WIN32 interface. This is not the same
-		** as C++ exception handling. There is no additional code overhead required
-		** with this interface and the compilers exception handling options should be disabled
-		** to prevent the compiler generating additional stack unwinding code.
-		*/
-		__try {
-#else
-		SetUnhandledExceptionFilter((LPTOP_LEVEL_EXCEPTION_FILTER) &Top_Level_Exception_Filter);
-#endif
-			WWDEBUG_SAY(("Game_Main_Loop\n"));
-			exitCode = Game_Main_Loop();
-
-#ifdef _MSC_VER
-		} __except(Exception_Handler(GetExceptionCode(), GetExceptionInformation())) {};
-
-		/*
-		** Set the exception filter to use on shutdown.
-		*/
-#else
-		SetUnhandledExceptionFilter((LPTOP_LEVEL_EXCEPTION_FILTER) &Top_Level_Exception_Filter);
-#endif
+		WWDEBUG_SAY(("Game_Main_Loop\n"));
+		exitCode = Run_Game_Main_Loop_With_Exception_Handler();
 #ifdef WWDEBUG
 	}
 #endif //WWDEBUG

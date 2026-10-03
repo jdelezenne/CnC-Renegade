@@ -24,17 +24,21 @@ If you wish to rebuild the source code and tools successfully you will need to f
 
 ## Compiling (Win32 Only)
 
-A CMake build for the original 32-bit Visual C++ 6.0 toolchain is available.
-From a VC6 developer command prompt, with CMake 3.25 or newer installed:
+Build with Visual Studio 2026 (Desktop development with C++, including ATL)
+and CMake 4.2 or newer. The presets select the v145 compiler and Win32 platform.
+No developer command prompt or custom toolchain file is needed.
 
 ```bat
+cmake --preset debug
+cmake --build --preset debug
 cmake --preset release
 cmake --build --preset release
 ```
 
-Use `debug` for a Debug build. Outputs are written to `out/build/<preset>/bin`
-and `out/build/<preset>/lib`. The presets use NMake because VC6 lacks the header
-dependency reporting needed by Ninja.
+The only presets are `debug` and `release`. Binaries are written to
+`out/build/debug/bin/Debug` and `out/build/release/bin/Release`; libraries use
+the corresponding `lib/<configuration>` directory. The game uses C++17 and
+the static MSVC runtime.
 
 SDK locations can be set with `-DREN_<SDK>_ROOT=<path>` at configure time:
 `DIRECTX`, `MILES`, `BINK`, `GAMESPY`, `REGEX`, and `UMBRA`. Defaults use the
@@ -44,21 +48,22 @@ GNU regex may use either `gnu_regex.c`/`gnu_regex.h` or `regex.c`/`regex.h`.
 Missing optional vendors can be disabled with `-DREN_ENABLE_BINK=OFF` or
 `-DREN_ENABLE_GAMESPY=OFF`. These disable movies or GameSpy services respectively.
 Umbra is disabled by default and can be enabled with `-DREN_ENABLE_UMBRA=ON`.
-DirectX, Miles, and GNU regex remain required; no compatible audio replacement
-has been validated.
+DirectX, Miles, and GNU regex remain required. Audio uses the real Miles runtime
+from the installed game.
 
 To use the compiled binaries, you must own the game. The C&C Ultimate Collection is available for purchase on [EA App](https://www.ea.com/en-gb/games/command-and-conquer/command-and-conquer-the-ultimate-collection/buy/pc) or [Steam](https://store.steampowered.com/bundle/39394/Command__Conquer_The_Ultimate_Collection/).
 
 ### Renegade
 
-The quickest way to build all configurations in the project is to open `commando.dsw` in Microsoft Visual Studio C++ 6.0 (SP5 recommended for binary matching to patch 1.037) and select Build -> Batch Build, then hit the “Rebuild All” button.
+Use the CMake commands above, or open this repository as a CMake project in
+Visual Studio 2026 and select Debug or Release. The original DSP/DSW files are
+retained as historical source references; the CMake build uses the current
+compiler directly.
 
-If you wish to compile the code under a modern version of Microsoft Visual Studio, you can convert the legacy project file to a modern MSVC solution by opening the `commando.dsw` in Microsoft Visual Studio .NET 2003, and then opening the newly created project and solution file in MSVC 2015 or newer.
-
-NOTE: As modern versions of MSVC enforce newer revisions of the C++ standard, you will need to make extensive changes to the codebase before it successfully compiles, even more so if you plan on compiling for the Win64 platform.
-
-When the workspace has finished building, the compiled binaries will be copied to the `/Run/` directory found in the root of this repository. 
-
+The game still requires the original data files, Miles runtime and drivers,
+and other runtime DLLs from an owned installation. Build output includes the
+matching Scripts and BandTest DLLs. Use these together with the executable in
+a separate game directory containing those assets.
 
 ### Free Dedicated Server
 It’s possible to build the Windows version of the FDS (Free Dedicated Server) for Command & Conquer Renegade from the source code in this repository, just uncomment `#define FREEDEDICATEDSERVER` in [Combat\specialbuilds.h](Combat\specialbuilds.h) and perform a “Rebuild All” action on the Release config.

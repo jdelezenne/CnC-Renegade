@@ -47,8 +47,6 @@
 #include "systimer.h"
 
 
-DEFINE_AUTO_POOL(SoundSceneClass::AudibleInfoClass, 64);
-
 
 //////////////////////////////////////////////////////////////////////////////////
 //	Generic constants

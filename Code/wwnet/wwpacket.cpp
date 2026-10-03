@@ -37,7 +37,6 @@
 #define	PACKET_ID_BITS		28		// Enough for about 100 packets per second for about a month.
 #define	PACKET_TYPE_BITS	4		// Enough for 16 packet types (we currently have 7 at 9/20/2001 11:33PM)
 
-DEFINE_AUTO_POOL(cPacket, 256)
 
 //
 // Class statics
