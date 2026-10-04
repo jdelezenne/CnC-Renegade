@@ -127,6 +127,7 @@ public:
 
 	WCHAR *		Get_Buffer (int new_length);
 	WCHAR *		Peek_Buffer (void);
+	const WCHAR * Peek_Buffer (void) const;
 
 	////////////////////////////////////////////////////////////
 	//	Static methods
@@ -554,6 +555,12 @@ WideStringClass::Get_Buffer (int new_length)
 ///////////////////////////////////////////////////////////////////
 inline WCHAR *
 WideStringClass::Peek_Buffer (void)
+{
+	return m_Buffer;
+}
+
+inline const WCHAR *
+WideStringClass::Peek_Buffer (void) const
 {
 	return m_Buffer;
 }

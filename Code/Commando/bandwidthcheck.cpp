@@ -882,7 +882,7 @@ BandwidthDetectWait::BandwidthDetectWait(void) :
  *=============================================================================================*/
 BandwidthDetectWait::~BandwidthDetectWait()
 {
-	WWDEBUG_SAY(("BandwidthDetectWait: End - %S\n", mEndText));
+	WWDEBUG_SAY(("BandwidthDetectWait: End - %S\n", mEndText.Peek_Buffer()));
 
 	if (WOLSession.IsValid()) WOLSession->EnablePinging(true);
 

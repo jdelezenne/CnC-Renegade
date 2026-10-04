@@ -15,3 +15,11 @@ FetchContent_Declare(OpenALSoft
     URL https://github.com/kcat/openal-soft/archive/refs/tags/1.25.2.tar.gz
     URL_HASH SHA256=fb27e5839aa11f0e5b9d33756965291fad5d6909ab928ea1f796f4a1a6877894)
 FetchContent_MakeAvailable(OpenALSoft)
+if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND MSVC)
+    set(helpers "${openalsoft_SOURCE_DIR}/common/opthelpers.h")
+    file(READ "${helpers}" original)
+    string(REPLACE "#if HAS_ATTRIBUTE(clang::nonblocking)" "#if HAS_ATTRIBUTE(clang::nonblocking) && !defined(_MSC_VER)" patched "${original}")
+    if(NOT original STREQUAL patched)
+        file(WRITE "${helpers}" "${patched}")
+    endif()
+endif()

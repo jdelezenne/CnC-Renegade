@@ -55,6 +55,8 @@
 #include	"assert.h"
 #include "cpudetect.h"
 #include	"except.h"
+#include <dbghelp.h>
+#include <mutex>
 //#include "debug.h"
 #include "mpu.h"
 //#include "commando\nat.h"
@@ -63,7 +65,6 @@
 #include "wwmemlog.h"
 
 #include	<conio.h>
-#include	<imagehlp.h>
 #include <crtdbg.h>
 #include	<stdio.h>
 
@@ -178,7 +179,7 @@ int __cdecl _purecall(void)
 	** Use int3 to cause an exception.
 	*/
 	WWDEBUG_SAY(("Pure Virtual Function call. Oh No!\n"));
-	_asm int 0x03;
+	__debugbreak();
 #endif	//_DEBUG_ASSERT
 
 	return(return_code);
@@ -282,6 +283,8 @@ static void Add_Txt (char const *txt)
  *=============================================================================================*/
 void Dump_Exception_Info(EXCEPTION_POINTERS *e_info)
 {
+#if defined(_M_IX86)
+
 	/*
 	** List of possible exceptions
 	*/
@@ -491,7 +494,7 @@ void Dump_Exception_Info(EXCEPTION_POINTERS *e_info)
 	DebugString("Stack walk...\n");
 	Add_Txt("\r\n  Stack walk...\r\n");
 
-	unsigned long return_addresses[256];
+	ULONG_PTR return_addresses[256];
 	int num_addresses = Stack_Walk(return_addresses, 256, context);
 
 	if (num_addresses) {
@@ -729,6 +732,24 @@ void Dump_Exception_Info(EXCEPTION_POINTERS *e_info)
 	}
 
 	Add_Txt ("\r\n\r\n");
+
+#else
+    memset(ExceptionText, 0, sizeof(ExceptionText));
+    char text[512];
+    sprintf_s(text, "Exception %08lx at %p\r\nRIP %016llx RSP %016llx RBP %016llx\r\n",
+        e_info->ExceptionRecord->ExceptionCode, e_info->ExceptionRecord->ExceptionAddress,
+        e_info->ContextRecord->Rip, e_info->ContextRecord->Rsp, e_info->ContextRecord->Rbp);
+    Add_Txt(text);
+    ULONG_PTR addresses[256];
+    int count = Stack_Walk(addresses, 256, e_info->ContextRecord);
+    for (int i = 0; i < count; ++i) {
+        char symbol[512]; int displacement = 0;
+        if (Lookup_Symbol(reinterpret_cast<void*>(addresses[i]), symbol, displacement))
+            sprintf_s(text, "%p %s + %x\r\n", reinterpret_cast<void*>(addresses[i]), symbol, displacement);
+        else sprintf_s(text, "%p\r\n", reinterpret_cast<void*>(addresses[i]));
+        Add_Txt(text);
+    }
+#endif
 }
 
 
@@ -1057,6 +1078,8 @@ unsigned long Get_Main_Thread_ID(void)
  *=============================================================================================*/
 void Load_Image_Helper(void)
 {
+#if defined(_M_IX86)
+
 	/*
 	** If this is the first time through then fix up the imagehelp function pointers since imagehlp.dll
 	** can't be statically linked.
@@ -1110,6 +1133,14 @@ void Load_Image_Helper(void)
 			}
 		}
 	}
+
+#else
+    static std::once_flag initialized;
+    std::call_once(initialized, [] {
+        SymSetOptions(SYMOPT_DEFERRED_LOADS | SYMOPT_UNDNAME);
+        SymInitialize(GetCurrentProcess(), nullptr, TRUE);
+    });
+#endif
 }
 
 
@@ -1136,6 +1167,8 @@ void Load_Image_Helper(void)
  *=============================================================================================*/
 bool Lookup_Symbol(void *code_ptr, char *symbol, int &displacement)
 {
+#if defined(_M_IX86)
+
 	/*
 	** Locals.
 	*/
@@ -1184,6 +1217,17 @@ bool Lookup_Symbol(void *code_ptr, char *symbol, int &displacement)
 		return(true);
 	}
 	return(false);
+
+#else
+    Load_Image_Helper();
+    alignas(SYMBOL_INFO) unsigned char buffer[sizeof(SYMBOL_INFO) + 512]{};
+    auto* info = reinterpret_cast<SYMBOL_INFO*>(buffer);
+    info->SizeOfStruct = sizeof(SYMBOL_INFO); info->MaxNameLen = 512;
+    DWORD64 offset = 0;
+    if (!SymFromAddr(GetCurrentProcess(), reinterpret_cast<DWORD64>(code_ptr), &offset, info)) return false;
+    strcpy(symbol, info->Name); displacement = static_cast<int>(offset);
+    return true;
+#endif
 }
 
 
@@ -1205,8 +1249,10 @@ bool Lookup_Symbol(void *code_ptr, char *symbol, int &displacement)
  * HISTORY:                                                                                    *
  *   6/12/2001 11:57AM ST : Created                                                            *
  *=============================================================================================*/
-int Stack_Walk(unsigned long *return_addresses, int num_addresses, CONTEXT *context)
+int Stack_Walk(ULONG_PTR *return_addresses, int num_addresses, CONTEXT *context)
 {
+#if defined(_M_IX86)
+
 	static HINSTANCE _imagehelp = (HINSTANCE) -1;
 
 	/*
@@ -1278,6 +1324,24 @@ here:
 	}
 
 	return(pointer_index);
+
+#else
+    if (!return_addresses || num_addresses <= 0) return 0;
+    Load_Image_Helper();
+    CONTEXT captured{};
+    if (context) captured = *context; else RtlCaptureContext(&captured);
+    STACKFRAME64 frame{};
+    frame.AddrPC = {captured.Rip, 0, AddrModeFlat};
+    frame.AddrStack = {captured.Rsp, 0, AddrModeFlat};
+    frame.AddrFrame = {captured.Rbp, 0, AddrModeFlat};
+    int count = 0;
+    while (count < num_addresses && StackWalk64(IMAGE_FILE_MACHINE_AMD64, GetCurrentProcess(), GetCurrentThread(),
+        &frame, &captured, nullptr, SymFunctionTableAccess64, SymGetModuleBase64, nullptr)) {
+        if (!frame.AddrPC.Offset) break;
+        return_addresses[count++] = static_cast<ULONG_PTR>(frame.AddrPC.Offset);
+    }
+    return count;
+#endif
 }
 
 

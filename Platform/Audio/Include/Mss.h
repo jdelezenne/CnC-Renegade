@@ -1,4 +1,5 @@
 #pragma once
+#include <cstdint>
 #include <windows.h>
 #include <mmsystem.h>
 #include <mmreg.h>
@@ -11,6 +12,9 @@
 #endif
 
 using S32 = long;
+using AILUserData = std::intptr_t;
+using AILFileHandle = std::uintptr_t;
+using MILES_HANDLE = std::uintptr_t;
 using U32 = unsigned long;
 using F32 = float;
 using C8 = char;
@@ -60,10 +64,10 @@ struct AILSOUNDINFO {
  U32 block_size;
  const void* initial_ptr;
 };
-using AIL_file_open_callback = U32 (AILCALLBACK*)(const char*, U32*);
-using AIL_file_close_callback = void (AILCALLBACK*)(U32);
-using AIL_file_seek_callback = S32 (AILCALLBACK*)(U32, S32, U32);
-using AIL_file_read_callback = U32 (AILCALLBACK*)(U32, void*, U32);
+using AIL_file_open_callback = U32 (AILCALLBACK*)(const char*, AILFileHandle*);
+using AIL_file_close_callback = void (AILCALLBACK*)(AILFileHandle);
+using AIL_file_seek_callback = S32 (AILCALLBACK*)(AILFileHandle, S32, U32);
+using AIL_file_read_callback = U32 (AILCALLBACK*)(AILFileHandle, void*, U32);
 
 extern "C" {
 S32 AILCALL AIL_startup (void);
@@ -93,8 +97,8 @@ S32 AILCALL AIL_sample_playback_rate (HSAMPLE S);
 S32 AILCALL AIL_sample_volume (HSAMPLE S);
 S32 AILCALL AIL_sample_pan (HSAMPLE S);
 S32 AILCALL AIL_sample_loop_count (HSAMPLE S);
-void AILCALL AIL_set_sample_user_data (HSAMPLE S, U32 index, S32 value);
-S32 AILCALL AIL_sample_user_data (HSAMPLE S, U32 index);
+void AILCALL AIL_set_sample_user_data (HSAMPLE S, U32 index, AILUserData value);
+AILUserData AILCALL AIL_sample_user_data (HSAMPLE S, U32 index);
 void AILCALL AIL_set_sample_ms_position (HSAMPLE S, S32 milliseconds);
 void AILCALL AIL_sample_ms_position (HSAMPLE S, S32 * total_milliseconds, S32 * current_milliseconds);
 HSTREAM AILCALL AIL_open_stream(HDIGDRIVER dig, char const * filename, S32 stream_mem);
@@ -142,7 +146,7 @@ H3DPOBJECT AILCALL AIL_open_3D_listener (HPROVIDER lib);
 void AILCALL AIL_set_3D_position (H3DPOBJECT obj, F32 X, F32 Y, F32 Z);
 void AILCALL AIL_set_3D_velocity_vector (H3DPOBJECT obj, F32 dX_per_ms, F32 dY_per_ms, F32 dZ_per_ms);
 void AILCALL AIL_set_3D_orientation (H3DPOBJECT obj, F32 X_face, F32 Y_face, F32 Z_face, F32 X_up, F32 Y_up, F32 Z_up);
-void AILCALL AIL_set_3D_user_data (H3DPOBJECT obj, U32 index, S32 value);
-S32 AILCALL AIL_3D_user_data (H3DPOBJECT obj, U32 index);
+void AILCALL AIL_set_3D_user_data (H3DPOBJECT obj, U32 index, AILUserData value);
+AILUserData AILCALL AIL_3D_user_data (H3DPOBJECT obj, U32 index);
 HSTREAM AILCALL AIL_open_stream_by_sample(HDIGDRIVER driver, HSAMPLE sample, const char *filename, S32 stream_mem);
 }

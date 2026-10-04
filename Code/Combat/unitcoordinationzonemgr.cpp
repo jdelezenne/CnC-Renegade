@@ -42,6 +42,8 @@
 #include "pscene.h"
 #include "staticanimphys.h"
 #include "elevator.h"
+#include "colmath.h"
+#include "colmathaabox.h"
 
 
 //////////////////////////////////////////////////////////////////////

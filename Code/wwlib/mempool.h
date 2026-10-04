@@ -91,7 +91,7 @@ public:
 protected:
 
 	T	*		FreeListHead;			
-	uint32 *	BlockListHead;			
+	unsigned char *	BlockListHead;
 	int		FreeObjectCount;
 	int		TotalObjectCount;
 	FastCriticalSectionClass ObjectPoolCS;
@@ -198,7 +198,7 @@ ObjectPoolClass<T,BLOCK_SIZE>::~ObjectPoolClass(void)
 	// delete all of the blocks we allocated
 	int block_count = 0;
 	while (BlockListHead != NULL) {
-		uint32 * next_block = *(uint32 **)BlockListHead;
+		unsigned char * next_block = *reinterpret_cast<unsigned char **>(BlockListHead);
 		::operator delete(BlockListHead);
 		BlockListHead = next_block;
 		block_count++;
@@ -274,13 +274,14 @@ T * ObjectPoolClass<T,BLOCK_SIZE>::Allocate_Object_Memory(void)
 	if ( FreeListHead == 0 ) {  
 
 		// No free objects, allocate another block
-		uint32 * tmp_block_head = BlockListHead;
-		BlockListHead = (uint32*)::operator new( sizeof(T) * BLOCK_SIZE + sizeof(uint32 *));
+		unsigned char * tmp_block_head = BlockListHead;
+		constexpr size_t header_size = (sizeof(void*) + alignof(T) - 1) & ~(alignof(T) - 1);
+		BlockListHead = static_cast<unsigned char*>(::operator new(sizeof(T) * BLOCK_SIZE + header_size));
 		// Link this block into the block list
 		*(void **)BlockListHead = tmp_block_head;
 
 		// Link the objects in the block into the free object list
-		FreeListHead = (T*)(BlockListHead + 1);
+		FreeListHead = reinterpret_cast<T*>(BlockListHead + header_size);
 		for ( int i = 0; i < BLOCK_SIZE; i++ ) {	
 			*(T**)(&(FreeListHead[i])) = &(FreeListHead[i+1]);	// link up the elements
 		}

@@ -3232,7 +3232,7 @@ WWAudioClass::Save_To_Settings
 //
 ////////////////////////////////////////////////////////////////////////////////////////////
 U32 AILCALLBACK
-WWAudioClass::File_Open_Callback (char const *filename, U32 *file_handle)
+WWAudioClass::File_Open_Callback (char const *filename, AILFileHandle *file_handle)
 {
 	U32 retval = false;
 
@@ -3243,7 +3243,7 @@ WWAudioClass::File_Open_Callback (char const *filename, U32 *file_handle)
 		//
 		FileClass *file = Get_Instance ()->Get_File (filename);
 		if (file != NULL && file->Open ()) {
-			(*file_handle) = (U32)file;
+			(*file_handle) = reinterpret_cast<AILFileHandle>(file);
 			retval = true;
 		}
 	}
@@ -3258,7 +3258,7 @@ WWAudioClass::File_Open_Callback (char const *filename, U32 *file_handle)
 //
 ////////////////////////////////////////////////////////////////////////////////////////////
 void AILCALLBACK
-WWAudioClass::File_Close_Callback (U32 file_handle)
+WWAudioClass::File_Close_Callback (AILFileHandle file_handle)
 {
 	if (Get_Instance () != NULL) {
 
@@ -3281,7 +3281,7 @@ WWAudioClass::File_Close_Callback (U32 file_handle)
 //
 ////////////////////////////////////////////////////////////////////////////////////////////
 S32 AILCALLBACK
-WWAudioClass::File_Seek_Callback (U32 file_handle, S32 offset, U32 type)
+WWAudioClass::File_Seek_Callback (AILFileHandle file_handle, S32 offset, U32 type)
 {
 	S32 retval = 0;
 
@@ -3326,7 +3326,7 @@ WWAudioClass::File_Seek_Callback (U32 file_handle, S32 offset, U32 type)
 //
 ////////////////////////////////////////////////////////////////////////////////////////////
 U32 AILCALLBACK
-WWAudioClass::File_Read_Callback (U32 file_handle, void *buffer, U32 bytes)
+WWAudioClass::File_Read_Callback (AILFileHandle file_handle, void *buffer, U32 bytes)
 {
 	U32 retval = 0;
 

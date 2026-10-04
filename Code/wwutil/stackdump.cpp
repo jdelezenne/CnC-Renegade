@@ -46,6 +46,7 @@
 #include <assert.h>
 
 #include	"wwdebug.h"
+#include "except.h"
 
 typedef BOOL		(WINAPI *SymCleanupType)					(HANDLE hProcess);
 typedef BOOL		(WINAPI *SymGetSymFromAddrType)			(HANDLE hProcess, DWORD Address, LPDWORD Displacement, PIMAGEHLP_SYMBOL Symbol);
@@ -105,6 +106,8 @@ cStackDump::Print_Call_Stack
 	void
 )
 {
+#if defined(_M_IX86)
+
 	WWDEBUG_SAY(("cStackDump::Print_Call_Stack:\n"));
 
 	HINSTANCE imagehelp = ::LoadLibrary("IMAGEHLP.DLL");
@@ -242,6 +245,17 @@ cStackDump::Print_Call_Stack
 	{
 		::FreeLibrary(imagehelp);
 	}
+
+#else
+    ULONG_PTR addresses[256];
+    int count = Stack_Walk(addresses, 256, nullptr);
+    for (int i = 0; i < count; ++i) {
+        char symbol[512]; int displacement = 0;
+        if (Lookup_Symbol(reinterpret_cast<void*>(addresses[i]), symbol, displacement))
+            WWDEBUG_SAY(("%p %s + %x\n", reinterpret_cast<void*>(addresses[i]), symbol, displacement));
+        else WWDEBUG_SAY(("%p\n", reinterpret_cast<void*>(addresses[i])));
+    }
+#endif
 }
 
 

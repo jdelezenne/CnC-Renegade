@@ -17,6 +17,7 @@
 */
 
 #include "cpudetect.h"
+#include <intrin.h>
 #include "wwstring.h"
 #include "wwdebug.h"
 #include "thread.h"
@@ -142,36 +143,16 @@ const char* CPUDetectClass::Get_Processor_Manufacturer_Name()
 	return ManufacturerNames[ProcessorManufacturer];
 }
 
-#define ASM_RDTSC _asm _emit 0x0f _asm _emit 0x31
 
 static unsigned Calculate_Processor_Speed(__int64& ticks_per_second)
 {
-	struct {
-		unsigned timer0_h;
-		unsigned timer0_l;
-		unsigned timer1_h;
-		unsigned timer1_l;
-	} Time;
-
-	__asm {
-		ASM_RDTSC;
-		mov Time.timer0_h,eax
-		mov Time.timer0_l,edx
-	}
-
-	unsigned start=TIMEGETTIME();
-	unsigned elapsed;
-	while ((elapsed=TIMEGETTIME()-start)<200) {
-		__asm {
-			ASM_RDTSC;
-			mov Time.timer1_h,eax
-			mov Time.timer1_l,edx
-		}
-	}
-
-	__int64 t=*(__int64*)&Time.timer1_h-*(__int64*)&Time.timer0_h;
-	ticks_per_second=(1000/200)*t;	// Ticks per second
-	return unsigned(t/(elapsed*1000));
+    const unsigned __int64 before = __rdtsc();
+    const unsigned start = TIMEGETTIME();
+    unsigned elapsed;
+    do { elapsed = TIMEGETTIME() - start; } while (elapsed < 200);
+    const unsigned __int64 ticks = __rdtsc() - before;
+    ticks_per_second = static_cast<__int64>(ticks * 1000 / elapsed);
+    return static_cast<unsigned>(ticks / (elapsed * 1000));
 }
 
 void CPUDetectClass::Init_Processor_Speed()
@@ -827,33 +808,7 @@ void CPUDetectClass::Init_Processor_String()
 
 void CPUDetectClass::Init_CPUID_Instruction()
 {
-	unsigned long cpuid_available=0;
-
-   // The pushfd/popfd commands are done using emits
-   // because CodeWarrior seems to have problems with
-   // the command (huh?)
-
-   __asm
-   {
-		mov cpuid_available,0	// clear flag
-		push ebx
-		pushfd
-		pop eax
-		mov ebx,eax
-		xor eax,0x00200000
-		push eax
-		popfd
-		pushfd
-		pop eax
-		xor eax,ebx
-		je done
-		mov cpuid_available,1
-done:
-		push ebx
-		popfd
-		pop ebx
-	}
-	HasCPUIDInstruction=!!cpuid_available;
+    HasCPUIDInstruction = true;
 }
 
 void CPUDetectClass::Init_Processor_Features()
@@ -915,34 +870,14 @@ bool CPUDetectClass::CPUID(
 	unsigned& u_edx_,
 	unsigned cpuid_type)
 {
-	if (!Has_CPUID_Instruction()) return false;	// Most processors since 486 have CPUID...
-
-	unsigned u_eax;
-	unsigned u_ebx;
-	unsigned u_ecx;
-	unsigned u_edx;
-
-	__asm
-	{
-		pushad
-		mov		eax,[cpuid_type]
-		xor		ebx,ebx
-		xor		ecx,ecx
-		xor		edx,edx
-		cpuid
-		mov		[u_eax],eax
-		mov		[u_ebx],ebx
-		mov		[u_ecx],ecx
-		mov		[u_edx],edx
-		popad
-	}
-
-	u_eax_=u_eax;
-	u_ebx_=u_ebx;
-	u_ecx_=u_ecx;
-	u_edx_=u_edx;
-
-	return true;
+    if (!Has_CPUID_Instruction()) return false;
+    int registers[4];
+    __cpuidex(registers, static_cast<int>(cpuid_type), 0);
+    u_eax_ = static_cast<unsigned>(registers[0]);
+    u_ebx_ = static_cast<unsigned>(registers[1]);
+    u_ecx_ = static_cast<unsigned>(registers[2]);
+    u_edx_ = static_cast<unsigned>(registers[3]);
+    return true;
 }
 
 #define SYSLOG(n) work.Format n ; CPUDetectClass::ProcessorLog+=work;
@@ -964,7 +899,7 @@ void CPUDetectClass::Init_Processor_Log()
 		(OSVersionBuildNumber&0xff000000)>>24,
 		(OSVersionBuildNumber&0xff0000)>>16,
 		(OSVersionBuildNumber&0xffff)));
-	SYSLOG(("OS-Info: %s\r\n",OSVersionExtraInfo));
+	SYSLOG(("OS-Info: %s\r\n",OSVersionExtraInfo.Peek_Buffer()));
 
 	SYSLOG(("Processor: %s\r\n",CPUDetectClass::Get_Processor_String()));
 	SYSLOG(("Clock speed: ~%dMHz\r\n",CPUDetectClass::Get_Processor_Speed()));
@@ -975,7 +910,7 @@ void CPUDetectClass::Init_Processor_Log()
 	case 2: cpu_type="Dual"; break;
 	case 3: cpu_type="*Intel Reserved*"; break;
 	}
-	SYSLOG(("Processor type: %s\r\n",cpu_type));
+	SYSLOG(("Processor type: %s\r\n",cpu_type.Peek_Buffer()));
 
 	SYSLOG(("\r\n"));
 

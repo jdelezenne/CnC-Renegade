@@ -25,6 +25,7 @@
 
 #include "always.h"
 #include "thread.h"
+#include <atomic>
 
 
 // Always use mutex or critical section when accessing the same data from multiple threads!
@@ -117,33 +118,17 @@ public:
 
 class FastCriticalSectionClass
 {
-	volatile unsigned Flag;
+	std::atomic<unsigned> Flag;
 
 	void Thread_Safe_Set_Flag()
-	{
-		volatile unsigned& nFlag=Flag;
+    {
+        while (Flag.exchange(1, std::memory_order_acquire)) ThreadClass::Switch_Thread();
+    }
 
-		#define ts_lock _emit 0xF0
-		assert(((unsigned)&nFlag % 4) == 0);
-
-		__asm mov ebx, [nFlag]
-		__asm ts_lock
-		__asm bts dword ptr [ebx], 0
-		__asm jc The_Bit_Was_Previously_Set_So_Try_Again
-		return;
-
-		The_Bit_Was_Previously_Set_So_Try_Again:
-		ThreadClass::Switch_Thread();
-		__asm mov ebx, [nFlag]
-		__asm ts_lock
-		__asm bts dword ptr [ebx], 0
-		__asm jc  The_Bit_Was_Previously_Set_So_Try_Again
-	}
-
-	WWINLINE void Thread_Safe_Clear_Flag()
-	{
-		Flag = 0;
-	}
+    WWINLINE void Thread_Safe_Clear_Flag()
+    {
+        Flag.store(0, std::memory_order_release);
+    }
 
 public:
 	// Name can (and usually should) be NULL. Use name only if you wish to create a globally unique mutex

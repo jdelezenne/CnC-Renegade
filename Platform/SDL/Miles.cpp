@@ -59,7 +59,7 @@ std::unordered_map<std::uint64_t, std::weak_ptr<AudioData>> Sounds;
 struct Decoder {
     drwav Wave{};
     drmp3 MP3{};
-    U32 File = 0;
+    AILFileHandle File = 0;
     bool Opened = false;
     bool IsWave = false;
     bool Valid = false;
@@ -135,7 +135,7 @@ struct Sample {
     ALuint SendFilter = 0;
     std::shared_ptr<AudioData> Data;
     std::unique_ptr<Decoder> Stream;
-    std::array<S32, 8> User{};
+    std::array<AILUserData, 8> User{};
     unsigned Channels = 0;
     unsigned Rate = 0;
     unsigned Bits = 16;
@@ -505,11 +505,11 @@ SAMPLE_GET(AIL_sample_pan, Pan)
 SAMPLE_GET(AIL_sample_playback_rate, PlaybackRate)
 SAMPLE_GET(AIL_sample_loop_count, PlaybackLoops)
 #undef SAMPLE_GET
-extern "C" void AILCALL AIL_set_sample_user_data(HSAMPLE handle, U32 index, S32 value)
+extern "C" void AILCALL AIL_set_sample_user_data(HSAMPLE handle, U32 index, AILUserData value)
 {
     std::lock_guard guard(AudioMutex); if (auto* sample = Find(handle); sample && index < sample->User.size()) sample->User[index] = value;
 }
-extern "C" S32 AILCALL AIL_sample_user_data(HSAMPLE handle, U32 index)
+extern "C" AILUserData AILCALL AIL_sample_user_data(HSAMPLE handle, U32 index)
 {
     std::lock_guard guard(AudioMutex); auto* sample = Find(handle); return sample && index < sample->User.size() ? sample->User[index] : 0;
 }
@@ -658,8 +658,8 @@ extern "C" void AILCALL AIL_set_3D_sample_distances(H3DSAMPLE handle, F32 maximu
 {
     std::lock_guard guard(AudioMutex); if (auto* sample = Find(handle)) { sample->MaxDistance = maximum; sample->MinDistance = minimum; Update(*sample); }
 }
-extern "C" void AILCALL AIL_set_3D_object_user_data(H3DPOBJECT handle, U32 index, S32 value) { AIL_set_sample_user_data(reinterpret_cast<HSAMPLE>(handle), index, value); }
-extern "C" S32 AILCALL AIL_3D_object_user_data(H3DPOBJECT handle, U32 index) { return AIL_sample_user_data(reinterpret_cast<HSAMPLE>(handle), index); }
+extern "C" void AILCALL AIL_set_3D_object_user_data(H3DPOBJECT handle, U32 index, AILUserData value) { AIL_set_sample_user_data(reinterpret_cast<HSAMPLE>(handle), index, value); }
+extern "C" AILUserData AILCALL AIL_3D_object_user_data(H3DPOBJECT handle, U32 index) { return AIL_sample_user_data(reinterpret_cast<HSAMPLE>(handle), index); }
 extern "C" void AILCALL AIL_set_3D_position(H3DPOBJECT handle, F32 x, F32 y, F32 z)
 {
     std::lock_guard guard(AudioMutex); if (auto* sample = Find(handle)) { sample->X = x; sample->Y = y; sample->Z = z; Update(*sample); }

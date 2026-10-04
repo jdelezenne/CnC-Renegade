@@ -46,6 +46,7 @@
 #include "wwdebug.h"
 #include "mutex.h"
 #include <malloc.h>
+#include <algorithm>
 #include <stddef.h> //size_t & ptrdiff_t definition
 #include <string.h>
 
@@ -235,7 +236,7 @@ protected:
 		};
 
 		Chunk* next;
-		char mem[size];
+		alignas(__STDCPP_DEFAULT_NEW_ALIGNMENT__) char mem[size];
 	};
 	Chunk* chunks;
 	unsigned int esize;
@@ -316,7 +317,7 @@ WWINLINE FastFixedAllocator::~FastFixedAllocator()
 
 WWINLINE void FastFixedAllocator::Init(unsigned int n)
 {
-   esize = (n<sizeof(Link*) ? sizeof(Link*) : n);
+   esize = (std::max(n, static_cast<unsigned>(sizeof(Link))) + __STDCPP_DEFAULT_NEW_ALIGNMENT__ - 1) & ~(__STDCPP_DEFAULT_NEW_ALIGNMENT__ - 1);
 }
 
 // ----------------------------------------------------------------------------
@@ -359,7 +360,8 @@ class FastAllocatorGeneral
 {
 	enum {
 		MAX_ALLOC_SIZE=2048,
-		ALLOC_STEP=16
+		ALLOC_STEP=16,
+        HEADER_SIZE=__STDCPP_DEFAULT_NEW_ALIGNMENT__
 	};
 public:
 	FastAllocatorGeneral();
@@ -430,7 +432,7 @@ WWINLINE void* FastAllocatorGeneral::Alloc(unsigned int n)
    //We actually allocate n+4 bytes. We store the # allocated 
    //in the first 4 bytes, and return the ptr to the rest back
    //to the user.
-   n += sizeof(unsigned int); 
+   n += HEADER_SIZE;
 #ifdef MEMORY_OVERWRITE_TEST
 	n+=sizeof(unsigned int);
 #endif
@@ -457,8 +459,8 @@ WWINLINE void* FastAllocatorGeneral::Alloc(unsigned int n)
 #endif
 
 	re_entrancy--;
-   *((unsigned int*)pMemory) = n;     //Write modified (augmented by 4) count into first four bytes.
-   return ((unsigned int*)pMemory)+1; //return ptr to bytes after it back to user.
+   *((unsigned int*)pMemory) = n;
+   return static_cast<char*>(pMemory)+HEADER_SIZE;
 }
 
 // ----------------------------------------------------------------------------
@@ -470,7 +472,7 @@ WWINLINE void* FastAllocatorGeneral::Alloc(unsigned int n)
 WWINLINE void FastAllocatorGeneral::Free(void* pAlloc)
 {
    if (pAlloc) {
-      unsigned int* n = ((unsigned int*)pAlloc)-1; //Subtract four bytes and the count is stored there.
+      unsigned int* n = reinterpret_cast<unsigned int*>(static_cast<char*>(pAlloc)-HEADER_SIZE);
 
 #ifdef MEMORY_OVERWRITE_TEST
 		WWASSERT(*((unsigned int*)((char*)n+*n)-1)==0xabbac0de);
@@ -501,7 +503,7 @@ WWINLINE void* FastAllocatorGeneral::Realloc(void* pAlloc, unsigned int n){
    if(n){
       void* const pNewAlloc = Alloc(n);      //Allocate the new memory. This never fails.
       if(pAlloc){
-         n = *(((unsigned int*)pAlloc)-1);   //Subtract four bytes and the count is stored there.
+         n = std::min(n, *reinterpret_cast<unsigned int*>(static_cast<char*>(pAlloc)-HEADER_SIZE)-HEADER_SIZE);
          ::memcpy(pNewAlloc, pAlloc, n);     //Copy the old memory into the new memory.
          Free(pAlloc);                       //Delete the old memory.
       }

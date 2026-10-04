@@ -378,7 +378,6 @@ void Game_Shutdown(void)
 	CampaignManager::Shutdown();
 
 	SystemSettings::Shutdown();
-	CombatManager::Shutdown();
 
 	//Analyze_Soldier_Bandwidth();
 
@@ -394,6 +393,7 @@ void Game_Shutdown(void)
 	DebugManager::Set_Display_Handler( NULL );
 
 	GameModeManager::Destroy_All();
+	CombatManager::Shutdown();
   EncyclopediaMgrClass::Shutdown();
 	RenegadeDialogMgrClass::Shutdown();
 

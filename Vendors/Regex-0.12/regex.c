@@ -1,3 +1,4 @@
+#include <stdint.h>
 /* Extended regular expression matching and search library,
    version 0.12.
    (Implements POSIX draft P10003.2/D11.2, except for
@@ -3762,7 +3763,7 @@ re_match_2 (bufp, string1, size1, string2, size2, pos, regs, stop)
                           regstart[r] = old_regstart[r];
 
                           /* xx why this test?  */
-                          if ((int) old_regend[r] >= (int) regstart[r])
+                          if ((uintptr_t) old_regend[r] >= (uintptr_t) regstart[r])
                             regend[r] = old_regend[r];
                         }     
                     }

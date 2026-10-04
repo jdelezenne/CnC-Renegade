@@ -8,33 +8,47 @@ This repository includes source code for Command & Conquer Renegade. This releas
 
 The game build requires:
 
-- DirectX SDK with the original D3D8/D3DX8 interfaces (`Code/DirectX` by default)
+- DirectX SDK headers for the original D3D8/D3DX8 interfaces (`Code/DirectX` by default)
 - SDL3, fetched by CMake from a pinned release (`Vendors/SDL3`)
 - Bundled Bink decoder (`Vendors/LibBinkDec`, LGPL-2.1-or-later)
 - OpenAL Soft 1.25.2 software mixer, fetched and built statically (`Vendors/OpenALSoft`)
 - dr_wav/dr_mp3 decoders, fetched from a pinned revision (`Vendors/DrLibs`)
 - GameSpy SDK (`Code/GameSpy` by default), when GameSpy integration is enabled
 - Bundled GNU regex (`Vendors/Regex-0.12`)
+- DirectXTex CPU texture helpers and DXC shader compiler, fetched from pinned releases
 
 
-## Compiling (Win32 Only)
+## Compiling on Windows
 
-Build with Visual Studio 2026 (Desktop development with C++, including ATL)
-and CMake 4.2 or newer. The presets select the v145 compiler and Win32 platform.
-No developer command prompt or custom toolchain file is needed.
+Use Visual Studio 2026 with Desktop development with C++ and ATL, CMake 4.2
+or newer, and LLVM 23 or newer for clang-cl builds. The configure presets are
+`windows-msvc-x64`, `windows-msvc-x86`, and `windows-clangcl`. Each provides
+Debug and Release build presets. MSVC uses the Visual Studio generator;
+clang-cl uses Ninja Multi-Config and the MSVC runtime and Windows SDK.
 
 ```bat
-cmake --preset Debug
-cmake --build --preset Debug
-cmake --preset Release
-cmake --build --preset Release
+cmake --preset windows-msvc-x64
+cmake --build --preset windows-msvc-x64-debug
+cmake --build --preset windows-msvc-x64-release
+cmake --preset windows-msvc-x86
+cmake --build --preset windows-msvc-x86-release
 ```
 
-The only presets are `Debug` and `Release`. Binaries are written to
-`Binaries/Debug` and `Binaries/Release`. Build trees live in `Build/Debug` and
-`Build/Release`; libraries stay inside their build tree. The game uses C++23 and
-the static MSVC runtime. MSVC 14.51 selects `/std:c++23preview`, its supported
-C++23 language mode.
+For clang-cl from a terminal, use an x64 Visual Studio developer shell with
+LLVM 23 and Ninja on PATH:
+
+```bat
+cmake --preset windows-clangcl
+cmake --build --preset windows-clangcl-debug
+cmake --build --preset windows-clangcl-release
+```
+
+Build trees are isolated under `Build/Windows-MSVC-x64`,
+`Build/Windows-MSVC-x86`, and `Build/Windows-Clang-x64`. Executables and the
+matching Scripts DLL go to `Binaries/<toolchain>/<config>`, for example
+`Binaries/Windows-MSVC-x64/Release`. Libraries remain in their build tree.
+The game uses C++23 and the static MSVC runtime. MSVC 14.51 selects
+`/std:c++23preview`; clang-cl uses its C++23 mode.
 
 SDK locations can be set with `-DREN_<SDK>_ROOT=<path>` at configure time:
 `DIRECTX`, `GAMESPY`, and `REGEX`. Defaults use the paths listed above.
@@ -56,17 +70,17 @@ the main window, event pump, gameplay keyboard/mouse/joystick input, game timer,
 and all audio output. Existing control bindings keep their original key IDs.
 
 Retained native implementations live under `Platform/Windows/`: the Windows
-entry point, single-instance handling, browser/IME message bridge,
-and Direct3D 8 device/renderer implementation. The game still targets Windows;
-Direct3D 8 rendering remains during this stage. SDL GPU
-is the next renderer migration, using the SDL window and platform layer.
+entry point, single-instance handling, browser/IME message bridge, and the
+engine's Direct3D 8 wrapper. The Direct3D 8 compatibility renderer lives under
+`Platform/SDL/GPU` and uses SDL GPU with D3D12 or Vulkan. D3DX texture and math
+helpers are source-built; the original D3DX8 binary library is not required.
 
 To use the compiled binaries, you must own the game. The C&C Ultimate Collection is available for purchase on [EA App](https://www.ea.com/en-gb/games/command-and-conquer/command-and-conquer-the-ultimate-collection/buy/pc) or [Steam](https://store.steampowered.com/bundle/39394/Command__Conquer_The_Ultimate_Collection/).
 
 ### Renegade
 
 Use the CMake commands above, or open this repository as a CMake project in
-Visual Studio 2026 and select Debug or Release. The game uses CMake directly;
+Visual Studio 2026 and select the MSVC architecture and Debug or Release. The game uses CMake directly;
 its obsolete DSP/DSW build files have been removed.
 
 The game still requires the original data files and other runtime DLLs from
@@ -75,11 +89,11 @@ executable. Build output includes the matching Scripts DLL. Run the executable
 with your installed game folder as its working directory.
 
 For VS Code, set `renegade.gameDirectory` in `.vscode/settings.json` to your
-installation folder (currently `D:\EA Games\Renegade`). Select `Debug` or
-`Release` in Run and Debug and press F5. The launch task builds that preset,
-then runs the executable from `Binaries` against the installed data and runtime
-DLLs. Configure the preset once using the commands above. The Microsoft C/C++
-extension is required. No game files are copied.
+installation folder (currently `D:\EA Games\Renegade`). With the Microsoft
+C/C++ and CMake Tools extensions installed, select a configure preset and its
+Debug or Release build preset, then select `renegade` as the launch target.
+F5 builds and launches the selected target using the installed game folder as
+its working directory. No game files are copied.
 
 Settings are stored in `Settings.ini` under SDL's per-user preferences folder,
 `%APPDATA%\Electronic Arts\Renegade` on Windows. The game starts with defaults;
@@ -101,11 +115,6 @@ It’s possible to build the Windows version of the FDS (Free Dedicated Server) 
 
 `Code/Tools/WWConfig` retains the graphics/audio configuration utility sources.
 It is not part of the current CMake build.
-
-## Known Issues
-
-The “Debug” configuration of the “Commando” project (the Renegade main project) will sometimes fail to link the final executable. This is due to Windows Defender incorrectly detecting RenegadeD.exe containing a virus (possibly due to the embedded browser code). Excluding the output `/Binaries/Debug/` folder found in the root of this repository in Windows Defender should resolve this for you.
-
 
 ## Contributing
 

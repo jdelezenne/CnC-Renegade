@@ -2317,7 +2317,7 @@ public:
 	virtual	const char * Get_Help( void )	{ return "BREAK - break execution. Do not use this just for fun."; }
 	virtual	void Activate( const char * input ) {
 		Print("Breaking execution on demand.\n");
-		_asm int 0x03;
+		__debugbreak();
 	}
 };
 
@@ -4012,7 +4012,7 @@ public:
 																					(int)(addr->sin_addr.S_un.S_un_b.s_b2),
 																					(int)(addr->sin_addr.S_un.S_un_b.s_b3),
 																					(int)(addr->sin_addr.S_un.S_un_b.s_b4),
-																					unsigned int(ntohs(addr->sin_port)));
+																					static_cast<unsigned int>(ntohs(addr->sin_port)));
 							int addr_string_len = strlen(addr_string);
 							char local_addr_string[128];
 							strcpy(local_addr_string, addr_string);

@@ -232,17 +232,17 @@ void MPWolGameListMenuClass::On_Init_Dialog(void)
 	WOLLogonMgr::GetServerName(serverName);
 
 	WideStringClass string(128, true);
-	string.Format(TRANSLATE (IDS_MENU_CONNECTED_TO_FORMAT), serverName);
+	string.Format(TRANSLATE (IDS_MENU_CONNECTED_TO_FORMAT), serverName.Peek_Buffer());
 	Set_Dlg_Item_Text(IDC_SERVERNAME, string);
 
 	WideStringClass loginName(64, true);
 	WOLLogonMgr::GetLoginName(loginName);
 
-	string.Format(TRANSLATE (IDS_MENU_LOGIN_NAME_FORMAT), loginName);
+	string.Format(TRANSLATE (IDS_MENU_LOGIN_NAME_FORMAT), loginName.Peek_Buffer());
 	Set_Dlg_Item_Text(IDC_LOGINNAME, string);
 
 	WideStringClass conn(BandwidthCheckerClass::Get_Bandwidth_As_String(), true);
-	string.Format(TRANSLATE (IDS_MENU_SPEED_FORMAT), conn);
+	string.Format(TRANSLATE (IDS_MENU_SPEED_FORMAT), conn.Peek_Buffer());
 	Set_Dlg_Item_Text(IDC_CONNECTIONSPEED, string);
 
 	//---------------------------------------------------------------------------
@@ -622,7 +622,7 @@ void MPWolGameListMenuClass::UpdateChannels(ListCtrlClass* list, const ChannelLi
 						{
 						ChannelData* rawChannel = channel.ReferencedObject();
 						rawChannel->AddReference();
-						list->Set_Entry_Data(itemIndex, COL_HOST_NAME, (unsigned long)rawChannel);
+						list->Set_Entry_Data(itemIndex, COL_HOST_NAME, (uintptr_t)rawChannel);
 
 						// Show the game channel name
 						list->Set_Entry_Text(itemIndex, COL_HOST_NAME, channel->GetName());

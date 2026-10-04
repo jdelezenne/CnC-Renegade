@@ -7,31 +7,77 @@
   },
   "configurePresets": [
     {
-      "name": "Debug",
-      "displayName": "Debug",
+      "name": "windows-msvc-x64",
+      "displayName": "Windows (MSVC x64)",
       "generator": "Visual Studio 18 2026",
-      "architecture": "Win32",
-      "toolset": "v145",
-      "binaryDir": "${sourceDir}/Build/Debug"
+      "architecture": "x64",
+      "binaryDir": "${sourceDir}/Build/Windows-MSVC-x64",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      }
     },
     {
-      "name": "Release",
-      "displayName": "Release",
-      "generator": "Visual Studio 18 2026",
+      "name": "windows-msvc-x86",
+      "displayName": "Windows (MSVC x86)",
+      "inherits": "windows-msvc-x64",
       "architecture": "Win32",
-      "toolset": "v145",
-      "binaryDir": "${sourceDir}/Build/Release"
+      "binaryDir": "${sourceDir}/Build/Windows-MSVC-x86"
+    },
+    {
+      "name": "windows-clangcl",
+      "displayName": "Windows (Clang x64)",
+      "generator": "Ninja Multi-Config",
+      "architecture": {
+        "value": "x64",
+        "strategy": "external"
+      },
+      "toolset": {
+        "value": "host=x64",
+        "strategy": "external"
+      },
+      "binaryDir": "${sourceDir}/Build/Windows-Clang-x64",
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "clang-cl",
+        "CMAKE_CXX_COMPILER": "clang-cl"
+      },
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      }
     }
   ],
   "buildPresets": [
     {
-      "name": "Debug",
-      "configurePreset": "Debug",
+      "name": "windows-msvc-x64-debug",
+      "configurePreset": "windows-msvc-x64",
       "configuration": "Debug"
     },
     {
-      "name": "Release",
-      "configurePreset": "Release",
+      "name": "windows-msvc-x64-release",
+      "configurePreset": "windows-msvc-x64",
+      "configuration": "Release"
+    },
+    {
+      "name": "windows-msvc-x86-debug",
+      "configurePreset": "windows-msvc-x86",
+      "configuration": "Debug"
+    },
+    {
+      "name": "windows-msvc-x86-release",
+      "configurePreset": "windows-msvc-x86",
+      "configuration": "Release"
+    },
+    {
+      "name": "windows-clangcl-debug",
+      "configurePreset": "windows-clangcl",
+      "configuration": "Debug"
+    },
+    {
+      "name": "windows-clangcl-release",
+      "configurePreset": "windows-clangcl",
       "configuration": "Release"
     }
   ]

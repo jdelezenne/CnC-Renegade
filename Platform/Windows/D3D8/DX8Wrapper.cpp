@@ -43,6 +43,7 @@
 
 #include "dx8wrapper.h"
 #include "Platform/Platform.h"
+#include "Platform/SDL/GPU/D3D8.h"
 #include "dx8fvf.h"
 #include "dx8vertexbuffer.h"
 #include "dx8indexbuffer.h"
@@ -163,11 +164,6 @@ static DynamicVectorClass<StringClass>					_RenderDeviceShortNameTable;
 static DynamicVectorClass<RenderDeviceDescClass>	_RenderDeviceDescriptionTable;
 
 
-typedef IDirect3D8* (WINAPI *Direct3DCreate8Type) (UINT SDKVersion);
-Direct3DCreate8Type	Direct3DCreate8Ptr = NULL;
-HINSTANCE D3D8Lib = NULL;
-
-
 /***********************************************************************************
 **
 ** DX8Wrapper Implementation
@@ -246,30 +242,10 @@ bool DX8Wrapper::Init(void * hwnd, bool lite)
 	Invalidate_Cached_Render_States();
 
 	if (!lite) {
-		D3D8Lib = LoadLibrary("D3D8.DLL");
-
-		if (D3D8Lib == NULL) return false;
-
-		Direct3DCreate8Ptr = (Direct3DCreate8Type) GetProcAddress(D3D8Lib, "Direct3DCreate8");
-		if (Direct3DCreate8Ptr) {
-
-			/*
-			** Create the D3D interface object
-			*/
-			WWDEBUG_SAY(("Create Direct3D8\n"));
-			D3DInterface = Direct3DCreate8Ptr(D3D_SDK_VERSION);		// TODO: handle failure cases...
-			if (D3DInterface == NULL) {
-				return(false);
-			}
-			IsInitted = true;
-
-			/*
-			** Enumerate the available devices
-			*/
-			WWDEBUG_SAY(("Enumerate devices\n"));
-			Enumerate_Devices();
-			WWDEBUG_SAY(("DX8Wrapper Init completed\n"));
-		}
+		D3DInterface = Platform::CreateD3D8Renderer();
+		if (D3DInterface == NULL) return false;
+		IsInitted = true;
+		Enumerate_Devices();
 	}
 	return(true);
 }
@@ -316,11 +292,6 @@ void DX8Wrapper::Shutdown(void)
 	_RenderDeviceNameTable.Delete_All();
 	_RenderDeviceShortNameTable.Delete_All();
 	_RenderDeviceDescriptionTable.Delete_All();
-
-	if (D3D8Lib) {
-		FreeLibrary(D3D8Lib);
-		D3D8Lib = NULL;
-	}
 
 	IsInitted = false;
 }
@@ -714,7 +685,7 @@ bool DX8Wrapper::Set_Render_Device(int dev, int width, int height, int bits, int
 	if (windowed != -1)	IsWindowed = (windowed != 0);
 
 	WWDEBUG_SAY(("Attempting Set_Render_Device: name: %s, width: %d, height: %d, windowed: %d\r\n",
-		_RenderDeviceNameTable[CurRenderDevice],ResolutionWidth,ResolutionHeight,(IsWindowed ? 1 : 0)));
+		_RenderDeviceNameTable[CurRenderDevice].Peek_Buffer(),ResolutionWidth,ResolutionHeight,(IsWindowed ? 1 : 0)));
 
 	WWASSERT(D3DDevice == NULL);
 
@@ -2095,7 +2066,7 @@ IDirect3DTexture8 * DX8Wrapper::_Create_DX8_Texture(
 		else {
 			StringClass format_name(0,true);
 			Get_WW3D_Format_Name(format, format_name);
-			WWDEBUG_SAY(("...Texture creation failed. (%d x %d, format: %s, mips: %d\n",width,height,format_name,mip_level_count));
+			WWDEBUG_SAY(("...Texture creation failed. (%d x %d, format: %s, mips: %d\n",width,height,format_name.Peek_Buffer(),mip_level_count));
 		}
 
 	}

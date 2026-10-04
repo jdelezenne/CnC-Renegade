@@ -483,7 +483,7 @@ class DataSafeEntryTypeClass
 		/*
 		** A unique number used to match and assign type IDs. This can come from anywhere as long as it's different for every type.
 		*/
-		unsigned long TypeCode;
+		uintptr_t TypeCode;
 
 		/*
 		** This is the user friendly ID that is stored along with entries in the data safe and returned in the handle that's
@@ -793,8 +793,8 @@ class DataSafeClass : public GenericDataSafeClass
 		/*
 		** Type identification.
 		*/
-		static int Get_Type_ID(unsigned long type_code, int size);
-		static unsigned long Get_Type_Code(void);
+		static int Get_Type_ID(uintptr_t type_code, int size);
+		static uintptr_t Get_Type_Code(void);
 
 		/*
 		** Type of this DataSafe.
@@ -829,10 +829,10 @@ class DataSafeClass : public GenericDataSafeClass
 */
 #define DECLARE_DATA_SAFE(type) 																\
 	DataSafeClass<type> DataSafe##type;														\
-	int DataSafeClass<type>::Type;															\
-	char DataSafeClass<type>::ReturnList[MAX_OBJECT_COPIES][sizeof(type)];		\
-	int DataSafeClass<type>::ReturnIndex;													\
-	int DataSafeClass<type>::MinSlop;
+	template<> int DataSafeClass<type>::Type{};															\
+	template<> char DataSafeClass<type>::ReturnList[MAX_OBJECT_COPIES][sizeof(type)]{};		\
+	template<> int DataSafeClass<type>::ReturnIndex{};													\
+	template<> int DataSafeClass<type>::MinSlop{};
 
 
 
@@ -1267,7 +1267,7 @@ DataSafeClass<T>::DataSafeClass(T*, int slopcount)
 	** same safe list.
 	*/
 	int data_size = sizeof(T);
-	int type_code = Get_Type_Code();
+	uintptr_t type_code = Get_Type_Code();
 
 	/*
 	** Get_Type_ID will return the Type ID for this type code (instruction pointer). It will create a new type if this one
@@ -1369,7 +1369,7 @@ DataSafeClass<T>::~DataSafeClass(void)
  *   7/2/2001 11:17AM ST : Created                                                             *
  *=============================================================================================*/
 template <class T>
-unsigned long DataSafeClass<T>::Get_Type_Code(void)
+uintptr_t DataSafeClass<T>::Get_Type_Code(void)
 {
 	/*
 	** Make sure this function gets expanded multiple times for different types by referencing the type.
@@ -1382,17 +1382,8 @@ unsigned long DataSafeClass<T>::Get_Type_Code(void)
 	** code will get expanded once for each type it's used with. I will use the location in memory of the function to
 	** uniquely identify each type. What a cunning plan.
 	*/
-	static unsigned long instruction_pointer;
-	instruction_pointer = 0;
-	__asm {
-here:
-		lea	eax,here
-		mov	[instruction_pointer],eax
-	};
-
-	ds_assert(instruction_pointer != 0);
-
-	return(instruction_pointer);
+	static unsigned char type_marker;
+    return reinterpret_cast<uintptr_t>(&type_marker);
 }
 
 
@@ -1415,7 +1406,7 @@ here:
  *   6/27/2001 12:44PM ST : Created                                                            *
  *=============================================================================================*/
 template <class T>
-int DataSafeClass<T>::Get_Type_ID(unsigned long type_code, int size)
+int DataSafeClass<T>::Get_Type_ID(uintptr_t type_code, int size)
 {
 	int id = 0;
 

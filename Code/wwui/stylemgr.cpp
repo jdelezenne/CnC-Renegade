@@ -859,7 +859,7 @@ StyleMgrClass::Render_Wrapped_Text_Ex
 			if (src_end == NULL) {						\
 				dest = src_start;							\
 			} else {											\
-				uint32 bytes	= ((uint32)src_end - (uint32)src_start);	\
+				uint32 bytes	= static_cast<uint32>((src_end - src_start) * sizeof(WCHAR));	\
 				uint32 len		= bytes / sizeof (WCHAR);						\
 				::memcpy (dest.Get_Buffer (len + 1), src_start, bytes);	\
 				dest.Peek_Buffer ()[len] = 0;										\

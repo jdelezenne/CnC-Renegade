@@ -274,9 +274,9 @@ void cTeam::Get_Team_String(int rank, WideStringClass & string) const
 	//GAMESPY
 	//substring.Format(L"%-11s", Name);
 	if (cGameSpyAdmin::Is_Gamespy_Game()) {
-		substring.Format(L"%-36s", Name);
+		substring.Format(L"%-36s", Name.Peek_Buffer());
 	} else {
-		substring.Format(L"%-11s", Name);
+		substring.Format(L"%-11s", Name.Peek_Buffer());
 	}
    string += substring;
 

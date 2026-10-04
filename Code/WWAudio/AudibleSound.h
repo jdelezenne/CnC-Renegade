@@ -75,7 +75,6 @@ class SoundHandleClass;
 //
 //	Typedefs
 //
-typedef unsigned long MILES_HANDLE;
 
 typedef enum
 {

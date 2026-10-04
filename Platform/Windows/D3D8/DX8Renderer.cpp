@@ -1369,7 +1369,7 @@ void DX8SkinFVFCategoryContainer::Render(void)
 	}
 	WWASSERT(vertex_offset==VisibleVertexCount);
 
-	SNAPSHOT_SAY(("Set vb: %x ib: %x\n",vb,index_buffer));
+	SNAPSHOT_SAY(("Set vb: %p ib: %p\n", static_cast<const void*>(&vb), static_cast<const void*>(index_buffer)));
 
 	DX8Wrapper::Set_Vertex_Buffer(vb);
 	DX8Wrapper::Set_Index_Buffer(index_buffer,0);
@@ -1533,7 +1533,7 @@ unsigned DX8TextureCategoryClass::Add_Mesh(
 					for (unsigned i=0;i<index_count;++i) {
 						unsigned short idx;
 
-						idx=unsigned short(strip[i+1]);
+						idx=static_cast<unsigned short>(strip[i+1]);
 						vmin=MIN(vmin,idx);
 						vmax=MAX(vmax,idx);
 						*dst_indices++=idx;
@@ -1579,19 +1579,19 @@ unsigned DX8TextureCategoryClass::Add_Mesh(
 				if (all_textures_same && Equal_Material(mat,material) && shd==shader) {
 					unsigned short idx;
 
-					idx=unsigned short(src_indices[i][0]+vertex_offset);
+					idx=static_cast<unsigned short>(src_indices[i][0]+vertex_offset);
 					vmin=MIN(vmin,idx);
 					vmax=MAX(vmax,idx);
 					*dst_indices++=idx;
 //					WWDEBUG_SAY(("%d, ",idx));
 
-					idx=unsigned short(src_indices[i][1]+vertex_offset);
+					idx=static_cast<unsigned short>(src_indices[i][1]+vertex_offset);
 					vmin=MIN(vmin,idx);
 					vmax=MAX(vmax,idx);
 					*dst_indices++=idx;
 //					WWDEBUG_SAY(("%d, ",idx));
 
-					idx=unsigned short(src_indices[i][2]+vertex_offset);
+					idx=static_cast<unsigned short>(src_indices[i][2]+vertex_offset);
 					vmin=MIN(vmin,idx);
 					vmax=MAX(vmax,idx);
 					*dst_indices++=idx;
@@ -1632,7 +1632,7 @@ void DX8TextureCategoryClass::Render(void)
 	SNAPSHOT_SAY(("Set_Material(%s)\n",Peek_Material() ? Peek_Material()->Get_Name() : "NULL"));
 	DX8Wrapper::Set_Material(Peek_Material());
 
-	SNAPSHOT_SAY(("Set_Shader(0x%x)\n",Get_Shader()));
+	SNAPSHOT_SAY(("Set_Shader(0x%x)\n",Get_Shader().Get_Bits()));
 	DX8Wrapper::Set_Shader(Get_Shader());
 	
 	PolyRenderTaskClass * prt = render_task_head;

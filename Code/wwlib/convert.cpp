@@ -178,7 +178,7 @@ ConvertClass::~ConvertClass(void)
 	delete Translucent3Blitter;
 	Translucent3Blitter = NULL;
 
-	delete [] Translator;
+	delete [] static_cast<unsigned char*>(Translator);
 	Translator = NULL;
 
 	delete [] ShadowTable;

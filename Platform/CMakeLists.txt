@@ -6,6 +6,7 @@ add_library(ren_platform STATIC
 target_include_directories(ren_platform PUBLIC "${PROJECT_SOURCE_DIR}")
 target_compile_features(ren_platform PUBLIC cxx_std_23)
 target_link_libraries(ren_platform PUBLIC SDL3::SDL3-static)
+add_subdirectory(SDL/GPU)
 
 add_library(ren_audio STATIC SDL/Miles.cpp)
 add_library(Vendor::Miles ALIAS ren_audio)

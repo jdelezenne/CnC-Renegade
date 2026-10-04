@@ -678,7 +678,7 @@ StringClass::Get_Length (void) const
 		// we better manually get the string length.
 		//
 		if (length == 0) {
-			length = _tcslen (m_Buffer);
+			length = static_cast<int>(_tcslen(m_Buffer));
 			((StringClass *)this)->Store_Length (length);
 		}
 	}

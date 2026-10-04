@@ -39,7 +39,13 @@ void Platform::MinimizeWindow() { if (Window) SDL_MinimizeWindow(Window); }
 void Platform::ConfigureRendererWindow(int width, int height, bool windowed)
 {
     if (!Window) return;
-    // Direct3D 8 still owns the exclusive display mode. SDL owns the window.
+    if (!windowed) {
+        SDL_DisplayMode mode;
+        if (SDL_GetClosestFullscreenDisplayMode(SDL_GetDisplayForWindow(Window), width, height, 0, true, &mode)) {
+            if (!SDL_SetWindowFullscreenMode(Window, &mode)) SDL_LogError(SDL_LOG_CATEGORY_VIDEO, "%s", SDL_GetError());
+        }
+    }
+    if (!SDL_SetWindowFullscreen(Window, !windowed)) SDL_LogError(SDL_LOG_CATEGORY_VIDEO, "%s", SDL_GetError());
     SDL_SetWindowBordered(Window, windowed);
     SDL_SetWindowAlwaysOnTop(Window, !windowed);
     SDL_SetWindowSize(Window, width, height);

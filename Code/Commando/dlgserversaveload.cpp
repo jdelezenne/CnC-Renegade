@@ -403,7 +403,7 @@ ServerSaveLoadMenuClass::Insert_Configuration (ServerSettingsClass *config)
 		//	Make a copy of the config object and store it with the entry
 		//
 		ServerSettingsClass *local_copy = new ServerSettingsClass(config);
-		list_ctrl->Set_Entry_Data (item_index, 0, (DWORD)local_copy);
+		list_ctrl->Set_Entry_Data (item_index, 0, (uintptr_t)local_copy);
 
 		//
 		//	Change the color of this configuration if the user cannot edit it
@@ -791,7 +791,7 @@ void ServerSettingsManagerClass::Load_Settings(ServerSettingsClass *settings)
 
 	if (settings && The_Game()) {
 		char filename[MAX_PATH];
-		sprintf(filename, "data\\%s", settings->RawFileName);
+		sprintf(filename, "data\\%s", settings->RawFileName.Peek_Buffer());
 		RawFileClass file(filename);
 		if (file.Is_Available()) {
 			The_Game()->Set_Ini_Filename(settings->RawFileName);
@@ -820,7 +820,7 @@ void ServerSettingsManagerClass::Delete_Configuration(ServerSettingsClass *setti
 {
 	if (!settings->Is_Default()) {
 		char filename[MAX_PATH];
-		sprintf(filename, "data\\%s", settings->RawFileName);
+		sprintf(filename, "data\\%s", settings->RawFileName.Peek_Buffer());
 		Platform::RemoveFile(filename);
 		for (int i=0 ; i<ServerSettingsList.Count() ; i++) {
 			if (strcmp(settings->RawFileName, ServerSettingsList[i]->RawFileName) == 0) {
@@ -855,7 +855,7 @@ void ServerSettingsManagerClass::Save_Configuration(ServerSettingsClass *setting
 
 	if (settings && The_Game()) {
 		char filename[MAX_PATH];
-		sprintf(filename, "data\\%s", settings->RawFileName);
+		sprintf(filename, "data\\%s", settings->RawFileName.Peek_Buffer());
 		RawFileClass file(filename);
 		if (!file.Is_Available()) {
 			file.Create();

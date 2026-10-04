@@ -1,3 +1,8 @@
 {
-  "renegade.gameDirectory": "D:\\EA Games\\Renegade"
+  "renegade.gameDirectory": "D:\\EA Games\\Renegade",
+  "cmake.buildBeforeRun": true,
+  "cmake.useCMakePresets": "always",
+  "cmake.configureEnvironment": {
+    "PATH": "D:/sdk/LLVM23/bin;${env:PATH}"
+  }
 }

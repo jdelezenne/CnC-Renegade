@@ -387,7 +387,7 @@ PathClass::Initialize (PathSolveClass &path_solve)
 	//
 	//	Clip the spline to the sectors and portals that the solver knows is safe
 	//
-	if (m_PathObject.Is_Flag_Set (PathObjectClass::IS_VEHICLE) == false) {
+	if (m_TotalDist != 0.0F && m_PathObject.Is_Flag_Set (PathObjectClass::IS_VEHICLE) == false) {
 		Clip_Spline_To_Pathfind_Data (node_list, path_solve);
 	}
 
@@ -827,7 +827,7 @@ PathClass::Get_Remaining_Path_Length (void)
 void
 PathClass::Display_Path (bool onoff)
 {
-	if (onoff == false) {
+	if (onoff == false || m_TotalDist == 0.0F) {
 		PathDebugPlotterClass::Get_Instance ()->Display (false);
 	} else if (m_State < FIRST_ERROR) {
 		
@@ -1368,6 +1368,23 @@ PathClass::Initialize_Spline (DynamicVectorClass<PATH_NODE> &node_list)
 			//
 			m_TotalDist += (point - last_point).Length ();
 			last_point = point;
+		}
+
+		if (m_TotalDist == 0.0F) {
+			if (m_PathObject.Is_Flag_Set (PathObjectClass::IS_VEHICLE)) {
+				m_Spline = new VehicleCurveClass (m_PathObject.Get_Turn_Radius ());
+				m_Velocity = DEF_VEHICLE_VELOCITY;
+			} else {
+				m_Spline = new HermiteSpline3DClass;
+				m_Velocity = DEF_HUMAN_VELOCITY;
+			}
+			m_Spline->Add_Key (m_StartPos, 0.0F);
+			m_Spline->Add_Key (m_StartPos, 1.0F);
+			m_State = STATE_PATH_COMPLETE;
+			m_SplineTime = m_EndTime;
+			m_LookAheadTime = 1.0F;
+			m_ExpectedPos = m_StartPos;
+			return;
 		}
 
 		//

@@ -592,10 +592,10 @@ protected:
 	//////////////////////////////////////////////////////////////////////
 	//	Miles File Callbacks
 	//////////////////////////////////////////////////////////////////////
-	static U32 AILCALLBACK	File_Open_Callback (char const *filename, U32 *file_handle);
-	static void AILCALLBACK	File_Close_Callback (U32 file_handle);
-	static S32 AILCALLBACK	File_Seek_Callback (U32 file_handle, S32 offset, U32 type);
-	static U32 AILCALLBACK	File_Read_Callback (U32 file_handle, void *buffer, U32 bytes);
+	static U32 AILCALLBACK	File_Open_Callback (char const *filename, AILFileHandle *file_handle);
+	static void AILCALLBACK	File_Close_Callback (AILFileHandle file_handle);
+	static S32 AILCALLBACK	File_Seek_Callback (AILFileHandle file_handle, S32 offset, U32 type);
+	static U32 AILCALLBACK	File_Read_Callback (AILFileHandle file_handle, void *buffer, U32 bytes);
 
 private:
 

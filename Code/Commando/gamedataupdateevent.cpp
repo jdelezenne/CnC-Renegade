@@ -57,7 +57,6 @@ cGameDataUpdateEvent::Init(int client_id)
 	WWASSERT(cNetwork::I_Am_Server());
 	//WWASSERT(client_id >= 0);
 
-	cGameDataUpdateEvent::cGameDataUpdateEvent();
 
 	WWASSERT(The_Game() != NULL);
 	TimeRemainingSeconds = (int) The_Game()->Get_Time_Remaining_Seconds();

@@ -35,6 +35,7 @@
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 #include "scriptcommands.h"
+#include <unordered_map>
 #include "debug.h"
 #include "combat.h"
 #include "smartgameobj.h"
@@ -2283,7 +2284,7 @@ void	Change_Objective_Type( int id, int type )
 
 void	Set_Objective_Radar_Blip( int id, const Vector3 & position )
 {
-	SCRIPT_TRACE((	"ST>Set_Objective_Radar_Blip( %d, %f %f %f )\n", id, position ));
+	SCRIPT_TRACE((	"ST>Set_Objective_Radar_Blip( %d, %f %f %f )\n", id, position.X, position.Y, position.Z ));
 	ObjectiveManager::Set_Objective_Radar_Blip( id, position );
 }
 
@@ -3054,6 +3055,9 @@ void	Cinematic_Sniper_Control(bool enabled, float zoom)
 /*
 **
 */
+static std::unordered_map<int, FileClass*> TextFiles;
+static int NextTextFile = 1;
+
 int	Text_File_Open( const char * filename )
 {
 	FileClass * file = _TheFileFactory->Get_File( filename );
@@ -3064,12 +3068,17 @@ int	Text_File_Open( const char * filename )
 			file = NULL;
 		}
 	}
-	return (int)( file );
+	if (!file) return 0;
+    int handle = NextTextFile++;
+    TextFiles.emplace(handle, file);
+    return handle;
 }
 
 bool	Text_File_Get_String( int handle, char * buffer, int size )
 {
-	FileClass * file = (FileClass *)handle;
+	auto entry = TextFiles.find(handle);
+    FileClass* file = entry == TextFiles.end() ? nullptr : entry->second;
+    if (!file || !buffer || size <= 0) return false;
 	char ch[4];
 	char *b = buffer;
 	while ( file->Read( &ch[0], 1 ) == 1 ) {
@@ -3087,9 +3096,11 @@ bool	Text_File_Get_String( int handle, char * buffer, int size )
 
 void	Text_File_Close( int handle )
 {
-	FileClass * file = (FileClass *)handle;
+	auto entry = TextFiles.find(handle);
+    FileClass* file = entry == TextFiles.end() ? nullptr : entry->second;
 	if ( file != NULL ) {
-		file->Close();
+		TextFiles.erase(entry);
+        file->Close();
 		_TheFileFactory->Return_File( file );
 	}
 }

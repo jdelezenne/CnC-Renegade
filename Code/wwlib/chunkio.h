@@ -41,6 +41,9 @@
 #ifndef CHUNKIO_H
 #define CHUNKIO_H
 
+#include <cstdint>
+#include <unordered_map>
+
 #ifndef ALWAYS_H
 #include "always.h"
 #endif
@@ -148,13 +151,26 @@ public:
 	bool					End_Micro_Chunk();
 
 	// Write data into the file
-	uint32				Write(const void *buf, uint32 nbytes);
+	uint32                Write(const void *buf, uint32 nbytes);
+    uint32 Get_Pointer_ID(const void* pointer)
+    {
+        if (!pointer) return 0;
+        auto [entry, inserted] = PointerIDs.try_emplace(pointer, static_cast<uint32>(PointerIDs.size()+1));
+        return entry->second;
+    }
+    template<class T> uint32 Write(T* const* buffer, uint32 bytes)
+    {
+        if (bytes != sizeof(T*)) return Write(static_cast<const void*>(buffer), bytes);
+        uint32 id = Get_Pointer_ID(*buffer);
+        return Write(static_cast<const void*>(&id), sizeof(id));
+    }
 	uint32				Write(const IOVector2Struct & v);
 	uint32				Write(const IOVector3Struct & v);
 	uint32				Write(const IOVector4Struct & v);
 	uint32				Write(const IOQuaternionStruct & q);
 
 private:
+    std::unordered_map<const void*, uint32> PointerIDs;
 
 	enum { MAX_STACK_DEPTH = 256 };
 
@@ -200,7 +216,15 @@ public:
 	uint32				Cur_Micro_Chunk_Length();
 
 	// Read a block of bytes from the output stream.
-	uint32				Read(void *buf, uint32 nbytes);
+	uint32                Read(void *buf, uint32 nbytes);
+    template<class T> uint32 Read(T** buffer, uint32 bytes)
+    {
+        if (bytes != sizeof(T*) && bytes != sizeof(uint32)) return Read(static_cast<void*>(buffer), bytes);
+        uint32 id = 0;
+        uint32 read = Read(static_cast<void*>(&id), sizeof(id));
+        if (read) *buffer = reinterpret_cast<T*>(static_cast<std::uintptr_t>(id));
+        return read;
+    }
 	uint32				Read(IOVector2Struct * v);
 	uint32				Read(IOVector3Struct * v);
 	uint32				Read(IOVector4Struct * v);

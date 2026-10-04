@@ -865,7 +865,7 @@ DownloadWait::DownloadWait(const DownloadList& files) :
 
 DownloadWait::~DownloadWait()
 	{
-	WWDEBUG_SAY(("WOL: DownloadWait End '%S'\n", mEndText));
+	WWDEBUG_SAY(("WOL: DownloadWait End '%S'\n", mEndText.Peek_Buffer()));
 	}
 
 
@@ -1023,7 +1023,7 @@ void DownloadWait::EndWait(WaitResult endResult, const wchar_t* endText)
 *
 ******************************************************************************/
 
-void DownloadWait::SetCallback(DownloadWaitCallback callback, unsigned long userdata)
+void DownloadWait::SetCallback(DownloadWaitCallback callback, uintptr_t userdata)
 	{
 	mCallback = callback;
 	mUserdata = userdata;
