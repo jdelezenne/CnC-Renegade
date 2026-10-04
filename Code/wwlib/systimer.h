@@ -38,7 +38,7 @@
 #ifndef _SYSTIMER_H
 
 #include "always.h"
-#include "platform/platform.h"
+#include "Platform/Platform.h"
 
 #define TIMEGETTIME SystemTime.Get
 

@@ -50,8 +50,8 @@
 #include "chunkio.h"
 #include "wwdebug.h"
 #include "saveload.h"
+#include "persist.h"
 
-class PersistClass;
 
 /*
 ** PersistFactoryClass

@@ -64,7 +64,7 @@
 #include "weaponbag.h"
 #include "powerup.h"
 #include "input.h"
-#include "platform/legacy_keycodes.h"
+#include "Platform/KeyCodes.h"
 #include "hud.h"
 #include "gamedata.h"
 #include "specialbuilds.h"

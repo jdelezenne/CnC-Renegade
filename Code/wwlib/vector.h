@@ -487,6 +487,7 @@ template<class T>
 class DynamicVectorClass : public VectorClass<T>
 {
 	public:
+		using VectorClass<T>::Length;
 		DynamicVectorClass(unsigned size=0, T const * array=0);
 
 		// Stubbed equality operators so you can have dynamic vectors of dynamic vectors
@@ -545,6 +546,8 @@ class DynamicVectorClass : public VectorClass<T>
       T * Uninitialized_Add(void);
 
 	protected:
+		using VectorClass<T>::IsAllocated;
+		using VectorClass<T>::VectorMax;
 
 		/*
 		**	This is a count of the number of active objects in this

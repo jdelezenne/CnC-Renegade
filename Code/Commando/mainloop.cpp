@@ -1,4 +1,4 @@
-#include "platform/platform.h"
+#include "Platform/Platform.h"
 /*
 **	Command & Conquer Renegade(tm)
 **	Copyright 2025 Electronic Arts Inc.

@@ -6,20 +6,14 @@ This repository includes source code for Command & Conquer Renegade. This releas
 
 ## Dependencies
 
-If you wish to rebuild the source code and tools successfully you will need to find or write new replacements (or remove the code using them entirely) for the following libraries;
+The game build requires:
 
-- DirectX SDK (Version 8.0 or higher) (expected path `\Code\DirectX\`)
-- SDL3 - pinned source release fetched by CMake (`vendors/sdl3`)
-- Bink video decoder - bundled in `vendors/libbinkdec` (LGPL-2.1-or-later)
-- RAD Miles Sound System SDK - (expected path `\Code\Miles6\`)
-- NvDXTLib SDK - (expected path `\Code\NvDXTLib\`)
-- Lightscape SDK - (expected path `\Code\Lightscape\`)
-- GameSpy SDK - (expected path `\Code\GameSpy\`)
-- GNU Regex - (expected path `\Code\WWLib\`)
-- SafeDisk API - (expected path `\Code\Launcher\SafeDisk\`)
-- Microsoft Cab Archive Library - (expected path `\Code\Installer\Cab\`)
-- RTPatch Library - (expected path `\Code\Installer\`)
-- Java Runtime Headers - (expected path `\Code\Tools\RenegadeGR\`)
+- DirectX SDK with the original D3D8/D3DX8 interfaces (`Code/DirectX` by default)
+- SDL3, fetched by CMake from a pinned release (`Vendors/SDL3`)
+- Bundled Bink decoder (`Vendors/LibBinkDec`, LGPL-2.1-or-later)
+- RAD Miles Sound System SDK (`Code/Miles6` by default)
+- GameSpy SDK (`Code/GameSpy` by default), when GameSpy integration is enabled
+- Bundled GNU regex (`Vendors/Regex-0.12`)
 
 
 ## Compiling (Win32 Only)
@@ -29,20 +23,20 @@ and CMake 4.2 or newer. The presets select the v145 compiler and Win32 platform.
 No developer command prompt or custom toolchain file is needed.
 
 ```bat
-cmake --preset debug
-cmake --build --preset debug
-cmake --preset release
-cmake --build --preset release
+cmake --preset Debug
+cmake --build --preset Debug
+cmake --preset Release
+cmake --build --preset Release
 ```
 
-The only presets are `debug` and `release`. Binaries are written to
-`out/build/debug/bin/Debug` and `out/build/release/bin/Release`; libraries use
-the corresponding `lib/<configuration>` directory. The game uses C++17 and
-the static MSVC runtime.
+The only presets are `Debug` and `Release`. Binaries are written to
+`Binaries/Debug` and `Binaries/Release`. Build trees live in `Build/Debug` and
+`Build/Release`; libraries stay inside their build tree. The game uses C++23 and
+the static MSVC runtime. MSVC 14.51 selects `/std:c++23preview`, its supported
+C++23 language mode.
 
 SDK locations can be set with `-DREN_<SDK>_ROOT=<path>` at configure time:
-`DIRECTX`, `MILES`, `GAMESPY`, and `REGEX`. Defaults use the
-original paths listed above, except GNU regex uses `vendors/regex-0.12`.
+`DIRECTX`, `MILES`, `GAMESPY`, and `REGEX`. Defaults use the paths listed above.
 GNU regex may use either `gnu_regex.c`/`gnu_regex.h` or `regex.c`/`regex.h`.
 
 GameSpy services can be disabled with `-DREN_ENABLE_GAMESPY=OFF`.
@@ -58,7 +52,7 @@ and built statically. The first configure requires network access. SDL owns
 the main window, event pump, gameplay keyboard/mouse/joystick input, game timer,
 and movie audio. Existing control bindings keep their original key IDs.
 
-Retained native implementations live under `platform/windows/`: the Windows
+Retained native implementations live under `Platform/Windows/`: the Windows
 entry point, registry, single-instance handling, browser/IME message bridge,
 and Direct3D 8 device/renderer implementation. The game still targets Windows;
 Direct3D 8 rendering and Miles game audio remain during this stage. SDL GPU
@@ -69,26 +63,28 @@ To use the compiled binaries, you must own the game. The C&C Ultimate Collection
 ### Renegade
 
 Use the CMake commands above, or open this repository as a CMake project in
-Visual Studio 2026 and select Debug or Release. The original DSP/DSW files are
-retained as historical source references; the CMake build uses the current
-compiler directly.
+Visual Studio 2026 and select Debug or Release. The game uses CMake directly;
+its obsolete DSP/DSW build files have been removed.
 
 The game still requires the original data files, Miles runtime and drivers,
-and other runtime DLLs from an owned installation. Build output includes the
-matching Scripts and BandTest DLLs. Use these together with the executable in
-a separate game directory containing those assets.
+and other runtime DLLs from an owned installation. BandTest is linked into the
+executable. Build output includes the matching Scripts DLL; use it with the executable in a separate game directory containing
+those assets.
 
 ### Free Dedicated Server
-It’s possible to build the Windows version of the FDS (Free Dedicated Server) for Command & Conquer Renegade from the source code in this repository, just uncomment `#define FREEDEDICATEDSERVER` in [Combat\specialbuilds.h](Combat\specialbuilds.h) and perform a “Rebuild All” action on the Release config.
+It’s possible to build the Windows version of the FDS (Free Dedicated Server) for Command & Conquer Renegade from the source code in this repository, just uncomment `#define FREEDEDICATEDSERVER` in [Code/Combat/specialbuilds.h](Code/Combat/specialbuilds.h) and perform a “Rebuild All” action on the Release config.
 
 
-### Level Edit (Public Release)
-To build the public release build of Level Edit, modify the LevelEdit project settings and add `PUBLIC_EDITOR_VER` to the preprocessor defines.
+### Graphics configuration utility
 
+`Code/Tools/WWConfig` retains the graphics/audio configuration utility sources.
+It is not part of the current CMake build. The game can launch the installed
+`WWConfig.exe` for graphics troubleshooting and driver warnings, so keep that
+executable with the original game assets.
 
 ## Known Issues
 
-The “Debug” configuration of the “Commando” project (the Renegade main project) will sometimes fail to link the final executable. This is due to Windows Defender incorrectly detecting RenegadeD.exe containing a virus (possibly due to the embedded browser code). Excluding the output `/Run/` folder found in the root of this repository in Windows Defender should resolve this for you.
+The “Debug” configuration of the “Commando” project (the Renegade main project) will sometimes fail to link the final executable. This is due to Windows Defender incorrectly detecting RenegadeD.exe containing a virus (possibly due to the embedded browser code). Excluding the output `/Binaries/Debug/` folder found in the root of this repository in Windows Defender should resolve this for you.
 
 
 ## Contributing

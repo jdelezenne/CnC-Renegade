@@ -24,7 +24,7 @@
 #include "texture.h"
 #include "subtitlemanager.h"
 #include "wwaudio.h"
-#include "platform/platform.h"
+#include "Platform/Platform.h"
 #include <SDL3/SDL.h>
 #include <algorithm>
 #include <vector>

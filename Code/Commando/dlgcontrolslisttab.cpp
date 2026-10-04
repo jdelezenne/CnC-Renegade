@@ -44,7 +44,7 @@
 
 
 #define DIRECTINPUT_VERSION 0x0800
-#include "platform/legacy_keycodes.h"
+#include "Platform/KeyCodes.h"
 #include "directinput.h"
 
 

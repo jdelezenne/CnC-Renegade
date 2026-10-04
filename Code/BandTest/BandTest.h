@@ -39,19 +39,7 @@
  * Functions:                                                                                  *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-/*
-** The following ifdef block is the standard way of creating macros which make exporting
-** from a DLL simpler. All files within this DLL are compiled with the BANDTEST_EXPORTS
-** symbol defined on the command line. this symbol should not be defined on any project
-** that uses this DLL. This way any other project whose source files include this file see
-** BANDTEST_API functions as being imported from a DLL, wheras this DLL sees symbols
-** defined with this macro as being exported.
-*/
-#ifdef BANDTEST_EXPORTS
-#define BANDTEST_API __declspec(dllexport)
-#else
-#define BANDTEST_API __declspec(dllimport)
-#endif
+
 
 /*
 ** Extended failure codes.
@@ -109,4 +97,4 @@ typedef struct tBandtestSettingsStruct {
 
 #define BANDTEST_API_VERSION 0x101
 
-BANDTEST_API unsigned long Detect_Bandwidth(unsigned long server_ip, unsigned long my_ip, int retries, int &failure_code, unsigned long &downstream, unsigned long api_version, BandtestSettingsStruct *settings = NULL, char *regpath = NULL);
+unsigned long Detect_Bandwidth(unsigned long server_ip, unsigned long my_ip, int retries, int &failure_code, unsigned long &downstream, unsigned long api_version, BandtestSettingsStruct *settings = NULL, char *regpath = NULL);

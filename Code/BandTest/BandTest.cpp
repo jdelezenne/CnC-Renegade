@@ -243,30 +243,6 @@ BandtestSettingsStruct DefaultSettings = {
 
 
 /***********************************************************************************************
- * DllMain -- Dll entry point. Not used for much                                               *
- *                                                                                             *
- *                                                                                             *
- *                                                                                             *
- * INPUT:    Nothing                                                                           *
- *                                                                                             *
- * OUTPUT:   Nothing                                                                           *
- *                                                                                             *
- * WARNINGS: None                                                                              *
- *                                                                                             *
- * HISTORY:                                                                                    *
- *   10/3/2001 11:20AM ST : Created                                                            *
- *=============================================================================================*/
-bool APIENTRY DllMain(HANDLE, DWORD, void *)
-{
-	return(true);
-}
-
-
-
-
-
-
-/***********************************************************************************************
  * Detect_Upstream_Bandwidth -- Try and figure out what our upstream bandwidth is              *
  *                                                                                             *
  *                                                                                             *
@@ -284,7 +260,7 @@ bool APIENTRY DllMain(HANDLE, DWORD, void *)
  * HISTORY:                                                                                    *
  *   10/3/2001 11:21AM ST : Created                                                            *
  *=============================================================================================*/
-BANDTEST_API unsigned long Detect_Bandwidth(unsigned long server_ip, unsigned long my_ip, int retries, int &failure_code, unsigned long &downstream, unsigned long api_version, BandtestSettingsStruct *settings, char *regpath)
+unsigned long Detect_Bandwidth(unsigned long server_ip, unsigned long my_ip, int retries, int &failure_code, unsigned long &downstream, unsigned long api_version, BandtestSettingsStruct *settings, char *regpath)
 {
 	if (api_version != BANDTEST_API_VERSION) {
 		return(BANDTEST_WRONG_API_VERSION);

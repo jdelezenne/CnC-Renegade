@@ -48,7 +48,7 @@
 #include "string_ids.h"
 #include "rendobj.h"
 #include "input.h"
-#include "platform/legacy_keycodes.h"
+#include "Platform/KeyCodes.h"
 #include "timemgr.h"
 #include "gametype.h"
 

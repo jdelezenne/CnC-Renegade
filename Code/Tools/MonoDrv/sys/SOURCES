@@ -1,7 +1,0 @@
-TARGETNAME=monodrvr
-TARGETPATH=$(BASEDIR)\lib
-TARGETTYPE=EXPORT_DRIVER
-
-DLLDEF=monodrvr.def
-
-SOURCES=monodrvr.c

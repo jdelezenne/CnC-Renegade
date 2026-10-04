@@ -7,31 +7,31 @@
   },
   "configurePresets": [
     {
-      "name": "debug",
+      "name": "Debug",
       "displayName": "Debug",
       "generator": "Visual Studio 18 2026",
       "architecture": "Win32",
       "toolset": "v145",
-      "binaryDir": "${sourceDir}/out/build/debug"
+      "binaryDir": "${sourceDir}/Build/Debug"
     },
     {
-      "name": "release",
+      "name": "Release",
       "displayName": "Release",
       "generator": "Visual Studio 18 2026",
       "architecture": "Win32",
       "toolset": "v145",
-      "binaryDir": "${sourceDir}/out/build/release"
+      "binaryDir": "${sourceDir}/Build/Release"
     }
   ],
   "buildPresets": [
     {
-      "name": "debug",
-      "configurePreset": "debug",
+      "name": "Debug",
+      "configurePreset": "Debug",
       "configuration": "Debug"
     },
     {
-      "name": "release",
-      "configurePreset": "release",
+      "name": "Release",
+      "configurePreset": "Release",
       "configuration": "Release"
     }
   ]
