@@ -1,0 +1,17 @@
+include(FetchContent)
+set(LIBTYPE STATIC)
+set(ALSOFT_UTILS OFF)
+set(ALSOFT_EXAMPLES OFF)
+set(ALSOFT_TESTS OFF)
+set(ALSOFT_INSTALL OFF)
+set(ALSOFT_UPDATE_BUILD_VERSION OFF)
+set(ALSOFT_ENABLE_MODULES OFF)
+set(ALSOFT_BACKEND_WASAPI OFF)
+set(ALSOFT_BACKEND_DSOUND OFF)
+set(ALSOFT_BACKEND_WINMM OFF)
+set(ALSOFT_BACKEND_WAVE OFF)
+set(ALSOFT_EAX ON)
+FetchContent_Declare(OpenALSoft
+    URL https://github.com/kcat/openal-soft/archive/refs/tags/1.25.2.tar.gz
+    URL_HASH SHA256=fb27e5839aa11f0e5b9d33756965291fad5d6909ab928ea1f796f4a1a6877894)
+FetchContent_MakeAvailable(OpenALSoft)

@@ -64,7 +64,6 @@ set_property(TARGET Vendor::d3dx8 APPEND PROPERTY INTERFACE_LINK_OPTIONS
     /NODEFAULTLIB:libci /NODEFAULTLIB:libc)
 set_property(TARGET Vendor::d3dx8 APPEND PROPERTY INTERFACE_LINK_LIBRARIES
     legacy_stdio_definitions)
-ren_import_sdk(Vendor::Miles "${REN_MILES_LIBRARY}" "${REN_MILES_INCLUDE_DIR}")
 if(REN_ENABLE_GAMESPY)
     get_filename_component(gamespy_parent "${REN_GAMESPY_HEADER_DIR}" DIRECTORY)
     ren_import_sdk(Vendor::GameSpy "${REN_GAMESPY_LIBRARY_RELEASE}" "${gamespy_parent}")
