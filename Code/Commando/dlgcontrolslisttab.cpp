@@ -43,7 +43,6 @@
 #include "translatedb.h"
 
 
-#define DIRECTINPUT_VERSION 0x0800
 #include "Platform/KeyCodes.h"
 #include "directinput.h"
 
