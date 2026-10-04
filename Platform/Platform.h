@@ -21,6 +21,7 @@ void PumpEvents();
 std::uint64_t Ticks();
 void Sleep(std::uint32_t milliseconds);
 
+
 // Native renderer, browser, and audio backends use this opaque handle.
 void* NativeWindowHandle();
 }

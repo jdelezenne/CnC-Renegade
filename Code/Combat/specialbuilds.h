@@ -51,7 +51,7 @@
 
 // Uncomment the BETASERVER define to build a BETASERVER
 // this is actually the same as a FULL build, just points to 
-// different registry entries
+// different settings entries
 //
 // #define BETASERVER
 

@@ -41,7 +41,7 @@
 #include "directinput.h"
 #include "debug.h"
 #include "timemgr.h"
-#include "registry.h"
+#include "Settings.h"
 #include "ffactory.h"
 #include "win.h"
 #include "translatedb.h"
@@ -698,33 +698,33 @@ void	Input::Free_Mappings( void )
 }
 
 
-void	Input::Load_Registry( const char * key )
+void	Input::Load_Settings( const char * key )
 {
-	/*RegistryClass * registry = new RegistryClass( key );
-	WWASSERT( registry );
-	if ( registry->Is_Valid() ) {
-		MouseSensitivity	= registry->Get_Float( "MouseSensitivity",	MouseSensitivity );
-		MouseScale			= registry->Get_Float( "MouseScale",	MouseScale );
-		MouseInvert			= registry->Get_Bool( "MouseInvert",	MouseInvert );
-		Mouse2DInvert		= registry->Get_Bool( "Mouse2DInvert",	Mouse2DInvert );
+	/*SettingsClass * settings = new SettingsClass( key );
+	WWASSERT( settings );
+	if ( settings->Is_Valid() ) {
+		MouseSensitivity	= settings->Get_Float( "MouseSensitivity",	MouseSensitivity );
+		MouseScale			= settings->Get_Float( "MouseScale",	MouseScale );
+		MouseInvert			= settings->Get_Bool( "MouseInvert",	MouseInvert );
+		Mouse2DInvert		= settings->Get_Bool( "Mouse2DInvert",	Mouse2DInvert );
 	}
-	delete registry;*/
+	delete settings;*/
 
 	//Input::Set_Mouse_Sensitivity( MouseSensitivity );
 
 }
 
-void	Input::Save_Registry( const char * key )
+void	Input::Save_Settings( const char * key )
 {
-	/*RegistryClass * registry = new RegistryClass( key );
-	WWASSERT( registry );
-	if ( registry->Is_Valid() ) {
-		registry->Set_Float( "MouseSensitivity",	MouseSensitivity );
-		registry->Set_Float( "MouseScale",	MouseScale );
-		registry->Set_Bool( "MouseInvert",	MouseInvert );
-		registry->Set_Bool( "Mouse2DInvert",	Mouse2DInvert );
+	/*SettingsClass * settings = new SettingsClass( key );
+	WWASSERT( settings );
+	if ( settings->Is_Valid() ) {
+		settings->Set_Float( "MouseSensitivity",	MouseSensitivity );
+		settings->Set_Float( "MouseScale",	MouseScale );
+		settings->Set_Bool( "MouseInvert",	MouseInvert );
+		settings->Set_Bool( "Mouse2DInvert",	Mouse2DInvert );
 	}
-	delete registry;*/
+	delete settings;*/
 }
 
 
@@ -736,7 +736,7 @@ float	Input::Get_Mouse_Sensitivity( void )
 
 void	Input::Set_Mouse_Sensitivity( float mouse_sensitivity )
 {
-	// save this in the registry...
+	// save this in the settings...
 	MouseSensitivity = WWMath::Clamp( mouse_sensitivity, 0, 1 );
 
 	/*
@@ -755,7 +755,7 @@ bool	Input::Get_Mouse_Invert( void )
 
 void	Input::Set_Mouse_Invert( bool invert )
 {
-	// save this in the registry...
+	// save this in the settings...
 	MouseInvert = invert;
 }
 
@@ -766,7 +766,7 @@ bool	Input::Get_Mouse_2D_Invert( void )
 
 void	Input::Set_Mouse_2D_Invert( bool invert )
 {
-	// save this in the registry...
+	// save this in the settings...
 	Mouse2DInvert = invert;
 }
 

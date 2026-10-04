@@ -22,7 +22,7 @@
 #include "stdafx.h"
 #include "wwconfig.h"
 #include "performanceconfigdialog.h"
-#include "registry.h"
+#include "Settings.h"
 #include "ww3d.h"
 #include "pscene.h"
 #include "rendobj.h"
@@ -118,32 +118,32 @@ PERFORMANCE_SETTING _PerformanceLevels[MAX_PERFORMANCE_LEVELS][MAX_EXPERT_OPTION
 
 
 /////////////////////////////////////////////////////////////////////////////
-// Registry Values
+// Settings Values
 /////////////////////////////////////////////////////////////////////////////
 
 
 /*
 #ifdef MULTIPLAYERDEMO
-const char *KEY_NAME_SETTINGS				= "Software\\Westwood\\RenegadeMPDemo\\System Settings";
-const char *KEY_NAME_OPTIONS				= "Software\\Westwood\\RenegadeMPDemo\\Options";
+const char *KEY_NAME_SETTINGS				= "RenegadeMPDemo\\System Settings";
+const char *KEY_NAME_OPTIONS				= "RenegadeMPDemo\\Options";
 #else
-const char *KEY_NAME_SETTINGS				= "Software\\Westwood\\Renegade\\System Settings";
-const char *KEY_NAME_OPTIONS				= "Software\\Westwood\\Renegade\\Options";
+const char *KEY_NAME_SETTINGS				= "Renegade\\System Settings";
+const char *KEY_NAME_OPTIONS				= "Renegade\\Options";
 #endif // MULTIPLAYERDEMO
 */
 
 #if	defined(FREEDEDICATEDSERVER)
-const char *KEY_NAME_SETTINGS				= "Software\\Westwood\\RenegadeFDS\\System Settings";
-const char *KEY_NAME_OPTIONS				= "Software\\Westwood\\RenegadeFDS\\Options";
+const char *KEY_NAME_SETTINGS				= "RenegadeFDS\\System Settings";
+const char *KEY_NAME_OPTIONS				= "RenegadeFDS\\Options";
 #elif defined(MULTIPLAYERDEMO)
-const char *KEY_NAME_SETTINGS				= "Software\\Westwood\\RenegadeMPDemo\\System Settings";
-const char *KEY_NAME_OPTIONS				= "Software\\Westwood\\RenegadeMPDemo\\Options";
+const char *KEY_NAME_SETTINGS				= "RenegadeMPDemo\\System Settings";
+const char *KEY_NAME_OPTIONS				= "RenegadeMPDemo\\Options";
 #elif defined(BETACLIENT)
-const char *KEY_NAME_SETTINGS				= "Software\\Westwood\\RenegadeBeta\\System Settings";
-const char *KEY_NAME_OPTIONS				= "Software\\Westwood\\RenegadeBeta\\Options";
+const char *KEY_NAME_SETTINGS				= "RenegadeBeta\\System Settings";
+const char *KEY_NAME_OPTIONS				= "RenegadeBeta\\Options";
 #else
-const char *KEY_NAME_SETTINGS				= "Software\\Westwood\\Renegade\\System Settings";
-const char *KEY_NAME_OPTIONS				= "Software\\Westwood\\Renegade\\Options";
+const char *KEY_NAME_SETTINGS				= "Renegade\\System Settings";
+const char *KEY_NAME_OPTIONS				= "Renegade\\Options";
 #endif
 
 const char *VALUE_NAME_DYN_LOD			= "Dynamic_LOD_Budget";
@@ -380,26 +380,26 @@ void
 PerformanceConfigDialogClass::Load_Values (void)
 {
 	//
-	//	Attempt to open the registry key 
+	//	Attempt to open the settings key
 	//
-	RegistryClass registry (KEY_NAME_SETTINGS);
-	if (registry.Is_Valid ()) {
+	SettingsClass settings (KEY_NAME_SETTINGS);
+	if (settings.Is_Valid ()) {
 
 		//
-		//	Read the values from the registry
+		//	Read the values from the settings
 		//
-		int dynamic_lod		= registry.Get_Int (VALUE_NAME_DYN_LOD, 3000);
-		int static_lod			= registry.Get_Int (VALUE_NAME_STATIC_LOD, 3000);
+		int dynamic_lod		= settings.Get_Int (VALUE_NAME_DYN_LOD, 3000);
+		int static_lod			= settings.Get_Int (VALUE_NAME_STATIC_LOD, 3000);
 
-		int dynamic_shadows	= registry.Get_Int (VALUE_NAME_DYN_SHADOWS, 1);
-		int static_shadows	= registry.Get_Int (VALUE_NAME_STATIC_SHADOWS, 1);
+		int dynamic_shadows	= settings.Get_Int (VALUE_NAME_DYN_SHADOWS, 1);
+		int static_shadows	= settings.Get_Int (VALUE_NAME_STATIC_SHADOWS, 1);
 
-		int prelit_mode		= registry.Get_Int (VALUE_NAME_PRELIT_MODE, WW3D::PRELIT_MODE_LIGHTMAP_MULTI_TEXTURE);
-		int texture_filter	= registry.Get_Int (VALUE_NAME_TEXTURE_FILTER, TextureClass::TEXTURE_FILTER_BILINEAR);
-		int shadow_mode		= registry.Get_Int (VALUE_NAME_SHADOW_MODE, PhysicsSceneClass::SHADOW_MODE_BLOBS_PLUS);		
-		int texture_red		= registry.Get_Int (VALUE_NAME_TEXTURE_RES, 0);
-		int surface_effect	= registry.Get_Int (VALUE_NAME_SURFACE_EFFECT, 1);
-		int particle_detail	= registry.Get_Int (VALUE_NAME_PARTICLE_DETAIL, 1);
+		int prelit_mode		= settings.Get_Int (VALUE_NAME_PRELIT_MODE, WW3D::PRELIT_MODE_LIGHTMAP_MULTI_TEXTURE);
+		int texture_filter	= settings.Get_Int (VALUE_NAME_TEXTURE_FILTER, TextureClass::TEXTURE_FILTER_BILINEAR);
+		int shadow_mode		= settings.Get_Int (VALUE_NAME_SHADOW_MODE, PhysicsSceneClass::SHADOW_MODE_BLOBS_PLUS);
+		int texture_red		= settings.Get_Int (VALUE_NAME_TEXTURE_RES, 0);
+		int surface_effect	= settings.Get_Int (VALUE_NAME_SURFACE_EFFECT, 1);
+		int particle_detail	= settings.Get_Int (VALUE_NAME_PARTICLE_DETAIL, 1);
 
 		//
 		//	Set the slider's positions to reflect the loaded values
@@ -640,10 +640,10 @@ void
 PerformanceConfigDialogClass::Apply_Changes (void)
 {
 	//
-	//	Attempt to open the registry key 
+	//	Attempt to open the settings key
 	//
-	RegistryClass registry (KEY_NAME_SETTINGS);
-	if (registry.Is_Valid ()) {
+	SettingsClass settings (KEY_NAME_SETTINGS);
+	if (settings.Is_Valid ()) {
 
 		//
 		//	Get the current settings from the dialog
@@ -675,20 +675,20 @@ PerformanceConfigDialogClass::Apply_Changes (void)
 		}
 
 		//
-		//	Store the values in the registry
+		//	Store the values in the settings
 		//
-		registry.Set_Int (VALUE_NAME_DYN_LOD, lod_budget);
-		registry.Set_Int (VALUE_NAME_STATIC_LOD, lod_budget);
+		settings.Set_Int (VALUE_NAME_DYN_LOD, lod_budget);
+		settings.Set_Int (VALUE_NAME_STATIC_LOD, lod_budget);
 
-		registry.Set_Int (VALUE_NAME_DYN_SHADOWS, (shadow_mode != PhysicsSceneClass::SHADOW_MODE_NONE));
-		registry.Set_Int (VALUE_NAME_STATIC_SHADOWS, static_shadows);
+		settings.Set_Int (VALUE_NAME_DYN_SHADOWS, (shadow_mode != PhysicsSceneClass::SHADOW_MODE_NONE));
+		settings.Set_Int (VALUE_NAME_STATIC_SHADOWS, static_shadows);
 
-		registry.Set_Int (VALUE_NAME_PRELIT_MODE, prelit_mode);
-		registry.Set_Int (VALUE_NAME_TEXTURE_FILTER, texture_filter);
-		registry.Set_Int (VALUE_NAME_SHADOW_MODE, shadow_mode);
-		registry.Set_Int (VALUE_NAME_TEXTURE_RES, max (2 - texture_red, 0));
-		registry.Set_Int (VALUE_NAME_SURFACE_EFFECT, surface_effect);
-		registry.Set_Int (VALUE_NAME_PARTICLE_DETAIL, particle_detail);
+		settings.Set_Int (VALUE_NAME_PRELIT_MODE, prelit_mode);
+		settings.Set_Int (VALUE_NAME_TEXTURE_FILTER, texture_filter);
+		settings.Set_Int (VALUE_NAME_SHADOW_MODE, shadow_mode);
+		settings.Set_Int (VALUE_NAME_TEXTURE_RES, max (2 - texture_red, 0));
+		settings.Set_Int (VALUE_NAME_SURFACE_EFFECT, surface_effect);
+		settings.Set_Int (VALUE_NAME_PARTICLE_DETAIL, particle_detail);
 	}
 
 	return ;
@@ -737,29 +737,29 @@ void PerformanceConfigDialogClass::OnGraphicsAutoSetup()
 };
 
 /*
-		registry.Set_Int (VALUE_NAME_DYN_LOD, lod_budget);
-		registry.Set_Int (VALUE_NAME_STATIC_LOD, lod_budget);
+		settings.Set_Int (VALUE_NAME_DYN_LOD, lod_budget);
+		settings.Set_Int (VALUE_NAME_STATIC_LOD, lod_budget);
 
-		registry.Set_Int (VALUE_NAME_DYN_SHADOWS, (shadow_mode != PhysicsSceneClass::SHADOW_MODE_NONE));
-		registry.Set_Int (VALUE_NAME_STATIC_SHADOWS, static_shadows);
+		settings.Set_Int (VALUE_NAME_DYN_SHADOWS, (shadow_mode != PhysicsSceneClass::SHADOW_MODE_NONE));
+		settings.Set_Int (VALUE_NAME_STATIC_SHADOWS, static_shadows);
 
-		registry.Set_Int (VALUE_NAME_PRELIT_MODE, prelit_mode);
-		registry.Set_Int (VALUE_NAME_SHADOW_MODE, shadow_mode);
-		registry.Set_Int (VALUE_NAME_TEXTURE_RES, max (2 - texture_red, 0));
-		registry.Set_Int (VALUE_NAME_SURFACE_EFFECT, surface_effect);
-		registry.Set_Int (VALUE_NAME_PARTICLE_DETAIL, particle_detail);
+		settings.Set_Int (VALUE_NAME_PRELIT_MODE, prelit_mode);
+		settings.Set_Int (VALUE_NAME_SHADOW_MODE, shadow_mode);
+		settings.Set_Int (VALUE_NAME_TEXTURE_RES, max (2 - texture_red, 0));
+		settings.Set_Int (VALUE_NAME_SURFACE_EFFECT, surface_effect);
+		settings.Set_Int (VALUE_NAME_PARTICLE_DETAIL, particle_detail);
 */
 void AutoConfigSettings() 
 {
 	//
-	//	Attempt to open the registry key 
+	//	Attempt to open the settings key
 	//
-	RegistryClass registry (KEY_NAME_SETTINGS);
-	if (!registry.Is_Valid()) return;
+	SettingsClass settings (KEY_NAME_SETTINGS);
+	if (!settings.Is_Valid()) return;
 
-	// Access registry key "Render"
-	RegistryClass render_registry(RENEGADE_SUB_KEY_NAME_RENDER);
-	if ( !render_registry.Is_Valid() ) {
+	// Access settings key "Render"
+	SettingsClass render_settings(RENEGADE_SETTINGS_SECTION_RENDER);
+	if ( !render_settings.Is_Valid() ) {
 		return;
 	}
 
@@ -772,7 +772,7 @@ void AutoConfigSettings()
 	VideoConfigDialogClass* video=VideoConfigDialogClass::Get_Instance();
 	if (video) {
 		WW3D::Set_Texture_Bitdepth(16);
-		render_registry.Set_Int( VALUE_NAME_RENDER_DEVICE_TEXTURE_DEPTH, 16 );
+		render_settings.Set_Int( VALUE_NAME_RENDER_DEVICE_TEXTURE_DEPTH, 16 );
 		d3d=DX8Wrapper::_Get_D3D8();
 		d3d->AddRef();
 		d3dcaps=&video->Get_Current_Caps();
@@ -792,15 +792,15 @@ void AutoConfigSettings()
 			return;
 		}
 
-		// Select device. If there is already a device selected in the registry, use it.
+		// Select device. If there is already a device selected in the settings, use it.
 
 		int current_adapter_index=D3DADAPTER_DEFAULT;
 
 		//
-		//	Load the render device settings from the registry
+		//	Load the render device settings from the settings
 		//
 		char device_name[256] = { 0 };
-		render_registry.Get_String( VALUE_NAME_RENDER_DEVICE_NAME, device_name, sizeof(device_name));
+		render_settings.Get_String( VALUE_NAME_RENDER_DEVICE_NAME, device_name, sizeof(device_name));
 
 		int adapter_count = d3d->GetAdapterCount();
 		for (int adapter_index=0; adapter_index<adapter_count; adapter_index++) {
@@ -834,15 +834,15 @@ void AutoConfigSettings()
 			return;
 		}
 
-		// Store device name in registry
-		render_registry.Set_String( VALUE_NAME_RENDER_DEVICE_NAME, adapter_id.Description);
+		// Store device name in settings
+		render_settings.Set_String( VALUE_NAME_RENDER_DEVICE_NAME, adapter_id.Description);
 
 		// Set resolution to 800 x 600 x 16
-		render_registry.Set_Int( VALUE_NAME_RENDER_DEVICE_WIDTH, 800 );
-		render_registry.Set_Int( VALUE_NAME_RENDER_DEVICE_HEIGHT, 600 );
-		render_registry.Set_Int( VALUE_NAME_RENDER_DEVICE_DEPTH, 16 );
-		render_registry.Set_Int( VALUE_NAME_RENDER_DEVICE_WINDOWED, 0 );
-		render_registry.Set_Int( VALUE_NAME_RENDER_DEVICE_TEXTURE_DEPTH, 16 );
+		render_settings.Set_Int( VALUE_NAME_RENDER_DEVICE_WIDTH, 800 );
+		render_settings.Set_Int( VALUE_NAME_RENDER_DEVICE_HEIGHT, 600 );
+		render_settings.Set_Int( VALUE_NAME_RENDER_DEVICE_DEPTH, 16 );
+		render_settings.Set_Int( VALUE_NAME_RENDER_DEVICE_WINDOWED, 0 );
+		render_settings.Set_Int( VALUE_NAME_RENDER_DEVICE_TEXTURE_DEPTH, 16 );
 
 		d3dcaps=&tmp_caps;
 		display_format=D3DFMT_R5G6B5;
@@ -856,7 +856,7 @@ void AutoConfigSettings()
 			switch (tmp_caps.Get_Device()) {
 			default:
 				display_format=D3DFMT_X8R8G8B8;
-				render_registry.Set_Int( VALUE_NAME_RENDER_DEVICE_DEPTH, 32 );
+				render_settings.Set_Int( VALUE_NAME_RENDER_DEVICE_DEPTH, 32 );
 				break;
 			case DX8Caps::DEVICE_NVIDIA_TNT2_ALADDIN:
 			case DX8Caps::DEVICE_NVIDIA_TNT2:
@@ -890,7 +890,7 @@ void AutoConfigSettings()
 				break;
 			default:
 				display_format=D3DFMT_X8R8G8B8;
-				render_registry.Set_Int( VALUE_NAME_RENDER_DEVICE_DEPTH, 32 );
+				render_settings.Set_Int( VALUE_NAME_RENDER_DEVICE_DEPTH, 32 );
 				break;
 			}
 			break;
@@ -910,28 +910,28 @@ void AutoConfigSettings()
 
 //	If no texture compression, default to texture resolution 1
 	if (caps.Support_DXTC()) {
-		registry.Set_Int (VALUE_NAME_TEXTURE_RES, 0);
+		settings.Set_Int (VALUE_NAME_TEXTURE_RES, 0);
 	}
 	else {
-		registry.Set_Int (VALUE_NAME_TEXTURE_RES, 1);
+		settings.Set_Int (VALUE_NAME_TEXTURE_RES, 1);
 	}
 
 
 // High geometry detail on T&L cards, medium on fast processors and low on slow ones
 	if (caps.Support_TnL()) {
-		registry.Set_Int (VALUE_NAME_DYN_LOD, 10000);
-		registry.Set_Int (VALUE_NAME_STATIC_LOD, 10000);
+		settings.Set_Int (VALUE_NAME_DYN_LOD, 10000);
+		settings.Set_Int (VALUE_NAME_STATIC_LOD, 10000);
 	}
 	else {
 		// If T&L hardware present, set to medium or low. Set to medium if high end cpu.
 		// TODO: Set to medium if Athlon detected.
 		if (high_end_processor) {
-			registry.Set_Int (VALUE_NAME_DYN_LOD, 5000);
-			registry.Set_Int (VALUE_NAME_STATIC_LOD, 5000);
+			settings.Set_Int (VALUE_NAME_DYN_LOD, 5000);
+			settings.Set_Int (VALUE_NAME_STATIC_LOD, 5000);
 		}
 		else {
-			registry.Set_Int (VALUE_NAME_DYN_LOD, 0);
-			registry.Set_Int (VALUE_NAME_STATIC_LOD, 0);
+			settings.Set_Int (VALUE_NAME_DYN_LOD, 0);
+			settings.Set_Int (VALUE_NAME_STATIC_LOD, 0);
 		}
 	}
 
@@ -940,52 +940,52 @@ void AutoConfigSettings()
 // Set low shadow detail if no render to texture is available
 	if (caps.Support_Render_To_Texture_Format(D3DFormat_To_WW3DFormat(display_format))) {
 		if (caps.Support_TnL()) {
-			registry.Set_Int (VALUE_NAME_SHADOW_MODE, 3);
-			registry.Set_Int (VALUE_NAME_STATIC_SHADOWS, 1);
+			settings.Set_Int (VALUE_NAME_SHADOW_MODE, 3);
+			settings.Set_Int (VALUE_NAME_STATIC_SHADOWS, 1);
 		}
 		else {
-			registry.Set_Int (VALUE_NAME_SHADOW_MODE, 2);
-			registry.Set_Int (VALUE_NAME_STATIC_SHADOWS, 0);
+			settings.Set_Int (VALUE_NAME_SHADOW_MODE, 2);
+			settings.Set_Int (VALUE_NAME_STATIC_SHADOWS, 0);
 		}
 	}
 	else {
-		registry.Set_Int (VALUE_NAME_STATIC_SHADOWS, 0);
+		settings.Set_Int (VALUE_NAME_STATIC_SHADOWS, 0);
 
 		// Set to medium if high end cpu detected.
 		// TODO: Set to medium if Athlon detected.
 		if (high_end_processor) {
-			registry.Set_Int (VALUE_NAME_SHADOW_MODE, 1);
+			settings.Set_Int (VALUE_NAME_SHADOW_MODE, 1);
 		}
 		else {
-			registry.Set_Int (VALUE_NAME_SHADOW_MODE, 0);
+			settings.Set_Int (VALUE_NAME_SHADOW_MODE, 0);
 		}
 	}
 
 // If a low end system turn surface effects off
 	if (caps.Support_TnL()) {
-		registry.Set_Int (VALUE_NAME_SURFACE_EFFECT, 2);
+		settings.Set_Int (VALUE_NAME_SURFACE_EFFECT, 2);
 	}
 	else {
 		// Set to medium if high end cpu detected.
 		// TODO: Set to medium if Athlon detected.
 		if (high_end_processor) {
-			registry.Set_Int (VALUE_NAME_SURFACE_EFFECT, 1);
+			settings.Set_Int (VALUE_NAME_SURFACE_EFFECT, 1);
 		}
 		else {
-			registry.Set_Int (VALUE_NAME_SURFACE_EFFECT, 0);
+			settings.Set_Int (VALUE_NAME_SURFACE_EFFECT, 0);
 		}
 	}
 
 // If HWTL and high end cpu, use highest particle detail
 	if (caps.Support_TnL() && high_end_processor) {
-		registry.Set_Int (VALUE_NAME_PARTICLE_DETAIL, 2);
+		settings.Set_Int (VALUE_NAME_PARTICLE_DETAIL, 2);
 	}
 	// If one or the other, use medium particle detail
 	else if (caps.Support_TnL() || high_end_processor) {
-		registry.Set_Int (VALUE_NAME_PARTICLE_DETAIL, 1);
+		settings.Set_Int (VALUE_NAME_PARTICLE_DETAIL, 1);
 	}
 	else {
-		registry.Set_Int (VALUE_NAME_PARTICLE_DETAIL, 0);
+		settings.Set_Int (VALUE_NAME_PARTICLE_DETAIL, 0);
 	}
 
 
@@ -994,28 +994,28 @@ void AutoConfigSettings()
 	// If card can't do multi pass (which is the case if we've seen z-fighting problems when multi-passing)
 	// select vertex solve.
 	if (!caps.Can_Do_Multi_Pass() || CPUDetectClass::Get_Total_Physical_Memory()<100*1024*1024) {
-		registry.Set_Int (VALUE_NAME_PRELIT_MODE, 0);
+		settings.Set_Int (VALUE_NAME_PRELIT_MODE, 0);
 	}
 	// Otherwise select multitexturing if card can do it, or multipass...
 	else {
 		if (caps.Get_Max_Textures_Per_Pass()>=2) {
-			registry.Set_Int (VALUE_NAME_PRELIT_MODE, 2);
+			settings.Set_Int (VALUE_NAME_PRELIT_MODE, 2);
 		}
 		else {
-			registry.Set_Int (VALUE_NAME_PRELIT_MODE, 1);
+			settings.Set_Int (VALUE_NAME_PRELIT_MODE, 1);
 		}
 	}
 
-	RegistryClass registry_options (KEY_NAME_OPTIONS);
-	if (!registry_options.Is_Valid()) return;
+	SettingsClass settings_options (KEY_NAME_OPTIONS);
+	if (!settings_options.Is_Valid()) return;
 
 	// The uv bias setting for most of the cards
 	// (PowerVR Kyro and Kyro II and ATI Rage Pro need different UV bias and the rest of the cards.)
-	registry_options.Set_Int( "ScreenUVBias", 1 );
+	settings_options.Set_Int( "ScreenUVBias", 1 );
 
 	switch (caps.Get_Vendor()) {
 	default:
-		registry.Set_Int(VALUE_NAME_TEXTURE_FILTER,0);	// Most cards default to bilinear filtering
+		settings.Set_Int(VALUE_NAME_TEXTURE_FILTER,0);	// Most cards default to bilinear filtering
 		break;
 	case DX8Caps::VENDOR_NVIDIA:
 		switch (caps.Get_Device()) {
@@ -1028,10 +1028,10 @@ void AutoConfigSettings()
 		case DX8Caps::DEVICE_NVIDIA_RIVA_128:
 		case DX8Caps::DEVICE_NVIDIA_TNT_VANTA:
 		case DX8Caps::DEVICE_NVIDIA_NV1:
-			registry.Set_Int(VALUE_NAME_TEXTURE_FILTER,0);
+			settings.Set_Int(VALUE_NAME_TEXTURE_FILTER,0);
 			break;
 		default:
-			registry.Set_Int(VALUE_NAME_TEXTURE_FILTER,1);	// New NVidia cards default to trilinear
+			settings.Set_Int(VALUE_NAME_TEXTURE_FILTER,1);	// New NVidia cards default to trilinear
 		}
 		break;
 	case DX8Caps::VENDOR_ATI:
@@ -1051,7 +1051,7 @@ void AutoConfigSettings()
 		case DX8Caps::DEVICE_ATI_RAGE_128_VR:
 		case DX8Caps::DEVICE_ATI_RAGE_PRO:
 		case DX8Caps::DEVICE_ATI_RAGE_PRO_MOBILITY:
-			registry.Set_Int(VALUE_NAME_TEXTURE_FILTER,0);
+			settings.Set_Int(VALUE_NAME_TEXTURE_FILTER,0);
 
 			// It seems the bias needs to be adjusted on Rage128 as well...
 			if (caps.Get_Device()==DX8Caps::DEVICE_ATI_RAGE_PRO ||
@@ -1060,21 +1060,21 @@ void AutoConfigSettings()
 				caps.Get_Device()==DX8Caps::DEVICE_ATI_RAGE_128_MOBILITY_M3 ||
 				caps.Get_Device()==DX8Caps::DEVICE_ATI_RAGE_128_MOBILITY_M4 ||
 				caps.Get_Device()==DX8Caps::DEVICE_ATI_RAGE_128_PRO_ULTRA) {
-				registry_options.Set_Int( "ScreenUVBias", 0 );
+				settings_options.Set_Int( "ScreenUVBias", 0 );
 			}
 			break;
 		default:
-			registry.Set_Int(VALUE_NAME_TEXTURE_FILTER,1);	// New ATI cards default to trilinear
+			settings.Set_Int(VALUE_NAME_TEXTURE_FILTER,1);	// New ATI cards default to trilinear
 			break;
 		}
 		break;
 	case DX8Caps::VENDOR_POWERVR:
 		// not sure how this goes. Kyro at the office requires 1, but some other powervr
 		// card seems to require 0...
-		registry_options.Set_Int( "ScreenUVBias", 0 );
+		settings_options.Set_Int( "ScreenUVBias", 0 );
 		switch (caps.Get_Device()) {
 		case DX8Caps::DEVICE_POWERVR_KYRO:
-			registry_options.Set_Int( "ScreenUVBias", 1 );
+			settings_options.Set_Int( "ScreenUVBias", 1 );
 			break;
 		}
 		break;
@@ -1105,8 +1105,8 @@ PerformanceConfigDialogClass::OnShowWindow(BOOL bShow, UINT nStatus)
 		//	Insert code here
 		//
 
-		RegistryClass registry (KEY_NAME_SETTINGS);
-		if (!registry.Is_Valid ()) return;
+		SettingsClass settings (KEY_NAME_SETTINGS);
+		if (!settings.Is_Valid ()) return;
 
 		VideoConfigDialogClass* video=VideoConfigDialogClass::Get_Instance();
 		if (video) {
@@ -1138,7 +1138,7 @@ PerformanceConfigDialogClass::OnShowWindow(BOOL bShow, UINT nStatus)
 			}
 			else {
 				cur_sel_string[0]=0;
-				sel=registry.Get_Int (VALUE_NAME_PRELIT_MODE, WW3D::PRELIT_MODE_LIGHTMAP_MULTI_TEXTURE);
+				sel=settings.Get_Int (VALUE_NAME_PRELIT_MODE, WW3D::PRELIT_MODE_LIGHTMAP_MULTI_TEXTURE);
 			}
 
 			// Reset content and add available modes
@@ -1173,7 +1173,7 @@ PerformanceConfigDialogClass::OnShowWindow(BOOL bShow, UINT nStatus)
 			}
 			else {
 				cur_sel_string[0]=0;
-				sel=registry.Get_Int (VALUE_NAME_TEXTURE_FILTER, TextureClass::TEXTURE_FILTER_BILINEAR);
+				sel=settings.Get_Int (VALUE_NAME_TEXTURE_FILTER, TextureClass::TEXTURE_FILTER_BILINEAR);
 			}
 			SendDlgItemMessage (IDC_TEXTURE_FILTER_COMBO, CB_RESETCONTENT, 0, 0);
 			SendDlgItemMessage (IDC_TEXTURE_FILTER_COMBO, CB_ADDSTRING, 0, (LPARAM)Locale_GetString( IDS_BILINEAR, string ));

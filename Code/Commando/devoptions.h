@@ -30,8 +30,8 @@
 #ifndef DEVOPTIONS_H
 #define DEVOPTIONS_H
 
-#include "regbool.h"
-#include "regint.h"
+#include "SettingsBool.h"
+#include "SettingsInt.h"
 #include "boolean.h"
 
 //-----------------------------------------------------------------------------
@@ -43,94 +43,94 @@ class cDevOptions
 	public:
 
 #ifdef WWDEBUG
-   static cRegistryBool ShowGodStatus;
-   static cRegistryBool ShowSoldierData;
-   static cRegistryBool ShowVehicleData;
-   static cRegistryBool ShowDoorData;
-   static cRegistryBool ShowElevatorData;
-   static cRegistryBool ShowDSAPOData;
-   static cRegistryBool ShowPowerupData;
-   static cRegistryBool ShowBuildingData;
-   static cRegistryBool ShowSpawnerData;
-   static cRegistryBool ShowImportStates;
-   static cRegistryBool ShowImportStatesSV;
-   static cRegistryBool ShowServerRhostData;
-   static cRegistryBool ShowClientRhostData;
+   static cSettingsBool ShowGodStatus;
+   static cSettingsBool ShowSoldierData;
+   static cSettingsBool ShowVehicleData;
+   static cSettingsBool ShowDoorData;
+   static cSettingsBool ShowElevatorData;
+   static cSettingsBool ShowDSAPOData;
+   static cSettingsBool ShowPowerupData;
+   static cSettingsBool ShowBuildingData;
+   static cSettingsBool ShowSpawnerData;
+   static cSettingsBool ShowImportStates;
+   static cSettingsBool ShowImportStatesSV;
+   static cSettingsBool ShowServerRhostData;
+   static cSettingsBool ShowClientRhostData;
 
-	//static cRegistryBool ShowPacketGraphs;
+	//static cSettingsBool ShowPacketGraphs;
 
-	static cRegistryBool PacketsSentServer;
-	static cRegistryBool PacketsSentClient;
-	static cRegistryBool PacketsRecdServer;
-	static cRegistryBool PacketsRecdClient;
-	static cRegistryBool AvgSizePacketsSentServer;
-	static cRegistryBool AvgSizePacketsSentClient;
-	static cRegistryBool AvgSizePacketsRecdServer;
-	static cRegistryBool AvgSizePacketsRecdClient;
-	static cRegistryBool BytesSentServer;
-	static cRegistryBool BytesSentClient;
-	static cRegistryBool BytesRecdServer;
-	static cRegistryBool BytesRecdClient;
+	static cSettingsBool PacketsSentServer;
+	static cSettingsBool PacketsSentClient;
+	static cSettingsBool PacketsRecdServer;
+	static cSettingsBool PacketsRecdClient;
+	static cSettingsBool AvgSizePacketsSentServer;
+	static cSettingsBool AvgSizePacketsSentClient;
+	static cSettingsBool AvgSizePacketsRecdServer;
+	static cSettingsBool AvgSizePacketsRecdClient;
+	static cSettingsBool BytesSentServer;
+	static cSettingsBool BytesSentClient;
+	static cSettingsBool BytesRecdServer;
+	static cSettingsBool BytesRecdClient;
 
-	static cRegistryBool WwnetPacketsSentServer;
-	static cRegistryBool WwnetPacketsSentClient;
-	static cRegistryBool WwnetPacketsRecdServer;
-	static cRegistryBool WwnetPacketsRecdClient;
-	static cRegistryBool WwnetAvgSizePacketsSentServer;
-	static cRegistryBool WwnetAvgSizePacketsSentClient;
-	static cRegistryBool WwnetAvgSizePacketsRecdServer;
-	static cRegistryBool WwnetAvgSizePacketsRecdClient;
-	static cRegistryBool WwnetBytesSentServer;
-	static cRegistryBool WwnetBytesSentClient;
-	static cRegistryBool WwnetBytesRecdServer;
-	static cRegistryBool WwnetBytesRecdClient;
+	static cSettingsBool WwnetPacketsSentServer;
+	static cSettingsBool WwnetPacketsSentClient;
+	static cSettingsBool WwnetPacketsRecdServer;
+	static cSettingsBool WwnetPacketsRecdClient;
+	static cSettingsBool WwnetAvgSizePacketsSentServer;
+	static cSettingsBool WwnetAvgSizePacketsSentClient;
+	static cSettingsBool WwnetAvgSizePacketsRecdServer;
+	static cSettingsBool WwnetAvgSizePacketsRecdClient;
+	static cSettingsBool WwnetBytesSentServer;
+	static cSettingsBool WwnetBytesSentClient;
+	static cSettingsBool WwnetBytesRecdServer;
+	static cSettingsBool WwnetBytesRecdClient;
 
-   static cRegistryBool ShowPriorities;
-   static cRegistryBool ShowBandwidth;
-   static cRegistryBool ShowLatency;
-   static cRegistryBool ShowLastContact;
-   static cRegistryBool ShowListSizes;
-   static cRegistryBool ShowListTimes;
-   static cRegistryBool ShowListPacketSizes;
-   //static cRegistryBool ShowBandwidthBudgetOut;
-   static cRegistryBool ShowWatchList;
-   static cRegistryBool ShowWolLocation;
-	static cRegistryBool ShowDiagnostics;
-	static cRegistryBool ShowMenuStack;
-	static cRegistryBool ShowIpAddresses;
-	static cRegistryBool ShowClientFps;
-	static cRegistryBool ShowId;
-	static cRegistryBool ShowPing;
-	static cRegistryBool ShowObjectTally;
-	static cRegistryBool ShowInactivePlayers;
-	static cRegistryBool SoundEffectOnAssert;
-	static cRegistryBool DisplayLogfileOnAssert;
-	static cRegistryBool BreakToDebuggerOnAssert;
-	static cRegistryBool ShutdownInputOnAssert;
-	static cRegistryBool PreloadAssets;
-	static cRegistryBool FilterLevelFiles;
-	static cRegistryBool IBelieveInGod;
-	static cRegistryBool LogDataSafe;
-	static cRegistryBool EnableExceptionHandler;
-	static cRegistryBool ShowThumbnailPreInitDialog;
-	static cRegistryBool CrtDbgEnabled;
-	static cRegistryBool PacketOptimizationsEnabled;
-	static cRegistryBool ShowMoney;
-	static cRegistryBool ExtraNetDebug;
-	static cRegistryBool ExtraModemBandwidthThrottling;
-	static cRegistryBool ShowGameSpyAuthState;
+   static cSettingsBool ShowPriorities;
+   static cSettingsBool ShowBandwidth;
+   static cSettingsBool ShowLatency;
+   static cSettingsBool ShowLastContact;
+   static cSettingsBool ShowListSizes;
+   static cSettingsBool ShowListTimes;
+   static cSettingsBool ShowListPacketSizes;
+   //static cSettingsBool ShowBandwidthBudgetOut;
+   static cSettingsBool ShowWatchList;
+   static cSettingsBool ShowWolLocation;
+	static cSettingsBool ShowDiagnostics;
+	static cSettingsBool ShowMenuStack;
+	static cSettingsBool ShowIpAddresses;
+	static cSettingsBool ShowClientFps;
+	static cSettingsBool ShowId;
+	static cSettingsBool ShowPing;
+	static cSettingsBool ShowObjectTally;
+	static cSettingsBool ShowInactivePlayers;
+	static cSettingsBool SoundEffectOnAssert;
+	static cSettingsBool DisplayLogfileOnAssert;
+	static cSettingsBool BreakToDebuggerOnAssert;
+	static cSettingsBool ShutdownInputOnAssert;
+	static cSettingsBool PreloadAssets;
+	static cSettingsBool FilterLevelFiles;
+	static cSettingsBool IBelieveInGod;
+	static cSettingsBool LogDataSafe;
+	static cSettingsBool EnableExceptionHandler;
+	static cSettingsBool ShowThumbnailPreInitDialog;
+	static cSettingsBool CrtDbgEnabled;
+	static cSettingsBool PacketOptimizationsEnabled;
+	static cSettingsBool ShowMoney;
+	static cSettingsBool ExtraNetDebug;
+	static cSettingsBool ExtraModemBandwidthThrottling;
+	static cSettingsBool ShowGameSpyAuthState;
 
    //
    // These are development conveniences for starting a client or server,
    // either from a main menu keypress or from a command line param.
 	//
 
-	static cRegistryInt DesiredFrameSleepMs;
-	static cRegistryInt SimulatedPacketLossPc;
-	static cRegistryInt SimulatedPacketDuplicationPc;
-	static cRegistryInt SimulatedLatencyRangeMsLower;
-	static cRegistryInt SimulatedLatencyRangeMsUpper;
-	static cRegistryInt SpamCount;
+	static cSettingsInt DesiredFrameSleepMs;
+	static cSettingsInt SimulatedPacketLossPc;
+	static cSettingsInt SimulatedPacketDuplicationPc;
+	static cSettingsInt SimulatedLatencyRangeMsLower;
+	static cSettingsInt SimulatedLatencyRangeMsUpper;
+	static cSettingsInt SpamCount;
 
 	//
 	// GoToMainMenu uses QuickFullExit but stops at the main menu.
@@ -146,12 +146,12 @@ class cDevOptions
    //
    static cBoolean QuickFullExit;
 
-	static cRegistryBool ExitThreadOnAssert;
-	static cRegistryBool CompareExeVersionOnNetwork;
-   static cRegistryBool ShowFps;
+	static cSettingsBool ExitThreadOnAssert;
+	static cSettingsBool CompareExeVersionOnNetwork;
+   static cSettingsBool ShowFps;
 
 	// TEMP. ST - 12/10/2001 3:39PM
-	static cRegistryBool UseNewTCADO;
+	static cSettingsBool UseNewTCADO;
 
    private:
 
@@ -171,4 +171,4 @@ class cDevOptions
 
 
 
-	//static cRegistryBool DoThumbnailPreInit;
+	//static cSettingsBool DoThumbnailPreInit;

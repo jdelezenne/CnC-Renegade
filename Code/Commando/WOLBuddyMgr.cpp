@@ -48,7 +48,7 @@
 #include "consolemode.h"
 #include <WWOnline\WOLChannel.h>
 #include <WWOnline\WOLProduct.h>
-#include <WWLib\Registry.h>
+#include <WWLib\Settings.h>
 
 #include "String_IDs.h"
 #include <WWTranslateDB\TranslateDB.h>
@@ -207,36 +207,14 @@ void WOLBuddyMgr::LoadIgnoreList(void)
 	{
 	mIgnoreList.clear();
 
-	HKEY hKey;
-	LONG result = RegOpenKeyEx(HKEY_LOCAL_MACHINE, APPLICATION_SUB_KEY_NAME_IGNORE_LIST, 0, KEY_READ, &hKey);
-
-	if (ERROR_SUCCESS == result)
-		{
-		// Build a list of users to ignore
-		char valueName[128];
-		unsigned long valueSize = sizeof(valueName);
-		int index = 0;
-
-		while (RegEnumValue(hKey, index, valueName, &valueSize, 0, NULL, NULL, NULL) == ERROR_SUCCESS)
-			{
-			DWORD type = 0;
-			char name[MAX_USERNAME_LEN];
-			DWORD nameSize = sizeof(name);
-			result = RegQueryValueEx(hKey, valueName, NULL, &type, (LPBYTE)name, (DWORD*)&nameSize);
-
-			if ((ERROR_SUCCESS == result) && (REG_SZ == type) && strlen(name))
-				{
-				// Add the name to the ignore list
-				WideStringClass wideName(name);
-				mIgnoreList.push_back(wideName);
-				}
-
-			index++;
-			valueSize = sizeof(valueName);
-			}
-
-		RegCloseKey(hKey);
-		}
+    SettingsClass settings(APPLICATION_SETTINGS_SECTION_IGNORE_LIST, false);
+    DynamicVectorClass<StringClass> entries;
+    settings.Get_Value_List(entries);
+    for (int index = 0; index < entries.Count(); ++index) {
+        StringClass name;
+        settings.Get_String(entries[index], name);
+        if (!name.Is_Empty()) mIgnoreList.push_back(WideStringClass(name));
+    }
 
 	Add_Ref();
 	WOLBuddyMgrEvent event(IGNORELIST_CHANGED, this);
@@ -265,11 +243,11 @@ void WOLBuddyMgr::SaveIgnoreList(void)
 	{
 	if (mWOLSession->IsStoreLoginAllowed())
 		{
-		RegistryClass reg(APPLICATION_SUB_KEY_NAME_IGNORE_LIST);
+		SettingsClass reg(APPLICATION_SETTINGS_SECTION_IGNORE_LIST);
 
 		if (reg.Is_Valid())
 			{
-			reg.Deleta_All_Values();
+			reg.Delete_All_Values();
 
 			for (unsigned int index = 0; index < mIgnoreList.size(); ++index)
 				{

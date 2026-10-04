@@ -37,7 +37,7 @@
 #include "dlgmovieoptions.h"
 #include "listctrl.h"
 #include "binkmovie.h"
-#include "registry.h"
+#include "Settings.h"
 #include "translatedb.h"
 #include "_globals.h"
 #include "string_ids.h"
@@ -78,8 +78,8 @@ MovieOptionsMenuClass::On_Init_Dialog (void)
 		//
 		//	Add the movies to the list...
 		//		
-		RegistryClass registry (APPLICATION_SUB_KEY_NAME_MOVIES);
-		if (registry.Is_Valid ()) {
+		SettingsClass settings (APPLICATION_SETTINGS_SECTION_MOVIES);
+		if (settings.Is_Valid ()) {
 
 			const char *INTRO_MOVIE	= "DATA\\MOVIES\\R_INTRO.BIK";
 						
@@ -92,17 +92,17 @@ MovieOptionsMenuClass::On_Init_Dialog (void)
 			}
 
 			//
-			//	Get the list of entries from the registry
+			//	Get the list of entries from the settings
 			//
 			DynamicVectorClass<StringClass> list;
-			registry.Get_Value_List (list);
+			settings.Get_Value_List (list);
 
 			//
-			//	Loop over all the movies in the registry
+			//	Loop over all the movies in the settings
 			//
 			for (int index = 0; index < list.Count (); index ++) {
 				StringClass string_id_des;
-				registry.Get_String (list[index], string_id_des);
+				settings.Get_String (list[index], string_id_des);
 
 				//
 				//	Add an entry for this movie

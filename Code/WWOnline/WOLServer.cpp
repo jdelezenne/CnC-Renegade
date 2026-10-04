@@ -44,7 +44,7 @@
 #include <commando\_globals.h>
 #include <string.h>
 #include <WWDebug\WWDebug.h>
-#include <WWLib\Registry.h>
+#include <WWLib\Settings.h>
 
 namespace WWOnline {
 
@@ -412,8 +412,8 @@ void PingServerData::SetPingTime(int time)
 	{
 	mPingTime = time;
 
-	// Save the ping time in the registry.
-	RegistryClass reg(APPLICATION_SUB_KEY_NAME_SERVER_LIST);
+	// Save the ping time in the settings.
+	SettingsClass reg(APPLICATION_SETTINGS_SECTION_SERVER_LIST);
 	reg.Set_Int(GetHostAddress(), time);
 	}
 

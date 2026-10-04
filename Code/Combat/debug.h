@@ -91,8 +91,8 @@ public:
 
 	static	void	Update( void );
 
-	static	void	Load_Registry_Settings( const char * sub_key );
-	static	void	Save_Registry_Settings( const char * sub_key );
+	static	void	Load_Settings( const char * sub_key );
+	static	void	Save_Settings( const char * sub_key );
 
 	//
 	//	Version number support.  The major revision number is stored in the

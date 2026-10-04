@@ -121,8 +121,8 @@ class SlaveMasterClass
 
 	private:
 
-		void Delete_Registry_Copies(void);
-		void Create_Registry_Copies(void);
+		void Delete_Settings_Copies(void);
+		void Create_Settings_Copies(void);
 		bool Aquire_Slave(int index);
 		void Wait_For_Slave_Shutdown(void);
 

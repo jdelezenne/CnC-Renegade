@@ -34,6 +34,7 @@
  * Functions:                                                                                  *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
+#include "Settings.h"
 #include <Gamespy\gs_patch_usage.h>
 #include <Gamespy\gcdkeyserver.h>
 #include "specialbuilds.h"
@@ -170,28 +171,11 @@ CGameSpyQnR::~CGameSpyQnR()
 }
 
 void CGameSpyQnR::LaunchArcade(void) {
-	char *akey = "Software\\GameSpy\\GameSpy Arcade";
-	BOOL launched = FALSE;
-	HKEY key = NULL;
-	int result = 0;
-
-	result = RegOpenKeyEx(HKEY_CURRENT_USER, akey, 0, KEY_READ, &key);
-	if (result == ERROR_SUCCESS) {
-		StringClass value(true);
-		//
-		//	Get the size of the entry
-		//
-		DWORD data_size = 0;
-		DWORD type = 0;
-		result = ::RegQueryValueEx ((HKEY)key, "InstDir", NULL, &type, NULL, &data_size);
-		if (result == ERROR_SUCCESS && type == REG_SZ) {
-
-			//
-			//	Read the entry from the registry
-			//
-			::RegQueryValueEx ((HKEY)key, "InstDir", NULL, &type,
-				(LPBYTE)value.Get_Buffer(data_size), &data_size);
-		}
+    SettingsClass settings(APPLICATION_SETTINGS_SECTION_GAMESPY);
+    BOOL launched = FALSE;
+    {
+        StringClass value;
+        settings.Get_String("ArcadeDirectory", value);
 		if (!value.Is_Empty()) {
 			if (value[value.Get_Length()-1] == '\\') {
 				value += "Aphex.exe";

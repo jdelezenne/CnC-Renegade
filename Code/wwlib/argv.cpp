@@ -39,6 +39,7 @@
  *   *ArgvClass::Find_Value -- Find value of argument given prefix.                            * 
  *   *ArgvClass::Get_Cur_Value -- Get value of current argugment.                              * 
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+#include "Platform/Paths.h"
 #include "argv.h"
 
 #include <assert.h>
@@ -246,14 +247,14 @@ bool ArgvClass::Load_File(const char *fname)
 {
 	file_auto_ptr fileap(_TheFileFactory, fname);
 
-	FILE *fp = fopen(fileap->File_Name(), "r");
+	FILE *fp = Platform::OpenStream(fileap->File_Name(), "r");
 
 	// [SKB: May 08 2001 @ 8:42pm] :
 	// If file factor fails to return a valid name (i.e. can't open the file),
 	// then see if user (namely me) specified a full path for the file and see
 	// if we can open just fname.
 	if (!fp) 
-		fp = fopen(fname, "r");
+		fp = Platform::OpenStream(fname, "r");
 
 	if (fp)  {							
 		while (Argc < MAX_ARGC) {

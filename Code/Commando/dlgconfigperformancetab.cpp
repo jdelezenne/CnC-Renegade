@@ -36,7 +36,7 @@
 
 #include "dlgconfigperformancetab.h"
 #include "resource.h"
-#include "registry.h"
+#include "Settings.h"
 #include "comboboxctrl.h"
 #include "sliderctrl.h"
 #include "rendobj.h"
@@ -307,19 +307,19 @@ DlgConfigPerformanceTabClass::Load_Values (void)
 	SliderCtrlClass *particle_slider			= (SliderCtrlClass *)Get_Dlg_Item (IDC_PARTICLE_DETAIL_SLIDER);
 
 	//
-	//	Attempt to open the registry key
+	//	Attempt to open the settings key
 	//
-	RegistryClass registry (APPLICATION_SUB_KEY_NAME_SYSTEM_SETTINGS);
-	if (registry.Is_Valid ()) {
+	SettingsClass settings (APPLICATION_SETTINGS_SECTION_SYSTEM_SETTINGS);
+	if (settings.Is_Valid ()) {
 
 		//
-		//	Read the values from the registry
+		//	Read the values from the settings
 		//
-		int static_shadows	= registry.Get_Int (VALUE_NAME_STATIC_SHADOWS, 1);
-		int shadow_mode		= registry.Get_Int (VALUE_NAME_SHADOW_MODE, PhysicsSceneClass::SHADOW_MODE_BLOBS_PLUS);
-		int texture_red		= registry.Get_Int (VALUE_NAME_TEXTURE_RES, 0);
-		int particle_detail	= registry.Get_Int (VALUE_NAME_PARTICLE_DETAIL, 1);
-		int npatches			= registry.Get_Int (VALUE_NAME_NPATCHES, 0);
+		int static_shadows	= settings.Get_Int (VALUE_NAME_STATIC_SHADOWS, 1);
+		int shadow_mode		= settings.Get_Int (VALUE_NAME_SHADOW_MODE, PhysicsSceneClass::SHADOW_MODE_BLOBS_PLUS);
+		int texture_red		= settings.Get_Int (VALUE_NAME_TEXTURE_RES, 0);
+		int particle_detail	= settings.Get_Int (VALUE_NAME_PARTICLE_DETAIL, 1);
+		int npatches			= settings.Get_Int (VALUE_NAME_NPATCHES, 0);
 
 		//
 		//	Get the surface effect mode
@@ -575,10 +575,10 @@ DlgConfigPerformanceTabClass::On_Apply (void)
 	SliderCtrlClass *particle_slider			= (SliderCtrlClass *)Get_Dlg_Item (IDC_PARTICLE_DETAIL_SLIDER);
 	
 	//
-	//	Attempt to open the registry key
+	//	Attempt to open the settings key
 	//
-	RegistryClass registry (APPLICATION_SUB_KEY_NAME_SYSTEM_SETTINGS);
-	if (registry.Is_Valid ()) {
+	SettingsClass settings (APPLICATION_SETTINGS_SECTION_SYSTEM_SETTINGS);
+	if (settings.Is_Valid ()) {
 
 		//
 		//	Get the current settings from the dialog
@@ -604,20 +604,20 @@ DlgConfigPerformanceTabClass::On_Apply (void)
 		}
 
 		//
-		//	Store the values in the registry
+		//	Store the values in the settings
 		//
-		registry.Set_Int (VALUE_NAME_DYN_LOD, lod_budget);
-		registry.Set_Int (VALUE_NAME_STATIC_LOD, lod_budget);
+		settings.Set_Int (VALUE_NAME_DYN_LOD, lod_budget);
+		settings.Set_Int (VALUE_NAME_STATIC_LOD, lod_budget);
 
-		registry.Set_Int (VALUE_NAME_DYN_SHADOWS, (shadow_mode != PhysicsSceneClass::SHADOW_MODE_NONE));
-		registry.Set_Int (VALUE_NAME_STATIC_SHADOWS, static_shadows);
+		settings.Set_Int (VALUE_NAME_DYN_SHADOWS, (shadow_mode != PhysicsSceneClass::SHADOW_MODE_NONE));
+		settings.Set_Int (VALUE_NAME_STATIC_SHADOWS, static_shadows);
 
-		registry.Set_Int (VALUE_NAME_SHADOW_MODE,		shadow_mode);
-		registry.Set_Int (VALUE_NAME_TEXTURE_RES,		max (2 - texture_red, 0));
-		registry.Set_Int (VALUE_NAME_PARTICLE_DETAIL, particle_detail);
+		settings.Set_Int (VALUE_NAME_SHADOW_MODE,		shadow_mode);
+		settings.Set_Int (VALUE_NAME_TEXTURE_RES,		max (2 - texture_red, 0));
+		settings.Set_Int (VALUE_NAME_PARTICLE_DETAIL, particle_detail);
 
 		if (DX8Wrapper::Get_Current_Caps() && DX8Wrapper::Get_Current_Caps()->Support_NPatches ()) {
-			registry.Set_Int (VALUE_NAME_NPATCHES,	npatches);
+			settings.Set_Int (VALUE_NAME_NPATCHES,	npatches);
 		}
 
 		//

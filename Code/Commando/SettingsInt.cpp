@@ -17,60 +17,56 @@
 */
 
 //
-// Filename:     regstring.cpp
+// Filename:     SettingsInt.cpp
 // Author:       Tom Spencer-Smith
 // Date:         Dec 1998
-// Description:  
+// Description:
 //
 
-#include "regstring.h" // I WANNA BE FIRST!
+#include "SettingsInt.h" // I WANNA BE FIRST!
 
 #include "string.h"
-#include "registry.h"
+#include "Settings.h"
 #include "wwdebug.h"
+#include "wwmemlog.h"
 
 //
 // Class statics
 //
 
 //-----------------------------------------------------------------------------
-cRegistryString::cRegistryString(LPCSTR registry_location, LPCSTR key_name, 
-	LPCSTR default_value)
+cSettingsInt::cSettingsInt(LPCSTR settings_section, LPCSTR key_name, int default_value)
 {
-   WWASSERT(default_value != NULL);
-
-   if (registry_location == NULL) {
-      strcpy(RegistryLocation, "");
+   WWMEMLOG(MEM_GAMEDATA);
+	if (settings_section == NULL) {
+      strcpy(SettingsSection, "");
       strcpy(KeyName, "");
       Set(default_value);
    } else {
-      WWASSERT(strlen(registry_location) < sizeof(RegistryLocation));
       WWASSERT(key_name != NULL);
+      WWASSERT(strlen(settings_section) < sizeof(SettingsSection));
       WWASSERT(strlen(key_name) < sizeof(KeyName));
-      strcpy(RegistryLocation, registry_location);
+      strcpy(SettingsSection, settings_section);
       strcpy(KeyName, key_name);
 
-	   RegistryClass * registry = new RegistryClass(RegistryLocation);
-	   WWASSERT(registry != NULL && registry->Is_Valid());
-		registry->Get_String(KeyName, Value, sizeof(Value), default_value);
-   	delete registry;
+	   SettingsClass * settings = new SettingsClass(SettingsSection);
+	   WWASSERT(settings != NULL && settings->Is_Valid());
+      Value = settings->Get_Int(KeyName, default_value);
+	delete settings;
 
       Set(Value);
    }
 }
 
 //-----------------------------------------------------------------------------
-void cRegistryString::Set(LPCSTR value)
+void cSettingsInt::Set(int value)
 {
-   WWASSERT(value != NULL);
-   WWASSERT(strlen(value) < sizeof(Value));
+   Value = value;
 
-   strcpy(Value, value);
-
-   if (strcmp(RegistryLocation, "")) {
-	   RegistryClass * registry = new RegistryClass(RegistryLocation);
-	   WWASSERT(registry != NULL && registry->Is_Valid());
-		registry->Set_String(KeyName, Value);
-   	delete registry;
+   if (strcmp(SettingsSection, "")) {
+	   SettingsClass * settings = new SettingsClass(SettingsSection);
+	   WWASSERT(settings != NULL && settings->Is_Valid());
+      settings->Set_Int(KeyName, Value);
+	delete settings;
    }
 }

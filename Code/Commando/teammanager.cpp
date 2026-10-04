@@ -34,6 +34,7 @@
  * Functions:                                                                                  *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
+#include "Platform/Paths.h"
 #include "teammanager.h" // I WANNA BE FIRST!
 
 #include <stdio.h>
@@ -238,7 +239,7 @@ void cTeamManager::Log_Team_List(void)
 
 	StringClass results_filename;
 	results_filename.Format("results%d.txt", cUserOptions::ResultsLogNumber.Get());
-	FILE * file = ::fopen(results_filename, "wt");
+	FILE * file = Platform::OpenStream(results_filename, "wt");
 
    if (file != NULL) {
 

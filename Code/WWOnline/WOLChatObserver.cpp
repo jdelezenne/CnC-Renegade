@@ -50,7 +50,7 @@
 #include "WOLGameOptions.h"
 #include "WOLGame.h"
 #include "WOLErrorUtil.h"
-#include <wwlib\registry.h>
+#include <wwlib\Settings.h>
 #include <commando\_globals.h>
 #include "systimer.h"
 #include "specialbuilds.h"
@@ -266,9 +266,9 @@ STDMETHODIMP ChatObserver::OnServerList(HRESULT result, WOL::Server* servers)
 	// Process new server list.
 	mOuter->ClearServers();
 
-	// Clear out old server info from the registry.
-	RegistryClass reg(APPLICATION_SUB_KEY_NAME_SERVER_LIST);
-	reg.Deleta_All_Values();
+	// Clear out old server info from the settings.
+	SettingsClass reg(APPLICATION_SETTINGS_SECTION_SERVER_LIST);
+	reg.Delete_All_Values();
 
 	WOL::Server* curServer = servers;
 

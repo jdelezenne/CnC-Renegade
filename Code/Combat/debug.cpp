@@ -34,6 +34,7 @@
  * Functions:                                                                                  *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
+#include "Platform/Paths.h"
 #include "debug.h"
 #include "input.h"
 #include "ww3dtrig.h"
@@ -41,7 +42,7 @@
 #include "timemgr.h"
 #include "ww3d.h"
 #include "mono.h"
-#include "registry.h"
+#include "Settings.h"
 #include <stdio.h>
 #include "wwaudio.h"
 #include "combat.h"
@@ -83,7 +84,7 @@ bool wwdebug_trigger_handler(int trigger_num);
 void wwdebug_profile_start_handler( const char * title );
 void wwdebug_profile_stop_handler( const char * title );
 
-char DefaultRegistryModifier[1024] = {""};
+char DefaultSettingsModifier[1024] = {""};
 
 /*
 **
@@ -167,17 +168,17 @@ void	DebugManager::Update( void )
 #endif
 }
 
-void	DebugManager::Load_Registry_Settings( const char * sub_key )
+void	DebugManager::Load_Settings( const char * sub_key )
 {
-	RegistryClass registry( sub_key );
-	if ( registry.Is_Valid() ) {
-		EnabledDevices = registry.Get_Int( "EnabledDevices",	EnabledDevices );
-		EnabledTypes	= registry.Get_Int( "EnabledTypes",	EnabledTypes );
-		EnabledOptions	= registry.Get_Int( "EnabledOptions", EnabledOptions );
-		EnableFileLogging	= registry.Get_Bool( "EnableFileLogging",	EnableFileLogging );
-		EnableDiagLogging	= registry.Get_Bool( "EnableDiagLogging",	EnableDiagLogging );
-		LoadDebugScripts = registry.Get_Bool( "LoadDebugScripts",	LoadDebugScripts );
-		AllowCinematicKeys = registry.Get_Bool( "AllowCinematicKeys",	AllowCinematicKeys );
+	SettingsClass settings( sub_key );
+	if ( settings.Is_Valid() ) {
+		EnabledDevices = settings.Get_Int( "EnabledDevices",	EnabledDevices );
+		EnabledTypes	= settings.Get_Int( "EnabledTypes",	EnabledTypes );
+		EnabledOptions	= settings.Get_Int( "EnabledOptions", EnabledOptions );
+		EnableFileLogging	= settings.Get_Bool( "EnableFileLogging",	EnableFileLogging );
+		EnableDiagLogging	= settings.Get_Bool( "EnableDiagLogging",	EnableDiagLogging );
+		LoadDebugScripts = settings.Get_Bool( "LoadDebugScripts",	LoadDebugScripts );
+		AllowCinematicKeys = settings.Get_Bool( "AllowCinematicKeys",	AllowCinematicKeys );
 	}
 
 #ifdef LOG_MEMORY
@@ -186,17 +187,17 @@ void	DebugManager::Load_Registry_Settings( const char * sub_key )
 
 }
 
-void	DebugManager::Save_Registry_Settings( const char * sub_key )
+void	DebugManager::Save_Settings( const char * sub_key )
 {
-	RegistryClass registry( sub_key );
-	if ( registry.Is_Valid() ) {
-		registry.Set_Int( "EnabledDevices",			EnabledDevices );
-		registry.Set_Int( "EnabledTypes",		EnabledTypes );
-		registry.Set_Int( "EnabledOptions",	EnabledOptions );
-		registry.Set_Bool( "EnableFileLogging",	EnableFileLogging );
-		registry.Set_Bool( "EnableDiagLogging",	EnableDiagLogging );
-		registry.Set_Bool( "LoadDebugScripts",	LoadDebugScripts );
-		registry.Set_Bool( "AllowCinematicKeys",	AllowCinematicKeys );
+	SettingsClass settings( sub_key );
+	if ( settings.Is_Valid() ) {
+		settings.Set_Int( "EnabledDevices",			EnabledDevices );
+		settings.Set_Int( "EnabledTypes",		EnabledTypes );
+		settings.Set_Int( "EnabledOptions",	EnabledOptions );
+		settings.Set_Bool( "EnableFileLogging",	EnableFileLogging );
+		settings.Set_Bool( "EnableDiagLogging",	EnableDiagLogging );
+		settings.Set_Bool( "LoadDebugScripts",	LoadDebugScripts );
+		settings.Set_Bool( "AllowCinematicKeys",	AllowCinematicKeys );
 	}
 }
 
@@ -411,14 +412,14 @@ void	DebugManager::Display_Text( const WideStringClass & string, const Vector3 &
 void DebugManager::Init_Logfile(void)
 {
 	if (IsSlave) {
-		sprintf(LogfileNameBuffer, "%s%s", DefaultRegistryModifier, DEFAULT_LOGFILE_NAME);
+		sprintf(LogfileNameBuffer, "%s%s", DefaultSettingsModifier, DEFAULT_LOGFILE_NAME);
 		LOGFILE = LogfileNameBuffer;
 	}
 
 	//
    // Destroy contents
    //
-   FILE * file = fopen(LOGFILE, "wt");
+   FILE * file = Platform::OpenStream(LOGFILE, "wt");
 	if ( file ) {
 		fclose(file);
 	}
@@ -431,7 +432,7 @@ void DebugManager::Write_To_File(LPCSTR str)
    // I open/close for each write so as to maximize integrity of this file.
    //
 
-   FILE * file = fopen(LOGFILE, "at");
+   FILE * file = Platform::OpenStream(LOGFILE, "at");
    if (file != NULL) {
 	   fwrite(str, 1, strlen(str), file);
 	   fclose(file);

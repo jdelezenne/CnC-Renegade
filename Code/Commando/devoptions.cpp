@@ -28,95 +28,95 @@
 #include "_globals.h"
 #include "wwdebug.h"
 #include "player.h"
-#include "registry.h"
+#include "Settings.h"
 
 //
 // Class statics
 //
 #ifdef WWDEBUG
-   cRegistryBool cDevOptions::ShowGodStatus(				APPLICATION_SUB_KEY_NAME_NETDEBUG, "ShowGodStatus",				true);
-   cRegistryBool cDevOptions::ShowSoldierData(        APPLICATION_SUB_KEY_NAME_NETDEBUG, "ShowSoldierData",          false);
-   cRegistryBool cDevOptions::ShowVehicleData(        APPLICATION_SUB_KEY_NAME_NETDEBUG, "ShowVehicleData",          false);
-   cRegistryBool cDevOptions::ShowDoorData(				APPLICATION_SUB_KEY_NAME_NETDEBUG, "ShowDoorData",					false);
-   cRegistryBool cDevOptions::ShowElevatorData(       APPLICATION_SUB_KEY_NAME_NETDEBUG, "ShowElevatorData",         false);
-   cRegistryBool cDevOptions::ShowDSAPOData(				APPLICATION_SUB_KEY_NAME_NETDEBUG, "ShowDSAPOData",				false);
-   cRegistryBool cDevOptions::ShowPowerupData(        APPLICATION_SUB_KEY_NAME_NETDEBUG, "ShowPowerupData",          false);
-   cRegistryBool cDevOptions::ShowBuildingData(       APPLICATION_SUB_KEY_NAME_NETDEBUG, "ShowBuildingData",         false);
-   cRegistryBool cDevOptions::ShowSpawnerData(        APPLICATION_SUB_KEY_NAME_NETDEBUG, "ShowSpawnerData",          false);
-   cRegistryBool cDevOptions::ShowImportStates(       APPLICATION_SUB_KEY_NAME_NETDEBUG, "ShowImportStates",         false);
-   cRegistryBool cDevOptions::ShowImportStatesSV(		APPLICATION_SUB_KEY_NAME_NETDEBUG, "ShowImportStatesSV",			false);
-   cRegistryBool cDevOptions::ShowServerRhostData(    APPLICATION_SUB_KEY_NAME_NETDEBUG, "ShowServerRhostData",      false);
-   cRegistryBool cDevOptions::ShowClientRhostData(    APPLICATION_SUB_KEY_NAME_NETDEBUG, "ShowClientRhostData",      false);
-   //cRegistryBool cDevOptions::ShowPacketGraphs(       APPLICATION_SUB_KEY_NAME_NETDEBUG, "ShowPacketGraphs",         false);
+   cSettingsBool cDevOptions::ShowGodStatus(				APPLICATION_SETTINGS_SECTION_NETDEBUG, "ShowGodStatus",				true);
+   cSettingsBool cDevOptions::ShowSoldierData(        APPLICATION_SETTINGS_SECTION_NETDEBUG, "ShowSoldierData",          false);
+   cSettingsBool cDevOptions::ShowVehicleData(        APPLICATION_SETTINGS_SECTION_NETDEBUG, "ShowVehicleData",          false);
+   cSettingsBool cDevOptions::ShowDoorData(				APPLICATION_SETTINGS_SECTION_NETDEBUG, "ShowDoorData",					false);
+   cSettingsBool cDevOptions::ShowElevatorData(       APPLICATION_SETTINGS_SECTION_NETDEBUG, "ShowElevatorData",         false);
+   cSettingsBool cDevOptions::ShowDSAPOData(				APPLICATION_SETTINGS_SECTION_NETDEBUG, "ShowDSAPOData",				false);
+   cSettingsBool cDevOptions::ShowPowerupData(        APPLICATION_SETTINGS_SECTION_NETDEBUG, "ShowPowerupData",          false);
+   cSettingsBool cDevOptions::ShowBuildingData(       APPLICATION_SETTINGS_SECTION_NETDEBUG, "ShowBuildingData",         false);
+   cSettingsBool cDevOptions::ShowSpawnerData(        APPLICATION_SETTINGS_SECTION_NETDEBUG, "ShowSpawnerData",          false);
+   cSettingsBool cDevOptions::ShowImportStates(       APPLICATION_SETTINGS_SECTION_NETDEBUG, "ShowImportStates",         false);
+   cSettingsBool cDevOptions::ShowImportStatesSV(		APPLICATION_SETTINGS_SECTION_NETDEBUG, "ShowImportStatesSV",			false);
+   cSettingsBool cDevOptions::ShowServerRhostData(    APPLICATION_SETTINGS_SECTION_NETDEBUG, "ShowServerRhostData",      false);
+   cSettingsBool cDevOptions::ShowClientRhostData(    APPLICATION_SETTINGS_SECTION_NETDEBUG, "ShowClientRhostData",      false);
+   //cSettingsBool cDevOptions::ShowPacketGraphs(       APPLICATION_SETTINGS_SECTION_NETDEBUG, "ShowPacketGraphs",         false);
 
-	cRegistryBool cDevOptions::PacketsSentServer(					APPLICATION_SUB_KEY_NAME_NETDEBUG, "PacketsSentServer",					false);
-	cRegistryBool cDevOptions::PacketsSentClient(					APPLICATION_SUB_KEY_NAME_NETDEBUG, "PacketsSentClient",					false);
-	cRegistryBool cDevOptions::PacketsRecdServer(					APPLICATION_SUB_KEY_NAME_NETDEBUG, "PacketsRecdServer",					false);
-	cRegistryBool cDevOptions::PacketsRecdClient(					APPLICATION_SUB_KEY_NAME_NETDEBUG, "PacketsRecdClient",					false);
-	cRegistryBool cDevOptions::AvgSizePacketsSentServer(			APPLICATION_SUB_KEY_NAME_NETDEBUG, "AvgSizePacketsSentServer",       false);
-	cRegistryBool cDevOptions::AvgSizePacketsSentClient(			APPLICATION_SUB_KEY_NAME_NETDEBUG, "AvgSizePacketsSentClient",       false);
-	cRegistryBool cDevOptions::AvgSizePacketsRecdServer(			APPLICATION_SUB_KEY_NAME_NETDEBUG, "AvgSizePacketsRecdServer",       false);
-	cRegistryBool cDevOptions::AvgSizePacketsRecdClient(			APPLICATION_SUB_KEY_NAME_NETDEBUG, "AvgSizePacketsRecdClient",       false);
-	cRegistryBool cDevOptions::BytesSentServer(						APPLICATION_SUB_KEY_NAME_NETDEBUG, "BytesSentServer",						false);
-	cRegistryBool cDevOptions::BytesSentClient(						APPLICATION_SUB_KEY_NAME_NETDEBUG, "BytesSentClient",						false);
-	cRegistryBool cDevOptions::BytesRecdServer(						APPLICATION_SUB_KEY_NAME_NETDEBUG, "BytesRecdServer",						false);
-	cRegistryBool cDevOptions::BytesRecdClient(						APPLICATION_SUB_KEY_NAME_NETDEBUG, "BytesRecdClient",						false);
+	cSettingsBool cDevOptions::PacketsSentServer(					APPLICATION_SETTINGS_SECTION_NETDEBUG, "PacketsSentServer",					false);
+	cSettingsBool cDevOptions::PacketsSentClient(					APPLICATION_SETTINGS_SECTION_NETDEBUG, "PacketsSentClient",					false);
+	cSettingsBool cDevOptions::PacketsRecdServer(					APPLICATION_SETTINGS_SECTION_NETDEBUG, "PacketsRecdServer",					false);
+	cSettingsBool cDevOptions::PacketsRecdClient(					APPLICATION_SETTINGS_SECTION_NETDEBUG, "PacketsRecdClient",					false);
+	cSettingsBool cDevOptions::AvgSizePacketsSentServer(			APPLICATION_SETTINGS_SECTION_NETDEBUG, "AvgSizePacketsSentServer",       false);
+	cSettingsBool cDevOptions::AvgSizePacketsSentClient(			APPLICATION_SETTINGS_SECTION_NETDEBUG, "AvgSizePacketsSentClient",       false);
+	cSettingsBool cDevOptions::AvgSizePacketsRecdServer(			APPLICATION_SETTINGS_SECTION_NETDEBUG, "AvgSizePacketsRecdServer",       false);
+	cSettingsBool cDevOptions::AvgSizePacketsRecdClient(			APPLICATION_SETTINGS_SECTION_NETDEBUG, "AvgSizePacketsRecdClient",       false);
+	cSettingsBool cDevOptions::BytesSentServer(						APPLICATION_SETTINGS_SECTION_NETDEBUG, "BytesSentServer",						false);
+	cSettingsBool cDevOptions::BytesSentClient(						APPLICATION_SETTINGS_SECTION_NETDEBUG, "BytesSentClient",						false);
+	cSettingsBool cDevOptions::BytesRecdServer(						APPLICATION_SETTINGS_SECTION_NETDEBUG, "BytesRecdServer",						false);
+	cSettingsBool cDevOptions::BytesRecdClient(						APPLICATION_SETTINGS_SECTION_NETDEBUG, "BytesRecdClient",						false);
 
-	cRegistryBool cDevOptions::WwnetPacketsSentServer(				APPLICATION_SUB_KEY_NAME_NETDEBUG, "WwnetPacketsSentServer",         false);
-	cRegistryBool cDevOptions::WwnetPacketsSentClient(				APPLICATION_SUB_KEY_NAME_NETDEBUG, "WwnetPacketsSentClient",         false);
-	cRegistryBool cDevOptions::WwnetPacketsRecdServer(				APPLICATION_SUB_KEY_NAME_NETDEBUG, "WwnetPacketsRecdServer",         false);
-	cRegistryBool cDevOptions::WwnetPacketsRecdClient(				APPLICATION_SUB_KEY_NAME_NETDEBUG, "WwnetPacketsRecdClient",         false);
-	cRegistryBool cDevOptions::WwnetAvgSizePacketsSentServer(	APPLICATION_SUB_KEY_NAME_NETDEBUG, "WwnetAvgSizePacketsSentServer",	false);
-	cRegistryBool cDevOptions::WwnetAvgSizePacketsSentClient(   APPLICATION_SUB_KEY_NAME_NETDEBUG, "WwnetAvgSizePacketsSentClient",  false);
-	cRegistryBool cDevOptions::WwnetAvgSizePacketsRecdServer(   APPLICATION_SUB_KEY_NAME_NETDEBUG, "WwnetAvgSizePacketsRecdServer",  false);
-	cRegistryBool cDevOptions::WwnetAvgSizePacketsRecdClient(   APPLICATION_SUB_KEY_NAME_NETDEBUG, "WwnetAvgSizePacketsRecdClient",  false);
-	cRegistryBool cDevOptions::WwnetBytesSentServer(				APPLICATION_SUB_KEY_NAME_NETDEBUG, "WwnetBytesSentServer",				 false);
-	cRegistryBool cDevOptions::WwnetBytesSentClient(				APPLICATION_SUB_KEY_NAME_NETDEBUG, "WwnetBytesSentClient",				false);
-	cRegistryBool cDevOptions::WwnetBytesRecdServer(				APPLICATION_SUB_KEY_NAME_NETDEBUG, "WwnetBytesRecdServer",				false);
-	cRegistryBool cDevOptions::WwnetBytesRecdClient(				APPLICATION_SUB_KEY_NAME_NETDEBUG, "WwnetBytesRecdClient",				false);
+	cSettingsBool cDevOptions::WwnetPacketsSentServer(				APPLICATION_SETTINGS_SECTION_NETDEBUG, "WwnetPacketsSentServer",         false);
+	cSettingsBool cDevOptions::WwnetPacketsSentClient(				APPLICATION_SETTINGS_SECTION_NETDEBUG, "WwnetPacketsSentClient",         false);
+	cSettingsBool cDevOptions::WwnetPacketsRecdServer(				APPLICATION_SETTINGS_SECTION_NETDEBUG, "WwnetPacketsRecdServer",         false);
+	cSettingsBool cDevOptions::WwnetPacketsRecdClient(				APPLICATION_SETTINGS_SECTION_NETDEBUG, "WwnetPacketsRecdClient",         false);
+	cSettingsBool cDevOptions::WwnetAvgSizePacketsSentServer(	APPLICATION_SETTINGS_SECTION_NETDEBUG, "WwnetAvgSizePacketsSentServer",	false);
+	cSettingsBool cDevOptions::WwnetAvgSizePacketsSentClient(   APPLICATION_SETTINGS_SECTION_NETDEBUG, "WwnetAvgSizePacketsSentClient",  false);
+	cSettingsBool cDevOptions::WwnetAvgSizePacketsRecdServer(   APPLICATION_SETTINGS_SECTION_NETDEBUG, "WwnetAvgSizePacketsRecdServer",  false);
+	cSettingsBool cDevOptions::WwnetAvgSizePacketsRecdClient(   APPLICATION_SETTINGS_SECTION_NETDEBUG, "WwnetAvgSizePacketsRecdClient",  false);
+	cSettingsBool cDevOptions::WwnetBytesSentServer(				APPLICATION_SETTINGS_SECTION_NETDEBUG, "WwnetBytesSentServer",				 false);
+	cSettingsBool cDevOptions::WwnetBytesSentClient(				APPLICATION_SETTINGS_SECTION_NETDEBUG, "WwnetBytesSentClient",				false);
+	cSettingsBool cDevOptions::WwnetBytesRecdServer(				APPLICATION_SETTINGS_SECTION_NETDEBUG, "WwnetBytesRecdServer",				false);
+	cSettingsBool cDevOptions::WwnetBytesRecdClient(				APPLICATION_SETTINGS_SECTION_NETDEBUG, "WwnetBytesRecdClient",				false);
 
-   cRegistryBool cDevOptions::ShowPriorities(			APPLICATION_SUB_KEY_NAME_NETDEBUG, "ShowPriorities",				false);
-   cRegistryBool cDevOptions::ShowBandwidth(          APPLICATION_SUB_KEY_NAME_NETDEBUG, "ShowBandwidth",            false);
-   cRegistryBool cDevOptions::ShowLatency(            APPLICATION_SUB_KEY_NAME_NETDEBUG, "ShowLatency",              false);
-   cRegistryBool cDevOptions::ShowLastContact(        APPLICATION_SUB_KEY_NAME_NETDEBUG, "ShowLastContact",          false);
-   cRegistryBool cDevOptions::ShowListSizes(          APPLICATION_SUB_KEY_NAME_NETDEBUG, "ShowListSizes",            false);
-   cRegistryBool cDevOptions::ShowListTimes(          APPLICATION_SUB_KEY_NAME_NETDEBUG, "ShowListTimes",            false);
-   cRegistryBool cDevOptions::ShowListPacketSizes(    APPLICATION_SUB_KEY_NAME_NETDEBUG, "ShowListPacketSizes",      false);
-   //cRegistryBool cDevOptions::ShowBandwidthBudgetOut( APPLICATION_SUB_KEY_NAME_NETDEBUG, "ShowBandwidthBudgetOut",   false);
-   cRegistryBool cDevOptions::ShowWatchList(				APPLICATION_SUB_KEY_NAME_NETDEBUG, "ShowWatchList",				false);
-   cRegistryBool cDevOptions::ShowWolLocation(        APPLICATION_SUB_KEY_NAME_NETDEBUG, "ShowWolLocation",          false);
-   cRegistryBool cDevOptions::ShowDiagnostics(			APPLICATION_SUB_KEY_NAME_NETDEBUG, "ShowDiagnostics",				false);
-   cRegistryBool cDevOptions::ShowMenuStack(				APPLICATION_SUB_KEY_NAME_NETDEBUG, "ShowMenuStack",				false);
-   cRegistryBool cDevOptions::ShowIpAddresses(			APPLICATION_SUB_KEY_NAME_NETDEBUG, "ShowIpAddresses",				false);
-   cRegistryBool cDevOptions::ShowClientFps(				APPLICATION_SUB_KEY_NAME_NETDEBUG, "ShowClientFps",				false);
-   cRegistryBool cDevOptions::ShowId(						APPLICATION_SUB_KEY_NAME_NETDEBUG, "ShowId",							false);
-	cRegistryBool cDevOptions::ShowPing(					APPLICATION_SUB_KEY_NAME_NETDEBUG, "ShowPing",                 false);
-   cRegistryBool cDevOptions::ShowObjectTally(			APPLICATION_SUB_KEY_NAME_NETDEBUG, "ShowObjectTally",				false);
-   cRegistryBool cDevOptions::ShowInactivePlayers(		APPLICATION_SUB_KEY_NAME_NETDEBUG, "ShowInactivePlayers",		false);
-	cRegistryBool cDevOptions::ShowGameSpyAuthState(	APPLICATION_SUB_KEY_NAME_NETDEBUG, "ShowGameSpyAuthState",		false);
+   cSettingsBool cDevOptions::ShowPriorities(			APPLICATION_SETTINGS_SECTION_NETDEBUG, "ShowPriorities",				false);
+   cSettingsBool cDevOptions::ShowBandwidth(          APPLICATION_SETTINGS_SECTION_NETDEBUG, "ShowBandwidth",            false);
+   cSettingsBool cDevOptions::ShowLatency(            APPLICATION_SETTINGS_SECTION_NETDEBUG, "ShowLatency",              false);
+   cSettingsBool cDevOptions::ShowLastContact(        APPLICATION_SETTINGS_SECTION_NETDEBUG, "ShowLastContact",          false);
+   cSettingsBool cDevOptions::ShowListSizes(          APPLICATION_SETTINGS_SECTION_NETDEBUG, "ShowListSizes",            false);
+   cSettingsBool cDevOptions::ShowListTimes(          APPLICATION_SETTINGS_SECTION_NETDEBUG, "ShowListTimes",            false);
+   cSettingsBool cDevOptions::ShowListPacketSizes(    APPLICATION_SETTINGS_SECTION_NETDEBUG, "ShowListPacketSizes",      false);
+   //cSettingsBool cDevOptions::ShowBandwidthBudgetOut( APPLICATION_SETTINGS_SECTION_NETDEBUG, "ShowBandwidthBudgetOut",   false);
+   cSettingsBool cDevOptions::ShowWatchList(				APPLICATION_SETTINGS_SECTION_NETDEBUG, "ShowWatchList",				false);
+   cSettingsBool cDevOptions::ShowWolLocation(        APPLICATION_SETTINGS_SECTION_NETDEBUG, "ShowWolLocation",          false);
+   cSettingsBool cDevOptions::ShowDiagnostics(			APPLICATION_SETTINGS_SECTION_NETDEBUG, "ShowDiagnostics",				false);
+   cSettingsBool cDevOptions::ShowMenuStack(				APPLICATION_SETTINGS_SECTION_NETDEBUG, "ShowMenuStack",				false);
+   cSettingsBool cDevOptions::ShowIpAddresses(			APPLICATION_SETTINGS_SECTION_NETDEBUG, "ShowIpAddresses",				false);
+   cSettingsBool cDevOptions::ShowClientFps(				APPLICATION_SETTINGS_SECTION_NETDEBUG, "ShowClientFps",				false);
+   cSettingsBool cDevOptions::ShowId(						APPLICATION_SETTINGS_SECTION_NETDEBUG, "ShowId",							false);
+	cSettingsBool cDevOptions::ShowPing(					APPLICATION_SETTINGS_SECTION_NETDEBUG, "ShowPing",                 false);
+   cSettingsBool cDevOptions::ShowObjectTally(			APPLICATION_SETTINGS_SECTION_NETDEBUG, "ShowObjectTally",				false);
+   cSettingsBool cDevOptions::ShowInactivePlayers(		APPLICATION_SETTINGS_SECTION_NETDEBUG, "ShowInactivePlayers",		false);
+	cSettingsBool cDevOptions::ShowGameSpyAuthState(	APPLICATION_SETTINGS_SECTION_NETDEBUG, "ShowGameSpyAuthState",		false);
 
-	cRegistryInt cDevOptions::DesiredFrameSleepMs(				APPLICATION_SUB_KEY_NAME_NETDEBUG, "DesiredFrameSleepMs",				0);
-	cRegistryInt cDevOptions::SimulatedPacketLossPc(			APPLICATION_SUB_KEY_NAME_NETDEBUG, "SimulatedPacketLossPc",				0);
-	cRegistryInt cDevOptions::SimulatedPacketDuplicationPc(	APPLICATION_SUB_KEY_NAME_NETDEBUG, "SimulatedPacketDuplicationPc",	0);
-	cRegistryInt cDevOptions::SimulatedLatencyRangeMsLower(	APPLICATION_SUB_KEY_NAME_NETDEBUG, "SimulatedLatencyRangeMsLower",	0);
-	cRegistryInt cDevOptions::SimulatedLatencyRangeMsUpper(	APPLICATION_SUB_KEY_NAME_NETDEBUG, "SimulatedLatencyRangeMsUpper",	0);
-	cRegistryInt cDevOptions::SpamCount(							APPLICATION_SUB_KEY_NAME_NETDEBUG, "SpamCount",								0);
+	cSettingsInt cDevOptions::DesiredFrameSleepMs(				APPLICATION_SETTINGS_SECTION_NETDEBUG, "DesiredFrameSleepMs",				0);
+	cSettingsInt cDevOptions::SimulatedPacketLossPc(			APPLICATION_SETTINGS_SECTION_NETDEBUG, "SimulatedPacketLossPc",				0);
+	cSettingsInt cDevOptions::SimulatedPacketDuplicationPc(	APPLICATION_SETTINGS_SECTION_NETDEBUG, "SimulatedPacketDuplicationPc",	0);
+	cSettingsInt cDevOptions::SimulatedLatencyRangeMsLower(	APPLICATION_SETTINGS_SECTION_NETDEBUG, "SimulatedLatencyRangeMsLower",	0);
+	cSettingsInt cDevOptions::SimulatedLatencyRangeMsUpper(	APPLICATION_SETTINGS_SECTION_NETDEBUG, "SimulatedLatencyRangeMsUpper",	0);
+	cSettingsInt cDevOptions::SpamCount(							APPLICATION_SETTINGS_SECTION_NETDEBUG, "SpamCount",								0);
 
-	cRegistryBool cDevOptions::SoundEffectOnAssert(				APPLICATION_SUB_KEY_NAME_DEBUG,	"SoundEffectOnAssert",				false);
-	cRegistryBool cDevOptions::DisplayLogfileOnAssert(			APPLICATION_SUB_KEY_NAME_DEBUG,	"DisplayLogfileOnAssert",			false);
-	cRegistryBool cDevOptions::BreakToDebuggerOnAssert(		APPLICATION_SUB_KEY_NAME_DEBUG,	"BreakToDebuggerOnAssert",			true);
-	cRegistryBool cDevOptions::ShutdownInputOnAssert(			APPLICATION_SUB_KEY_NAME_DEBUG,	"ShutdownInputOnAssert",			true);
-	cRegistryBool cDevOptions::PreloadAssets(						APPLICATION_SUB_KEY_NAME_DEBUG,	"PreloadAssets",						true);
-	cRegistryBool cDevOptions::FilterLevelFiles(					APPLICATION_SUB_KEY_NAME_DEBUG,	"FilterLevelFiles",					true);
-	cRegistryBool cDevOptions::IBelieveInGod(						APPLICATION_SUB_KEY_NAME_DEBUG,	"IBelieveInGod",						false);
-	cRegistryBool cDevOptions::LogDataSafe(						APPLICATION_SUB_KEY_NAME_DEBUG,	"LogDataSafe",							true);
-	cRegistryBool cDevOptions::EnableExceptionHandler(			APPLICATION_SUB_KEY_NAME_DEBUG,	"ExceptionHandler",					true);
-	cRegistryBool cDevOptions::ShowThumbnailPreInitDialog(	APPLICATION_SUB_KEY_NAME_DEBUG,	"ShowThumbnailPreInitDialog",		true);
-	cRegistryBool cDevOptions::CrtDbgEnabled(						APPLICATION_SUB_KEY_NAME_DEBUG,	"CrtDbgEnabled",						true);
-	cRegistryBool cDevOptions::PacketOptimizationsEnabled(	APPLICATION_SUB_KEY_NAME_DEBUG,	"PacketOptimizationsEnabled",		true);
-	cRegistryBool cDevOptions::ShowMoney(							APPLICATION_SUB_KEY_NAME_DEBUG,	"ShowMoney",							false);
-	cRegistryBool cDevOptions::ExtraNetDebug(						APPLICATION_SUB_KEY_NAME_DEBUG,	"NetDebugLog",							false);
-	cRegistryBool cDevOptions::ExtraModemBandwidthThrottling(APPLICATION_SUB_KEY_NAME_DEBUG,	"ExtraModemBWThrottling",			true);
+	cSettingsBool cDevOptions::SoundEffectOnAssert(				APPLICATION_SETTINGS_SECTION_DEBUG,	"SoundEffectOnAssert",				false);
+	cSettingsBool cDevOptions::DisplayLogfileOnAssert(			APPLICATION_SETTINGS_SECTION_DEBUG,	"DisplayLogfileOnAssert",			false);
+	cSettingsBool cDevOptions::BreakToDebuggerOnAssert(		APPLICATION_SETTINGS_SECTION_DEBUG,	"BreakToDebuggerOnAssert",			true);
+	cSettingsBool cDevOptions::ShutdownInputOnAssert(			APPLICATION_SETTINGS_SECTION_DEBUG,	"ShutdownInputOnAssert",			true);
+	cSettingsBool cDevOptions::PreloadAssets(						APPLICATION_SETTINGS_SECTION_DEBUG,	"PreloadAssets",						true);
+	cSettingsBool cDevOptions::FilterLevelFiles(					APPLICATION_SETTINGS_SECTION_DEBUG,	"FilterLevelFiles",					true);
+	cSettingsBool cDevOptions::IBelieveInGod(						APPLICATION_SETTINGS_SECTION_DEBUG,	"IBelieveInGod",						false);
+	cSettingsBool cDevOptions::LogDataSafe(						APPLICATION_SETTINGS_SECTION_DEBUG,	"LogDataSafe",							true);
+	cSettingsBool cDevOptions::EnableExceptionHandler(			APPLICATION_SETTINGS_SECTION_DEBUG,	"ExceptionHandler",					true);
+	cSettingsBool cDevOptions::ShowThumbnailPreInitDialog(	APPLICATION_SETTINGS_SECTION_DEBUG,	"ShowThumbnailPreInitDialog",		true);
+	cSettingsBool cDevOptions::CrtDbgEnabled(						APPLICATION_SETTINGS_SECTION_DEBUG,	"CrtDbgEnabled",						true);
+	cSettingsBool cDevOptions::PacketOptimizationsEnabled(	APPLICATION_SETTINGS_SECTION_DEBUG,	"PacketOptimizationsEnabled",		true);
+	cSettingsBool cDevOptions::ShowMoney(							APPLICATION_SETTINGS_SECTION_DEBUG,	"ShowMoney",							false);
+	cSettingsBool cDevOptions::ExtraNetDebug(						APPLICATION_SETTINGS_SECTION_DEBUG,	"NetDebugLog",							false);
+	cSettingsBool cDevOptions::ExtraModemBandwidthThrottling(APPLICATION_SETTINGS_SECTION_DEBUG,	"ExtraModemBWThrottling",			true);
 
    cBoolean cDevOptions::GoToMainMenu(false);
 
@@ -124,17 +124,17 @@
 
    cBoolean cDevOptions::QuickFullExit(false);
 
-   cRegistryBool cDevOptions::ExitThreadOnAssert(				APPLICATION_SUB_KEY_NAME_DEBUG,	"ExitThreadOnAssert",				true);
-   cRegistryBool cDevOptions::CompareExeVersionOnNetwork(	APPLICATION_SUB_KEY_NAME_DEBUG,	"CompareExeVersionOnNetwork",		true);
+   cSettingsBool cDevOptions::ExitThreadOnAssert(				APPLICATION_SETTINGS_SECTION_DEBUG,	"ExitThreadOnAssert",				true);
+   cSettingsBool cDevOptions::CompareExeVersionOnNetwork(	APPLICATION_SETTINGS_SECTION_DEBUG,	"CompareExeVersionOnNetwork",		true);
 
-	cRegistryBool cDevOptions::UseNewTCADO(						APPLICATION_SUB_KEY_NAME_DEBUG,	"NewTCADO",								true);
-   cRegistryBool cDevOptions::ShowFps(								APPLICATION_SUB_KEY_NAME_NETDEBUG, "ShowFps",							false);
-
-
+	cSettingsBool cDevOptions::UseNewTCADO(						APPLICATION_SETTINGS_SECTION_DEBUG,	"NewTCADO",								true);
+   cSettingsBool cDevOptions::ShowFps(								APPLICATION_SETTINGS_SECTION_NETDEBUG, "ShowFps",							false);
 
 
 
 
 
 
-	//cRegistryBool cDevOptions::DoThumbnailPreInit(				APPLICATION_SUB_KEY_NAME_DEBUG,	"DoThumbnailPreInit",				true);
+
+
+	//cSettingsBool cDevOptions::DoThumbnailPreInit(				APPLICATION_SETTINGS_SECTION_DEBUG,	"DoThumbnailPreInit",				true);

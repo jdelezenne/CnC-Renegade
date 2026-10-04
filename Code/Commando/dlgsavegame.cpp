@@ -35,6 +35,8 @@
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 
+#include "Platform/Paths.h"
+#include "Platform/Windows/Files.h"
 #include "dlgsavegame.h"
 #include "listctrl.h"
 #include "dialogresource.h"
@@ -497,7 +499,7 @@ SaveGameMenuClass::Delete_Game (bool prompt)
 				//
 				//	Delete the file and remove its entry from the list
 				//
-				if (::DeleteFile (full_path) != 0) {
+				if (Platform::RemoveFile(full_path) != 0) {
 					list_ctrl->Delete_Entry (item_index);
 					Update_Text_Field ();
 					Update_Button_State ();
@@ -548,7 +550,7 @@ SaveGameMenuClass::Reload_List (const char *current_filename)
 	//	Build a list of all the saved games we know about
 	//
 	int index = 1;
-	for (file_find = ::FindFirstFile ("data\\save\\*.sav", &find_info);
+	for (file_find = ::FindFirstFile (Platform::UserPath("data\\save\\*.sav").c_str(), &find_info);
 		 (file_find != INVALID_HANDLE_VALUE) && keep_going;
 		  keep_going = ::FindNextFile (file_find, &find_info))
 	{

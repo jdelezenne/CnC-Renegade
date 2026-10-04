@@ -61,7 +61,7 @@
 #include "vertmaterial.h"
 
 /*
-** Registry value names
+** Settings value names
 */
 #define	VALUE_NAME_RENDER_DEVICE_NAME					"RenderDeviceName"
 #define	VALUE_NAME_RENDER_DEVICE_WIDTH				"RenderDeviceWidth"
@@ -399,8 +399,8 @@ public:
 
 	static const DX8Caps*	Get_Current_Caps() { WWASSERT(CurrentCaps); return CurrentCaps; }
 
-	static bool Registry_Save_Render_Device( const char * sub_key );
-	static bool Registry_Load_Render_Device( const char * sub_key, bool resize_window );
+	static bool Settings_Save_Render_Device( const char * sub_key );
+	static bool Settings_Load_Render_Device( const char * sub_key, bool resize_window );
 
 	static const char* Get_DX8_Render_State_Name(D3DRENDERSTATETYPE state);
 	static const char* Get_DX8_Texture_Stage_State_Name(D3DTEXTURESTAGESTATETYPE state);
@@ -460,8 +460,8 @@ protected:
 	static int	Get_Device_Resolution_Width(void) { return ResolutionWidth; }
 	static int	Get_Device_Resolution_Height(void) { return ResolutionHeight; }
 
-	static bool Registry_Save_Render_Device( const char *sub_key, int device, int width, int height, int depth, bool windowed, int texture_depth);
-	static bool Registry_Load_Render_Device( const char * sub_key, char *device, int device_len, int &width, int &height, int &depth, int &windowed, int &texture_depth);
+	static bool Settings_Save_Render_Device( const char *sub_key, int device, int width, int height, int depth, bool windowed, int texture_depth);
+	static bool Settings_Load_Render_Device( const char * sub_key, char *device, int device_len, int &width, int &height, int &depth, int &windowed, int &texture_depth);
 	static bool Is_Windowed(void) { return IsWindowed; }
 
 	static void	Set_Texture_Bitdepth(int depth)	{ WWASSERT(depth==16 || depth==32); TextureBitDepth = depth; }

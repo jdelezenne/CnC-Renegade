@@ -34,6 +34,7 @@
  * Functions:                                                                                  *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
+#include "Platform/Paths.h"
 #include "consolefunction.h"
 #include "console.h"
 #include "textdisplay.h"
@@ -143,7 +144,7 @@
 #include "bwbalance.h"
 #include "sbbomanager.h"
 #include "_globals.h"
-#include "registry.h"
+#include "Settings.h"
 #include "vipmodeevent.h"
 #include "dx8rendererdebugger.h"
 #include "changeteamevent.h"
@@ -1039,7 +1040,7 @@ public:
 class TomConsoleFunctionClass : public ConsoleFunctionClass {
 public:
 	virtual	const char * Get_Name( void )	{ return "tom"; }
-	virtual	const char * Get_Help( void )	{ return "TOM - Annoyance-reduction registry tweaks customized by Tom."; }
+	virtual	const char * Get_Help( void )	{ return "TOM - Annoyance-reduction settings tweaks customized by Tom."; }
 	virtual	void Activate( const char * input ) {
 
 		//
@@ -1085,11 +1086,11 @@ public:
 		// Set 800 x 600, windowed mode
 		//
 		{
-		RegistryClass registry(APPLICATION_SUB_KEY_NAME_RENDER);
-		WWASSERT(registry.Is_Valid());
-		registry.Set_Int(VALUE_NAME_RENDER_DEVICE_WIDTH, 800);
-		registry.Set_Int(VALUE_NAME_RENDER_DEVICE_HEIGHT, 600);
-		registry.Set_Int(VALUE_NAME_RENDER_DEVICE_WINDOWED, TRUE);
+		SettingsClass settings(APPLICATION_SETTINGS_SECTION_RENDER);
+		WWASSERT(settings.Is_Valid());
+		settings.Set_Int(VALUE_NAME_RENDER_DEVICE_WIDTH, 800);
+		settings.Set_Int(VALUE_NAME_RENDER_DEVICE_HEIGHT, 600);
+		settings.Set_Int(VALUE_NAME_RENDER_DEVICE_WINDOWED, TRUE);
 		}
 
 		/*
@@ -1097,10 +1098,10 @@ public:
 		// Stop Jani from spying on us (avoid delay on exit)
 		//
 		{
-		RegistryClass registry(APPLICATION_SUB_KEY_NAME_DEBUG);
-		WWASSERT(registry.Is_Valid());
-		registry.Set_Int("SystemInfoLogDisable", TRUE);
-		registry.Set_Int("DisableLogCopying", TRUE);
+		SettingsClass settings(APPLICATION_SETTINGS_SECTION_DEBUG);
+		WWASSERT(settings.Is_Valid());
+		settings.Set_Int("SystemInfoLogDisable", TRUE);
+		settings.Set_Int("DisableLogCopying", TRUE);
 		}
 		*/
 
@@ -1108,38 +1109,38 @@ public:
 		// Default to third person
 		//
 		{
-		RegistryClass registry(APPLICATION_SUB_KEY_NAME_OPTIONS);
-		WWASSERT(registry.Is_Valid());
-		registry.Set_Int("DefaultToFirstPerson", FALSE);
+		SettingsClass settings(APPLICATION_SETTINGS_SECTION_OPTIONS);
+		WWASSERT(settings.Is_Valid());
+		settings.Set_Int("DefaultToFirstPerson", FALSE);
 		}
 
 		//
 		// Skip intro movies
 		//
 		{
-		RegistryClass registry(APPLICATION_SUB_KEY_NAME_OPTIONS);
-		WWASSERT(registry.Is_Valid());
-		registry.Set_Int("SkipAllIntroMovies", TRUE);
+		SettingsClass settings(APPLICATION_SETTINGS_SECTION_OPTIONS);
+		WWASSERT(settings.Is_Valid());
+		settings.Set_Int("SkipAllIntroMovies", TRUE);
 		}
 
 		//
 		// Do not require CD for movies
 		//
 		{
-		RegistryClass registry(APPLICATION_SUB_KEY_NAME_DEBUG);
-		WWASSERT(registry.Is_Valid());
-		registry.Set_Int("DisableCDCheck", TRUE);
+		SettingsClass settings(APPLICATION_SETTINGS_SECTION_DEBUG);
+		WWASSERT(settings.Is_Valid());
+		settings.Set_Int("DisableCDCheck", TRUE);
 		}
 
 		//
 		// Set gamma etc so that they don't screw up debugging
 		//
 		{
-		RegistryClass registry(APPLICATION_SUB_KEY_NAME_SYSTEM_SETTINGS);
-		WWASSERT(registry.Is_Valid());
-		registry.Set_Int("Gamma",			1);
-		registry.Set_Int("Brightness",	0);
-		registry.Set_Int("Contrast",		1);
+		SettingsClass settings(APPLICATION_SETTINGS_SECTION_SYSTEM_SETTINGS);
+		WWASSERT(settings.Is_Valid());
+		settings.Set_Int("Gamma",			1);
+		settings.Set_Int("Brightness",	0);
+		settings.Set_Int("Contrast",		1);
 		}
 	}
 };
@@ -1507,7 +1508,7 @@ public:
 		WW3D::Set_Texture_Reduction(1);
 		Print("Texture Resolution set to 1.\n");
 
-		ConsoleGameModeClass::Save_Registry_Keys();
+		ConsoleGameModeClass::Save_Settings_Keys();
 
 		if (Get_Text_Display()) {
 			WWASSERT(Get_Text_Display() != NULL);
@@ -4426,19 +4427,19 @@ public:
 
 		if (!::stricmp(input, "on")) {
 
-			RegistryClass registry(APPLICATION_SUB_KEY_NAME_DEBUG);
-			WWASSERT(registry.Is_Valid());
-			registry.Set_Int("SystemInfoLogDisable", FALSE);
-			registry.Set_Int("DisableLogCopying", FALSE);
+			SettingsClass settings(APPLICATION_SETTINGS_SECTION_DEBUG);
+			WWASSERT(settings.Is_Valid());
+			settings.Set_Int("SystemInfoLogDisable", FALSE);
+			settings.Set_Int("DisableLogCopying", FALSE);
 
 			Print("Log copying is ON.");
 
 		} else if (!::stricmp(input, "off")) {
 
-			RegistryClass registry(APPLICATION_SUB_KEY_NAME_DEBUG);
-			WWASSERT(registry.Is_Valid());
-			registry.Set_Int("SystemInfoLogDisable", TRUE);
-			registry.Set_Int("DisableLogCopying", TRUE);
+			SettingsClass settings(APPLICATION_SETTINGS_SECTION_DEBUG);
+			WWASSERT(settings.Is_Valid());
+			settings.Set_Int("SystemInfoLogDisable", TRUE);
+			settings.Set_Int("DisableLogCopying", TRUE);
 
 			Print("Log copying is OFF.");
 
@@ -5271,7 +5272,7 @@ void ConsoleFunctionManager::Verbose_Help_File(void)
 	//
 	// Log function list to a file
 	//
-   FILE * file = fopen("commands.txt", "w");
+   FILE * file = Platform::OpenStream("commands.txt", "w");
 	if ( file ) {
 		char buffer[500];
 		sprintf(buffer, "RENEGADE COMMANDS as at %s\n\n", cMiscUtil::Get_Text_Time());

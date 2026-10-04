@@ -34,6 +34,7 @@
  * Functions:                                                                                  *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
+#include "Platform/Paths.h"
 #include "gamedata.h"
 
 #include <stdio.h>
@@ -1010,7 +1011,7 @@ void cGameData::Load_From_Server_Config(LPCSTR config_file)
 
 	if (p_ini == NULL) {
       full_filename.Format("data\\%s", config_file);
-      FILE * file = fopen(full_filename, "w");
+      FILE * file = Platform::OpenStream(full_filename, "w");
 	   fclose(file);
 
 		p_ini = Get_INI(config_file);

@@ -173,8 +173,8 @@ private:
 	/*
 	*/
 	int							Count_Scroll_Lines( void );
-	void							Load_Registry_Keys(void);
-	void							Save_Registry_Keys(void);
+	void							Load_Settings_Keys(void);
+	void							Save_Settings_Keys(void);
 };
 
 

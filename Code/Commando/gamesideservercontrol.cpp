@@ -37,7 +37,7 @@
 
 #include "always.h"
 #include "gamesideservercontrol.h"
-#include "registry.h"
+#include "Settings.h"
 #include "_globals.h"
 #include "consolefunction.h"
 #include "gamedata.h"
@@ -84,9 +84,9 @@ void GameSideServerControlClass::Init(void)
 		if (SlaveMaster.Am_I_Slave() || (The_Game() && The_Game()->IsDedicated.Is_True()) || ConsoleBox.Is_Exclusive()) {
 
 			/*
-			** Get the port number from the registry.
+			** Get the port number from the settings.
 			*/
-			RegistryClass reg(APPLICATION_SUB_KEY_NAME_NET_SERVER_CONTROL);
+			SettingsClass reg(APPLICATION_SETTINGS_SECTION_NET_SERVER_CONTROL);
 			int port = reg.Get_Int(SERVER_CONTROL_PORT_KEY, DEFAULT_SERVER_CONTROL_PORT);
 			if (port != 0) {
 
@@ -99,12 +99,12 @@ void GameSideServerControlClass::Init(void)
 				}
 
 				/*
-				** Get the bind IP from the registry.
+				** Get the bind IP from the settings.
 				*/
 				unsigned long ip = reg.Get_Int(SERVER_CONTROL_IP_KEY, 0);
 
 				/*
-				** Get the password from the registry.
+				** Get the password from the settings.
 				*/
 				reg.Get_String(SERVER_CONTROL_PASSWORD_KEY, password, sizeof(password), password);
 

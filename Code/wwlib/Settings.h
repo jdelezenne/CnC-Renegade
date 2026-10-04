@@ -22,7 +22,7 @@
  *                                                                                             *
  *                 Project Name : Commando / G Library                                         *
  *                                                                                             *
- *                     $Archive:: /Commando/Code/wwlib/registry.h                             $*
+ *                     $Archive:: /Commando/Code/wwlib/Settings.h                             $*
  *                                                                                             *
  *                      $Author:: Steve_t                                                     $*
  *                                                                                             *
@@ -37,8 +37,8 @@
 #pragma once
 #endif // _MSC_VER >= 1000
 
-#ifndef REGISTRY_H
-#define REGISTRY_H
+#ifndef SETTINGS_H
+#define SETTINGS_H
 
 #ifndef ALWAYS_H
 #include "always.h"
@@ -53,13 +53,13 @@ class INIClass;
 /*
 **
 */
-class	RegistryClass {
+class	SettingsClass {
 public:
 	static bool Exists(const char* sub_key);
 
 	// Constructor & Destructor
-	RegistryClass( const char * sub_key, bool create = true );
-	~RegistryClass( void );
+	SettingsClass( const char * sub_key, bool create = true );
+	~SettingsClass( void );
 
 	bool	Is_Valid( void )		{ return IsValid; }
 
@@ -95,33 +95,28 @@ public:
 
 	// Delete support
 	void	Delete_Value( const char * name);
-	void	Deleta_All_Values( void );
+	void	Delete_All_Values( void );
 
 	// Read only.
 	static void Set_Read_Only(bool set) {IsLocked = set;}
 
 	//
-	// Bulk registry operations. BE VERY VERY CAREFUL USING THESE
+	// Bulk settings operations. BE VERY VERY CAREFUL USING THESE
 	//
-	static void Delete_Registry_Tree(char *path);
-	static void Load_Registry(const char *filename, char *old_path, char *new_path);
-	static void Save_Registry(const char *filename, char *path);
+	static void Delete_Settings_Tree(char *path);
+	static void Load_Settings(const char *filename, char *old_path, char *new_path);
+	static void Save_Settings(const char *filename, char *path);
 
 
 private:
 
-	static void Delete_Registry_Values(HKEY key);
-	static void Save_Registry_Tree(char *path, INIClass *ini);
-	static void Save_Registry_Values(HKEY key, char *path, INIClass *ini);
-
-
-	int	Key;
+	StringClass Section;
 	bool	IsValid;
 
 	//
-	// Use this to make the registry 'read only'. Useful for running multiple copies of the app.
+	// Use this to make the settings 'read only'. Useful for running multiple copies of the app.
 	//
 	static bool IsLocked;
 };
 
-#endif // REGISTRY_H
+#endif // SETTINGS_H

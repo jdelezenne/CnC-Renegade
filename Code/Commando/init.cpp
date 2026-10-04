@@ -35,6 +35,8 @@
  *   Commando_Assert_Handler -- Commando callback function for WWASSERT's                      *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
+#include "Platform/Paths.h"
+#include "Platform/Windows/Files.h"
 #include "init.h"
 #include "Platform/Platform.h"
 #include "debug.h"
@@ -94,7 +96,7 @@
 #include "playermanager.h"
 #include "teammanager.h"
 #include "stackdump.h"
-#include "registry.h"
+#include "Settings.h"
 #include "bandwidthgraph.h"
 #include "buildnum.h"
 #include "dx8wrapper.h"
@@ -150,9 +152,9 @@ const char *	MOVIES_SUBDIRECTORY		= "DATA\\MOVIES\\";
 TextDebugDisplayHandlerClass				TextDisplayHandler;
 
 /*
-** Used to modify where game entries are kept in the registry.
+** Used to modify where game entries are kept in the settings.
 */
-extern char DefaultRegistryModifier[1024];
+extern char DefaultSettingsModifier[1024];
 
 /*
 ** Static global lod settings for particles
@@ -200,7 +202,7 @@ void Append_To_Assert_History(const char * message)
 		return;
 	}
 
-	FILE * file = ::fopen("_asserts.txt", "at");
+	FILE * file = Platform::OpenStream("_asserts.txt", "at");
    if (file == NULL) {
 		return;
 	}
@@ -230,7 +232,7 @@ void Append_To_Assert_History(const char * message)
 	//
 	// File size
 	//
-	HANDLE hfile = ::CreateFile(full_filename, 0, 0, NULL, OPEN_EXISTING, 0L, NULL);
+	HANDLE hfile = Platform::OpenFile(full_filename, 0, 0, NULL, OPEN_EXISTING, 0L, NULL);
 	if (hfile != INVALID_HANDLE_VALUE)
 	{
 		DWORD file_size = ::GetFileSize(hfile, NULL);
@@ -290,15 +292,15 @@ void Commando_Assert_Handler(const char * message)
 	//
 	//
 	//    IF YOU WANT TO DISABLE CERTAIN ACTIONS HERE, USE
-	//    THE REGISTRY SWITCHES!!!!!!!!!!!!!
+	//    THE SETTINGS SWITCHES!!!!!!!!!!!!!
 	//
 	//
 #ifdef WWDEBUG
 	Copy_Logs(DebugManager::Get_Version_Number());
 #endif // WWDEBUG
-	RegistryClass registry( APPLICATION_SUB_KEY_NAME_DEBUG );
-	if ( registry.Is_Valid() ) {
-		registry.Set_Int( VALUE_NAME_APPLICATION_CRASH_VERSION, 0 );
+	SettingsClass settings( APPLICATION_SETTINGS_SECTION_DEBUG );
+	if ( settings.Is_Valid() ) {
+		settings.Set_Int( VALUE_NAME_APPLICATION_CRASH_VERSION, 0 );
 
 	}
 
@@ -327,7 +329,7 @@ void Commando_Assert_Handler(const char * message)
 		if (cDevOptions::ShutdownInputOnAssert.Is_True()) {
 			//
 			// This input shutdown is to help those of us who still have the
-			// DirectInput / debugger problem. For some of us the registry fix
+			// DirectInput / debugger problem. For some of us the settings fix
 			// doesn't help.
 			//
 			Input::Shutdown();
@@ -418,22 +420,7 @@ LoggingFileFactoryClass		LoggingFileFactory;
 */
 void	Construct_Directory_Structure(void)
 {
-	//
-	//	Lookup the path of the executable
-	//
-	char path[MAX_PATH] = { 0 };
-	::GetModuleFileName (NULL, path, sizeof (path));
-
-	//
-	//	Strip off the filename
-	//
-	char *filename = ::strrchr (path, '\\');
-	if (filename != NULL) {
-		filename[1] = 0;
-	}
-
-	StringClass data_dir(path,true);
-	data_dir += "data";
+	StringClass data_dir(Platform::UserPath("data").c_str(),true);
 
 	StringClass save_dir(data_dir + "\\save",true);
 	StringClass config_dir(data_dir + "\\config",true);
@@ -442,21 +429,21 @@ void	Construct_Directory_Structure(void)
 	//	Create the data directory if necessary
 	//
 	if (GetFileAttributes (data_dir) == 0xFFFFFFFF) {
-		::CreateDirectory (data_dir, NULL);
+		Platform::MakeDirectory(data_dir, NULL);
 	}
 
 	//
 	//	Create the save directory if necessary
 	//
 	if (GetFileAttributes (save_dir) == 0xFFFFFFFF) {
-		::CreateDirectory (save_dir, NULL);
+		Platform::MakeDirectory(save_dir, NULL);
 	}
 
 	//
 	//	Create the config directory if necessary
 	//
 	if (GetFileAttributes (config_dir) == 0xFFFFFFFF) {
-		::CreateDirectory (config_dir, NULL);
+		Platform::MakeDirectory(config_dir, NULL);
 	}
 
 
@@ -467,13 +454,13 @@ static bool Verify_Log_Directory(const StringClass& folder)
 {
 	if (GetFileAttributes(folder)!=0xffffffff) return true;
 	//HANDLE file;
-	//file = CreateFile(folder, 0, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+	//file = Platform::OpenFile(folder, 0, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 	//if (file!=INVALID_HANDLE_VALUE) {
 	//	CloseHandle(file);
 	//	return true;
 	//}
 
-	if (CreateDirectory(folder,NULL)) {
+	if (Platform::MakeDirectory(folder,NULL)) {
 		return true;
 	}
 	if (GetLastError() == ERROR_ALREADY_EXISTS) {
@@ -492,7 +479,7 @@ static bool Create_Log_File_Name(const StringClass& folder, StringClass& filenam
 	for (int i=0;i<999;++i) {
 		HANDLE file;
 		filename.Format("%s\\%3.3d%s",folder,i,original);
-		file = CreateFile(filename, GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
+		file = Platform::OpenFile(filename, GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
 		if (file!=INVALID_HANDLE_VALUE) {
 			CloseHandle(file);
 			return true;
@@ -511,7 +498,7 @@ static void Copy_Log(const StringClass& folder,const char* filename,bool use_num
 			if (Create_Log_File_Name(folder,log_file_name,use_numbering)) {
 				DWORD written;
 				HANDLE file;
-				file = CreateFile(log_file_name, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+				file = Platform::OpenFile(log_file_name, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 				if (INVALID_HANDLE_VALUE != file) {
 					raw_log_file.Open();
 					unsigned char* memory=new unsigned char[size];
@@ -544,9 +531,9 @@ public:
 		DWORD size = sizeof(computer_name);
 		::GetComputerName(computer_name, &size);
 
-		RegistryClass reg(APPLICATION_SUB_KEY_NAME_DEBUG);
+		SettingsClass reg(APPLICATION_SETTINGS_SECTION_DEBUG);
 		char path[MAX_PATH];
-		reg.Get_String("LogPath", path, sizeof(path), "\\\\tanya\\game\\projects\\renegade\\_error_logs");
+		reg.Get_String("LogPath", path, sizeof(path), Platform::UserPath("Logs").c_str());
 		strcat(path, "\\");
 
 		StringClass folder_name(0,true);
@@ -565,9 +552,9 @@ public:
 
 void Copy_Logs(unsigned version)
 {
-	RegistryClass registry( APPLICATION_SUB_KEY_NAME_DEBUG );
-	if ( registry.Is_Valid() ) {
-		if (registry.Get_Int( VALUE_NAME_DISABLE_LOG_COPYING,0 )) return;
+	SettingsClass settings( APPLICATION_SETTINGS_SECTION_DEBUG );
+	if ( settings.Is_Valid() ) {
+		if (settings.Get_Int( VALUE_NAME_DISABLE_LOG_COPYING,0 )) return;
 	}
 
 	if (CopyThread.Is_Running()) return;
@@ -588,9 +575,9 @@ void Application_Exception_Callback(void)
 #ifdef WWDEBUG
 	Copy_Logs(DebugManager::Get_Version_Number());
 #endif // WWDEBUG
-	RegistryClass registry( APPLICATION_SUB_KEY_NAME_DEBUG );
-	if ( registry.Is_Valid() ) {
-		registry.Set_Int( VALUE_NAME_APPLICATION_CRASH_VERSION, 0 );
+	SettingsClass settings( APPLICATION_SETTINGS_SECTION_DEBUG );
+	if ( settings.Is_Valid() ) {
+		settings.Set_Int( VALUE_NAME_APPLICATION_CRASH_VERSION, 0 );
 	}
 }
 
@@ -695,15 +682,15 @@ bool Game_Init(void)
 {
 	WWMEMLOG(MEM_GAMEINIT);
 
-	// Set registry key to 1 for the duration of the init. This way we know if the program crashed while the init.
-	RegistryClass registry( APPLICATION_SUB_KEY_NAME_DEBUG );
-	if ( registry.Is_Valid() ) {
-		registry.Set_Int( VALUE_NAME_GAME_INITIALIZATION_IN_PROGRESS, 1 );
-		unsigned crash_version=registry.Get_Int( VALUE_NAME_APPLICATION_CRASH_VERSION, 0 );
+	// Set settings key to 1 for the duration of the init. This way we know if the program crashed while the init.
+	SettingsClass settings( APPLICATION_SETTINGS_SECTION_DEBUG );
+	if ( settings.Is_Valid() ) {
+		settings.Set_Int( VALUE_NAME_GAME_INITIALIZATION_IN_PROGRESS, 1 );
+		unsigned crash_version=settings.Get_Int( VALUE_NAME_APPLICATION_CRASH_VERSION, 0 );
 #ifdef WWDEBUG
 		if (crash_version) Copy_Logs(crash_version);
 #endif // WWDEBUG
-		registry.Set_Int( VALUE_NAME_APPLICATION_CRASH_VERSION, 0 );
+		settings.Set_Int( VALUE_NAME_APPLICATION_CRASH_VERSION, 0 );
 	}
 
 	//
@@ -715,7 +702,7 @@ bool Game_Init(void)
 	//	Initialize our debugging framework
 	//
 	DebugManager::Init();
-  	DebugManager::Load_Registry_Settings( APPLICATION_SUB_KEY_NAME_DEBUG );
+	DebugManager::Load_Settings( APPLICATION_SETTINGS_SECTION_DEBUG );
 	WWDebug_Install_Assert_Handler(Commando_Assert_Handler);
 	BuildInfoClass::Log_Build_Info();
 
@@ -795,7 +782,7 @@ bool Game_Init(void)
 	// Create an instance of the sound library
 	//
 	new WWAudioClass(ConsoleBox.Is_Exclusive());
-	WWAudioClass::Get_Instance()->Initialize( APPLICATION_SUB_KEY_NAME_SOUND );
+	WWAudioClass::Get_Instance()->Initialize( APPLICATION_SETTINGS_SECTION_SOUND );
 	WWAudioClass::Get_Instance()->Set_File_Factory( &AudioFileFactory );
 	// Install text callback
 	WWAudioClass::Get_Instance()->Register_Text_Callback(AudioTextCallback,0);
@@ -845,13 +832,13 @@ bool Game_Init(void)
 		scene->Set_Max_Simultaneous_Shadows(0);
 		DazzleRenderObjClass::Enable_Dazzle_Rendering(false);
 	} else {
-		if ( WW3D::Registry_Load_Render_Device( APPLICATION_SUB_KEY_NAME_RENDER, true ) != WW3D_ERROR_OK ) {
-			WWDEBUG_SAY(("WW3D::Registry_Load_Render_Device Failed!\r\n"));
+		if ( WW3D::Settings_Load_Render_Device( APPLICATION_SETTINGS_SECTION_RENDER, true ) != WW3D_ERROR_OK ) {
+			WWDEBUG_SAY(("WW3D::Settings_Load_Render_Device Failed!\r\n"));
 			return false;
 		}
 
-		if ( WW3D::Registry_Save_Render_Device( APPLICATION_SUB_KEY_NAME_RENDER ) != WW3D_ERROR_OK ) {
-			WWDEBUG_SAY(("WW3D::Registry_Save_Render_Device Failed!\r\n"));
+		if ( WW3D::Settings_Save_Render_Device( APPLICATION_SETTINGS_SECTION_RENDER ) != WW3D_ERROR_OK ) {
+			WWDEBUG_SAY(("WW3D::Settings_Save_Render_Device Failed!\r\n"));
 			return false;
 		}
 		WW3D::Enable_Static_Sort_Lists (true);
@@ -908,7 +895,7 @@ bool Game_Init(void)
 	bool dinput_avail = (ConsoleBox.Is_Exclusive()) ? false : true;
 
 	Input::Init(dinput_avail);
-	Input::Load_Registry( APPLICATION_SUB_KEY_NAME_CONTROLS );
+	Input::Load_Settings( APPLICATION_SETTINGS_SECTION_CONTROLS );
 	InputConfigMgrClass::Initialize();
 
 	//
@@ -1020,9 +1007,9 @@ bool Game_Init(void)
 
 
 
-	if ( registry.Is_Valid() ) {
-		registry.Set_Int( VALUE_NAME_GAME_INITIALIZATION_IN_PROGRESS, 0 );
-		registry.Set_Int( VALUE_NAME_APPLICATION_CRASH_VERSION, DebugManager::Get_Version_Number() );
+	if ( settings.Is_Valid() ) {
+		settings.Set_Int( VALUE_NAME_GAME_INITIALIZATION_IN_PROGRESS, 0 );
+		settings.Set_Int( VALUE_NAME_APPLICATION_CRASH_VERSION, DebugManager::Get_Version_Number() );
 	}
 
 
@@ -1086,7 +1073,7 @@ bool Game_Init(void)
 
 
 /***********************************************************************************************
- * Build_Registry_Location_String -- Get a complete path to a registry location                *
+ * Build_Settings_Section -- Get a complete path to a settings location                *
  *                                                                                             *
  *                                                                                             *
  *                                                                                             *
@@ -1101,28 +1088,28 @@ bool Game_Init(void)
  * HISTORY:                                                                                    *
  *   11/9/2001 3:39PM ST : Created                                                             *
  *=============================================================================================*/
-char *Build_Registry_Location_String(const char *base, const char *modifier, const char *sub)
+char *Build_Settings_Section(const char *base, const char *modifier, const char *sub)
 {
-	static char _whole_registry_string[1024];
+	static char _whole_settings_string[1024];
 
 	WWASSERT(base != NULL);
 	WWASSERT(sub != NULL);
 
 
 	if (modifier == NULL) {
-		modifier = DefaultRegistryModifier;
+		modifier = DefaultSettingsModifier;
 	}
 
 	if (base && *base != 0) {
-		strcpy(_whole_registry_string, base);
+		strcpy(_whole_settings_string, base);
 	}
 	if (modifier && *modifier != 0) {
-		strcat(_whole_registry_string, "\\");
-		strcat(_whole_registry_string, modifier);
+		strcat(_whole_settings_string, "/");
+		strcat(_whole_settings_string, modifier);
 	}
 	if (sub && *sub != 0) {
-		strcat(_whole_registry_string, "\\");
-		strcat(_whole_registry_string, sub);
+		strcat(_whole_settings_string, "/");
+		strcat(_whole_settings_string, sub);
 	}
-	return(_whole_registry_string);
+	return(_whole_settings_string);
 }

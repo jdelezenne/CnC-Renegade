@@ -46,20 +46,20 @@ enum
 
 /*
 #ifdef MULTIPLAYERDEMO
-const char *RENEGADE_SUB_KEY_NAME_AUDIO = "Software\\Westwood\\RenegadeMPDemo\\Sound";
+const char *RENEGADE_SETTINGS_SECTION_AUDIO = "RenegadeMPDemo\\Sound";
 #else
-const char *RENEGADE_SUB_KEY_NAME_AUDIO = "Software\\Westwood\\Renegade\\Sound";
+const char *RENEGADE_SETTINGS_SECTION_AUDIO = "Renegade\\Sound";
 #endif // MULTIPLAYERDEMO
 */
 
 #if	defined(FREEDEDICATEDSERVER)
-const char *RENEGADE_SUB_KEY_NAME_AUDIO = "Software\\Westwood\\RenegadeFDS\\Sound";
+const char *RENEGADE_SETTINGS_SECTION_AUDIO = "RenegadeFDS\\Sound";
 #elif defined(MULTIPLAYERDEMO)
-const char *RENEGADE_SUB_KEY_NAME_AUDIO = "Software\\Westwood\\RenegadeMPDemo\\Sound";
+const char *RENEGADE_SETTINGS_SECTION_AUDIO = "RenegadeMPDemo\\Sound";
 #elif defined(BETACLIENT)
-const char *RENEGADE_SUB_KEY_NAME_AUDIO = "Software\\Westwood\\RenegadeBeta\\Sound";
+const char *RENEGADE_SETTINGS_SECTION_AUDIO = "RenegadeBeta\\Sound";
 #else
-const char *RENEGADE_SUB_KEY_NAME_AUDIO = "Software\\Westwood\\Renegade\\Sound";
+const char *RENEGADE_SETTINGS_SECTION_AUDIO = "Renegade\\Sound";
 #endif
 
 /////////////////////////////////////////////////////////////////////////////
@@ -170,7 +170,7 @@ AudioConfigDialogClass::OnInitDialog (void)
 	WWAudioClass::Get_Instance ()->Initialize ();
 	
 	//
-	//	Read the audio library's settings from the registry
+	//	Read the audio library's settings from the settings
 	//
 	StringClass device_name;
 	bool	is_stereo 	  = true;
@@ -186,7 +186,7 @@ AudioConfigDialogClass::OnInitDialog (void)
 	float	cinematic_vol = 1.0F;
 	int	speaker_type  = 0;
 
-	WWAudioClass::Get_Instance ()->Load_From_Registry (RENEGADE_SUB_KEY_NAME_AUDIO,
+	WWAudioClass::Get_Instance ()->Load_From_Settings (RENEGADE_SETTINGS_SECTION_AUDIO,
 												device_name, is_stereo, bits, hertz, sound_on,
 												music_on, dialog_on, cinematic_on, sound_vol,
 												music_vol, dialog_vol, cinematic_vol, speaker_type);
@@ -437,9 +437,9 @@ AudioConfigDialogClass::Apply_Changes (void)
 	speaker_type = SendDlgItemMessage (IDC_SPEAKER_COMBO, CB_GETCURSEL);
 
 	//
-	//	Store these settings in the registry
+	//	Store these settings in the settings
 	//
-	WWAudioClass::Get_Instance ()->Save_To_Registry (RENEGADE_SUB_KEY_NAME_AUDIO,
+	WWAudioClass::Get_Instance ()->Save_To_Settings (RENEGADE_SETTINGS_SECTION_AUDIO,
 												device_name, is_stereo, bits, hertz,
 												sound_on, music_on, dialog_on, cinematic_on,
 												sound_vol, music_vol, dialog_vol, cinematic_vol, speaker_type);

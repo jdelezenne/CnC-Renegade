@@ -200,7 +200,7 @@ public:
 	//	EAX, then D3DSound, then whatever driver is first available.
 	//
 	void					Initialize (bool stereo = true, int bits = 16, int hertz = 44100);
-	void					Initialize (const char *registry_subkey_name);
+	void					Initialize (const char *settings_subkey_name);
 	void					Shutdown (void);
 
 	//////////////////////////////////////////////////////////////////////
@@ -255,12 +255,12 @@ public:
 	int					Get_Speaker_Type (void) const;
 
 	//////////////////////////////////////////////////////////////////////
-	//	Registry settings
+	//	Settings settings
 	//////////////////////////////////////////////////////////////////////
-	bool					Load_From_Registry (const char *subkey_name);
-	bool					Load_From_Registry (const char *subkey_name, StringClass &device_name, bool &is_stereo, int &bits, int &hertz, bool &sound_enabled, bool &music_enabled, bool &dialog_enabled, bool &cinematic_sound_enabled, float &sound_volume, float &music_volume, float &dialog_volume, float &cinematic_volume, int &speaker_types);
-	bool					Save_To_Registry (const char *subkey_name);
-	bool					Save_To_Registry (const char *subkey_name, const StringClass &device_name, bool is_stereo, int bits, int hertz, bool sound_enabled, bool music_enabled, bool dialog_enabled, bool cinematic_sound_enabled, float sound_volume, float music_volume, float dialog_volume, float cinematic_volume, int speaker_type);
+	bool					Load_From_Settings (const char *subkey_name);
+	bool					Load_From_Settings (const char *subkey_name, StringClass &device_name, bool &is_stereo, int &bits, int &hertz, bool &sound_enabled, bool &music_enabled, bool &dialog_enabled, bool &cinematic_sound_enabled, float &sound_volume, float &music_volume, float &dialog_volume, float &cinematic_volume, int &speaker_types);
+	bool					Save_To_Settings (const char *subkey_name);
+	bool					Save_To_Settings (const char *subkey_name, const StringClass &device_name, bool is_stereo, int bits, int hertz, bool sound_enabled, bool music_enabled, bool dialog_enabled, bool cinematic_sound_enabled, float sound_volume, float music_volume, float dialog_volume, float cinematic_volume, int speaker_type);
 
 	//////////////////////////////////////////////////////////////////////
 	//	Default settings

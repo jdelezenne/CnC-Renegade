@@ -419,7 +419,7 @@ void LoginInfo::Remember(bool store)
 			StringClass pass(64, true);
 			mPassword.Convert_To(pass);
 
-			// Store login information into the registry
+			// Store login information into the settings
 			StoreLogin(name.Peek_Buffer(), pass.Peek_Buffer(), mIsPasswordEncrypted, mLocale);
 			}
 		}

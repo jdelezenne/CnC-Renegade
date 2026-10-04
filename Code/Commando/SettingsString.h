@@ -17,40 +17,36 @@
 */
 
 //
-// Filename:     regbool.h
+// Filename:     SettingsString.h
 // Author:       Tom Spencer-Smith
 // Date:         Dec 1998
-// Description:  
+// Description:
 //
 //-----------------------------------------------------------------------------
 #if defined(_MSV_VER)
 #pragma once
 #endif
 
-#ifndef REGBOOL_H
-#define REGBOOL_H
+#ifndef REGSTRING_H
+#define REGSTRING_H
 
 #include "bittype.h"
 
 //-----------------------------------------------------------------------------
-class cRegistryBool
+class cSettingsString
 {
 	public:
-      cRegistryBool(LPCSTR registry_location, LPCSTR key_name, 
-			bool initial_value = false);
+      cSettingsString(LPCSTR settings_section, LPCSTR key_name, LPCSTR initial_value);
 
-      bool Toggle(void);
-      bool Set(bool value);
-      bool Get(void) const          {return Value == 1;}
-      bool Is_True(void) const      {return Value == 1;}
-      bool Is_False(void) const     {return Value == 0;}
+      void Set(LPCSTR value);
+      LPCSTR Get(void) const {return Value;}
 
 	private:
 
-      int Value;
-      char RegistryLocation[400];
+      char Value[200];
+      char SettingsSection[400];
       char KeyName[100];
 };
 
 //-----------------------------------------------------------------------------
-#endif // REGBOOL_H
+#endif // REGSTRING_H

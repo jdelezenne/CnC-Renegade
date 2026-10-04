@@ -41,7 +41,7 @@
 #include "listctrl.h"
 #include "dlgwolautostart.h"
 #include "menubackdrop.h"
-#include "registry.h"
+#include "Settings.h"
 #include "_globals.h"
 
 /***********************************************************************************************
@@ -85,7 +85,7 @@ void AutoRestartProgressDialogClass::On_Init_Dialog (void)
 	/*
 	** Create the backdrop if necessary
 	*/
-	RegistryClass reg(APPLICATION_SUB_KEY_NAME_OPTIONS);
+	SettingsClass reg(APPLICATION_SETTINGS_SECTION_OPTIONS);
 	if (reg.Get_Int("DisableMenuAnim", 0) == 0) {
 		if (Get_BackDrop ()->Peek_Model () == NULL) {
 			Get_BackDrop ()->Set_Model ("IF_BACK01");

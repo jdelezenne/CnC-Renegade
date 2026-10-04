@@ -52,7 +52,7 @@
 
 #include "bandwidthcheck.h"
 #include "autostart.h"
-#include "registry.h"
+#include "Settings.h"
 #include "_globals.h"
 #include "useroptions.h"
 #include "translatedb.h"
@@ -224,9 +224,9 @@ const char *BandwidthCheckerClass::Get_Ping_Server_Name(void)
 	const char *server_name = DefaultServerName;
 
 	/*
-	** See if there are ping servers in the registry from a previous run.
+	** See if there are ping servers in the settings from a previous run.
 	*/
-	RegistryClass reg(APPLICATION_SUB_KEY_NAME_SERVER_LIST);
+	SettingsClass reg(APPLICATION_SETTINGS_SECTION_SERVER_LIST);
 	WWASSERT(list.Count() == 0);
 	reg.Get_Value_List(list);
 	if (list.Count() > 0) {
@@ -322,10 +322,10 @@ void BandwidthCheckerClass::Check(void)
 	int failure_code;
 
 	/*
-	** If we are auto starting then just use the previous settings from the registry.
+	** If we are auto starting then just use the previous settings from the settings.
 	*/
 	if (AutoRestart.Is_Active()) {
-		RegistryClass reg(APPLICATION_SUB_KEY_NAME_BANDTEST);
+		SettingsClass reg(APPLICATION_SETTINGS_SECTION_BANDTEST);
 		int up = reg.Get_Int("Up", 0);
 		int down = reg.Get_Int("Down", up);
 		UpstreamBandwidth = up;
@@ -395,7 +395,7 @@ void BandwidthCheckerClass::Check(void)
 		/*
 		** Call the .dll function to do the actual detection.
 		*/
-		UpstreamBandwidth = Detect_Bandwidth(ntohl(address.sin_addr.s_addr), 0, 2, failure_code, DownstreamBandwidth, BANDTEST_API_VERSION, &settings, APPLICATION_SUB_KEY_NAME_BANDTEST);
+		UpstreamBandwidth = Detect_Bandwidth(ntohl(address.sin_addr.s_addr), 0, 2, failure_code, DownstreamBandwidth, BANDTEST_API_VERSION, &settings, APPLICATION_SETTINGS_SECTION_BANDTEST);
 
 		/*
 		** If we failed due to a missing final ping then try again with fewer packets and no retries.

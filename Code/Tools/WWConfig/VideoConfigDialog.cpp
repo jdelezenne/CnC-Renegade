@@ -156,7 +156,7 @@ VideoConfigDialogClass::OnInitDialog (void)
 	AssetStatusClass::Peek_Instance()->Enable_Reporting (false);
 
 	//
-	//	Load the render device settings from the registry
+	//	Load the render device settings from the settings
 	//
 	char device_name[256] = { 0 };
 	int texture_depth = 0;
@@ -164,7 +164,7 @@ VideoConfigDialogClass::OnInitDialog (void)
 	int height = 0;
 	int bit_depth = 0;
 	int windowed = 0;
-	if (WW3D::Registry_Load_Render_Device (RENEGADE_SUB_KEY_NAME_RENDER, device_name, 256,
+	if (WW3D::Settings_Load_Render_Device (RENEGADE_SETTINGS_SECTION_RENDER, device_name, 256,
 					width, height, bit_depth, windowed, texture_depth))
 	{
 		if (width != -1) {
@@ -644,9 +644,9 @@ void
 VideoConfigDialogClass::Apply_Changes (void)
 {
 	//
-	//	Save the changes to the registry
+	//	Save the changes to the settings
 	//
-	WW3D::Registry_Save_Render_Device (RENEGADE_SUB_KEY_NAME_RENDER, CurrentDriverIndex,
+	WW3D::Settings_Save_Render_Device (RENEGADE_SETTINGS_SECTION_RENDER, CurrentDriverIndex,
 		CurrentWidth, CurrentHeight, CurrentBitDepth, CurrentIsWindowed, WW3D::Get_Texture_Bitdepth());
 	return ;
 }

@@ -16,8 +16,9 @@
 **	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "Platform/Windows/Files.h"
 #include "systeminfolog.h"
-#include "registry.h"
+#include "Settings.h"
 #include "timemgr.h"
 #include "debug.h"
 #include "playerdata.h"
@@ -33,18 +34,18 @@
 
 const unsigned NUM_GAMES_LOGGED=10;
 
-//#define	COMBAT_SUB_KEY_NAME_DEBUG				"Software\\Westwood\\Renegade\\Debug"
+//#define	COMBAT_SETTINGS_SECTION_DEBUG				"Renegade\\Debug"
 
 #if	defined(FREEDEDICATEDSERVER)
-#define	COMBAT_SUB_KEY_NAME_DEBUG				"Software\\Westwood\\RenegadeFDS\\Debug"
+#define	COMBAT_SETTINGS_SECTION_DEBUG				"RenegadeFDS\\Debug"
 #elif defined(MULTIPLAYERDEMO)
-#define	COMBAT_SUB_KEY_NAME_DEBUG				"Software\\Westwood\\RenegadeMPDemo\\Debug"
+#define	COMBAT_SETTINGS_SECTION_DEBUG				"RenegadeMPDemo\\Debug"
 #elif defined(BETACLIENT)
-#define	COMBAT_SUB_KEY_NAME_DEBUG				"Software\\Westwood\\RenegadeBeta\\Debug"
+#define	COMBAT_SETTINGS_SECTION_DEBUG				"RenegadeBeta\\Debug"
 #elif defined(BETASERVER)
-#define	COMBAT_SUB_KEY_NAME_DEBUG				"Software\\Westwood\\RenegadeBeta\\Debug"
+#define	COMBAT_SETTINGS_SECTION_DEBUG				"RenegadeBeta\\Debug"
 #else
-#define	COMBAT_SUB_KEY_NAME_DEBUG				"Software\\Westwood\\Renegade\\Debug"
+#define	COMBAT_SETTINGS_SECTION_DEBUG				"Renegade\\Debug"
 #endif
 
 
@@ -70,14 +71,14 @@ static unsigned TotalPlayingTime;
 static StringClass CurrentLevel;
 static StringClass CurrentString;
 
-static void Get_Latest_Game_String(RegistryClass& reg, int i, StringClass& string)
+static void Get_Latest_Game_String(SettingsClass& reg, int i, StringClass& string)
 {
 	StringClass keyname(0,true);
 	keyname.Format("%s%d",SYSTEM_INFO_LOG_LATEST_GAME,i+1);
 	reg.Get_String(keyname, string);
 }
 
-static void Set_Latest_Game_String(RegistryClass& reg, int i, const StringClass& string)
+static void Set_Latest_Game_String(SettingsClass& reg, int i, const StringClass& string)
 {
 	StringClass keyname(0,true);
 	keyname.Format("%s%d",SYSTEM_INFO_LOG_LATEST_GAME,i+1);
@@ -94,42 +95,42 @@ void SystemInfoLog::Set_State_Loading()
 	CurrentFPSCount=0;
 	CurrentLoadingTime=0;
 
-	RegistryClass registry( COMBAT_SUB_KEY_NAME_DEBUG );
-	if ( registry.Is_Valid() ) {
-		registry.Set_Int( SYSTEM_INFO_LOG_CURRENT_STATE, 1 );
+	SettingsClass settings( COMBAT_SETTINGS_SECTION_DEBUG );
+	if ( settings.Is_Valid() ) {
+		settings.Set_Int( SYSTEM_INFO_LOG_CURRENT_STATE, 1 );
 		StringClass string(0,true);
 		for (int i=NUM_GAMES_LOGGED-1;i>0;--i) {
-			Get_Latest_Game_String(registry,i-1,string);
-			Set_Latest_Game_String(registry,i,string);
+			Get_Latest_Game_String(settings,i-1,string);
+			Set_Latest_Game_String(settings,i,string);
 		}
 
 		Get_Final_String(CurrentString);
 		CurrentString+="Crashed while loading";
 
-		Set_Latest_Game_String(registry, 0, CurrentString );
+		Set_Latest_Game_String(settings, 0, CurrentString );
 	}
 }
 
 void SystemInfoLog::Set_Current_Level(const char* level_name)
 {
 	CurrentLevel=level_name;
-	RegistryClass registry( COMBAT_SUB_KEY_NAME_DEBUG );
-	if ( registry.Is_Valid() ) {
+	SettingsClass settings( COMBAT_SETTINGS_SECTION_DEBUG );
+	if ( settings.Is_Valid() ) {
 		Get_Final_String(CurrentString);
 		CurrentString+="Crashed while loading";
-		Set_Latest_Game_String(registry,0,CurrentString );
+		Set_Latest_Game_String(settings,0,CurrentString );
 
 	}
 }
 
 void SystemInfoLog::Set_State_Playing()
 {
-	RegistryClass registry( COMBAT_SUB_KEY_NAME_DEBUG );
-	if ( registry.Is_Valid() ) {
-		registry.Set_Int( SYSTEM_INFO_LOG_CURRENT_STATE, 2 );
+	SettingsClass settings( COMBAT_SETTINGS_SECTION_DEBUG );
+	if ( settings.Is_Valid() ) {
+		settings.Set_Int( SYSTEM_INFO_LOG_CURRENT_STATE, 2 );
 		Get_Final_String(CurrentString);
 		CurrentString+="Crashed while playing";
-		Set_Latest_Game_String(registry,0,CurrentString );
+		Set_Latest_Game_String(settings,0,CurrentString );
 	}
 	PlayingStartTime=TIMEGETTIME();
 }
@@ -162,27 +163,27 @@ void SystemInfoLog::Set_State_Exiting()
 		AvgFPS=CurrentTotalFPS*10/CurrentFPSCount;
 	}
 
-	RegistryClass registry( COMBAT_SUB_KEY_NAME_DEBUG );
-	if ( registry.Is_Valid() ) {
-		registry.Set_Int( SYSTEM_INFO_LOG_CURRENT_STATE, 3 );
+	SettingsClass settings( COMBAT_SETTINGS_SECTION_DEBUG );
+	if ( settings.Is_Valid() ) {
+		settings.Set_Int( SYSTEM_INFO_LOG_CURRENT_STATE, 3 );
 
 		Get_Final_String(CurrentString);
 		CurrentString+="Crashed while exiting.";
-		Set_Latest_Game_String(registry,0,CurrentString);
+		Set_Latest_Game_String(settings,0,CurrentString);
 	}
 }
 
 void SystemInfoLog::Reset_State()
 {
-	RegistryClass registry( COMBAT_SUB_KEY_NAME_DEBUG );
-	if ( registry.Is_Valid() ) {
-		int old_state=registry.Get_Int( SYSTEM_INFO_LOG_CURRENT_STATE);
-		registry.Set_Int( SYSTEM_INFO_LOG_CURRENT_STATE, 0 );
+	SettingsClass settings( COMBAT_SETTINGS_SECTION_DEBUG );
+	if ( settings.Is_Valid() ) {
+		int old_state=settings.Get_Int( SYSTEM_INFO_LOG_CURRENT_STATE);
+		settings.Set_Int( SYSTEM_INFO_LOG_CURRENT_STATE, 0 );
 		// If was exiting...
 		if (old_state==3) {
 			Get_Final_String(CurrentString);
 			CurrentString+="OK";
-			Set_Latest_Game_String(registry,0,CurrentString);
+			Set_Latest_Game_String(settings,0,CurrentString);
 		}
 	}
 	CurrentLevel="";
@@ -215,8 +216,8 @@ void SystemInfoLog::Record_Frame()
 
 void SystemInfoLog::Get_Log(StringClass& string)
 {
-	RegistryClass registry( COMBAT_SUB_KEY_NAME_DEBUG );
-	if ( registry.Is_Valid() ) {
+	SettingsClass settings( COMBAT_SETTINGS_SECTION_DEBUG );
+	if ( settings.Is_Valid() ) {
 		string.Format(
 			"Ten latest levels played:\r\n"
 			"%3s %5s %16s %6s %6s %6s %6s %8s %s\r\n",
@@ -233,7 +234,7 @@ void SystemInfoLog::Get_Log(StringClass& string)
 		StringClass tmp_string(0,true);
 
 		for (int i=0;i<NUM_GAMES_LOGGED;++i) {
-			Get_Latest_Game_String(registry,i,tmp_string);
+			Get_Latest_Game_String(settings,i,tmp_string);
 			StringClass tmp_string2(0,true);
 			tmp_string2.Format("%2d. ",i+1);
 			string+=tmp_string2;
@@ -297,7 +298,7 @@ void PlayerInfoLog::Append_To_Log(PlayerDataClass* data)
 	tmp+="\r\n";
 
 	DWORD written;
-	HANDLE file = CreateFile("history.txt", GENERIC_WRITE, 0, NULL, OPEN_ALWAYS,
+	HANDLE file = Platform::OpenFile("history.txt", GENERIC_WRITE, 0, NULL, OPEN_ALWAYS,
 			FILE_ATTRIBUTE_NORMAL, NULL);
 	if (INVALID_HANDLE_VALUE != file) {
 		SetFilePointer(file, 0, NULL, FILE_END);

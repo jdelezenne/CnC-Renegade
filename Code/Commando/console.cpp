@@ -60,7 +60,7 @@
 #include "smartgameobj.h"
 #include "playermanager.h"
 #include "_globals.h"
-#include "registry.h"
+#include "Settings.h"
 #include "phys3.h"
 #include "wolgmode.h"
 #include "devoptions.h"
@@ -137,7 +137,7 @@ void 	ConsoleGameModeClass::Init()
 
 	PerformanceSamplingActive = false;
 
-	Load_Registry_Keys();
+	Load_Settings_Keys();
 
 	ProfileIterator = NULL;
 }
@@ -147,7 +147,7 @@ void 	ConsoleGameModeClass::Init()
 */
 void 	ConsoleGameModeClass::Shutdown()
 {
-	Save_Registry_Keys();
+	Save_Settings_Keys();
 
 	WWASSERT( ConsoleGameModeClass::Instance == this );
 
@@ -156,36 +156,36 @@ void 	ConsoleGameModeClass::Shutdown()
 	ConsoleFunctionManager::Shutdown();
 }
 
-void ConsoleGameModeClass::Load_Registry_Keys(void)
+void ConsoleGameModeClass::Load_Settings_Keys(void)
 {
-//	Debug_Say(( "CombatGameModeClass::Load_Registry_Keys...\n" ));
-	RegistryClass * registry = new RegistryClass( APPLICATION_SUB_KEY_NAME_OPTIONS );
-	WWASSERT( registry );
-	if ( registry->Is_Valid() ) {
+//	Debug_Say(( "CombatGameModeClass::Load_Settings_Keys...\n" ));
+	SettingsClass * settings = new SettingsClass( APPLICATION_SETTINGS_SECTION_OPTIONS );
+	WWASSERT( settings );
+	if ( settings->Is_Valid() ) {
 
-      WW3D::Set_Screen_UV_Bias( registry->Get_Int( "ScreenUVBias", 1 ) != 0 );
+      WW3D::Set_Screen_UV_Bias( settings->Get_Int( "ScreenUVBias", 1 ) != 0 );
 
-      Get_Console()->Set_FPS_Active( registry->Get_Int( "FPS", 1 ) != 0 );
+      Get_Console()->Set_FPS_Active( settings->Get_Int( "FPS", 1 ) != 0 );
 	}
-	delete registry;
+	delete settings;
 }
 
-void ConsoleGameModeClass::Save_Registry_Keys(void)
+void ConsoleGameModeClass::Save_Settings_Keys(void)
 {
-//	Debug_Say(( "CombatGameModeClass::Save_Registry_Keys...\n"));
-	RegistryClass * registry = new RegistryClass( APPLICATION_SUB_KEY_NAME_OPTIONS );
-	WWASSERT( registry );
-	if ( registry->Is_Valid() ) {
-		registry->Set_Int( "ScreenUVBias", WW3D::Is_Screen_UV_Biased() );
+//	Debug_Say(( "CombatGameModeClass::Save_Settings_Keys...\n"));
+	SettingsClass * settings = new SettingsClass( APPLICATION_SETTINGS_SECTION_OPTIONS );
+	WWASSERT( settings );
+	if ( settings->Is_Valid() ) {
+		settings->Set_Int( "ScreenUVBias", WW3D::Is_Screen_UV_Biased() );
 
-//      registry->Set_Int( "TextureReduction", WW3D::Get_Texture_Reduction() );
-//      registry->Set_Int( "TextureThumbnail", WW3D::Get_Texture_Thumbnail_Mode() );
-//      registry->Set_Int( "TextureCompression", WW3D::Get_Texture_Compression_Mode() );
-//      registry->Set_Int( "NPatchesLevel", WW3D::Get_NPatches_Level() );
+//      settings->Set_Int( "TextureReduction", WW3D::Get_Texture_Reduction() );
+//      settings->Set_Int( "TextureThumbnail", WW3D::Get_Texture_Thumbnail_Mode() );
+//      settings->Set_Int( "TextureCompression", WW3D::Get_Texture_Compression_Mode() );
+//      settings->Set_Int( "NPatchesLevel", WW3D::Get_NPatches_Level() );
 
-      registry->Set_Int( "FPS", Get_Console()->Is_FPS_Active() );
+      settings->Set_Int( "FPS", Get_Console()->Is_FPS_Active() );
 	}
-	delete registry;
+	delete settings;
 }
 
 

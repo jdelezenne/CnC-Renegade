@@ -1,0 +1,35 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug",
+      "type": "cppvsdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/Binaries/Debug/RenegadeD.exe",
+      "cwd": "${config:renegade.gameDirectory}",
+      "args": [],
+      "environment": [
+        {
+          "name": "PATH",
+          "value": "${config:renegade.gameDirectory};${env:PATH}"
+        }
+      ],
+      "preLaunchTask": "Build Debug"
+    },
+    {
+      "name": "Release",
+      "type": "cppvsdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/Binaries/Release/Renegade.exe",
+      "cwd": "${config:renegade.gameDirectory}",
+      "args": [],
+      "environment": [
+        {
+          "name": "PATH",
+          "value": "${config:renegade.gameDirectory};${env:PATH}"
+        }
+      ],
+      "preLaunchTask": "Build Release"
+    }
+  ]
+}

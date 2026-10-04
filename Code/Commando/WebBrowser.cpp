@@ -33,6 +33,7 @@
 *
 ******************************************************************************/
 
+#include "Platform/Windows/Files.h"
 #include "always.h"
 
 #include "WebBrowser.h"
@@ -42,6 +43,7 @@
 #include <WWDebug\WWDebug.h>
 #include "win.h"
 #include "_globals.h"
+#include "Settings.h"
 
 WebBrowser* WebBrowser::_mInstance = NULL;
 
@@ -62,67 +64,8 @@ WebBrowser* WebBrowser::_mInstance = NULL;
 
 #ifdef _DEBUG
 bool WebBrowser::InstallPrerequisites(void)
-	{
-	// Check if the WOLBrowser component is installed by attempting to obtain
-	// the WOLBrowser class object. If we can get the class object then the
-	// component is already registered.
-	CComPtr<IClassFactory> factory;
-	HRESULT hr = CoGetClassObject(CLSID_WOLBrowser, CLSCTX_INPROC_SERVER, NULL,
-			IID_IClassFactory, (void**)&factory);
-
-	// If the component isn't registered then check for it in the run directory
-	// and register it if found.
-	if (FAILED(hr))
-		{
-		WWDEBUG_SAY(("WOLBrowser component not installed, attempting to locate in run directory\n"));
-
-		// Attempt to find the WOLBrowser server in the run directory.
-		char dllPath[512];
-		DWORD length = GetCurrentDirectory(sizeof(dllPath), dllPath);
-
-		if (length == 0)
-			{
-			WWDEBUG_SAY(("GetCurrentDirectory() failed!\n"));
-			Print_Win32Error(GetLastError());
-			return false;
-			}
-
-		WWDEBUG_SAY(("Registering WOLBrowser component\n"));
-		strcat(dllPath, "\\WolBrowser.dll");
-		bool success = RegisterCOMServer(dllPath);
-
-		if (!success)
-			{
-			WWDEBUG_SAY(("Failed to register WOLBrowser.dll!\n"));
-			::MessageBox(NULL, "WOLBrowser.dll not registered!\n\nDefaulting to external browser.",
-					"Renegade Warning!", MB_ICONWARNING|MB_OK);
-			return false;
-			}
-		}
-
-	// Attempt to open the URL key
-	HKEY key;
-	LONG result = RegOpenKeyEx(HKEY_LOCAL_MACHINE, APPLICATION_SUB_KEY_NAME_URL, 0, KEY_ALL_ACCESS, &key);
-
-	if (ERROR_SUCCESS != result)
-		{
-		WWDEBUG_SAY(("URL entry not in the registry\n"));
-		::MessageBox(NULL, "Embedded Browser prerequisite error!\n\nURL key not found.",
-				"Renegade Warning!", MB_ICONWARNING|MB_OK);
-
-		// Attempt to create the key.
-		LONG result = RegCreateKeyEx(HKEY_LOCAL_MACHINE, APPLICATION_SUB_KEY_NAME_URL, 0, NULL,
-			REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &key, NULL);
-
-		if (ERROR_SUCCESS != result)
-			{
-			WWDEBUG_SAY(("Failed to create URL entry in registry\n"));
-			::MessageBox(NULL, "Failed to create Embedded Browser URLS\n\nURL key not found.",
-					"Renegade Warning!", MB_ICONWARNING|MB_OK);
-			return false;
-			}
-
-		// Check for registry entries.
+{
+    SettingsClass settings(APPLICATION_SETTINGS_SECTION_URL);
 		struct URLEntry
 			{
 			const char* Name;
@@ -144,46 +87,13 @@ bool WebBrowser::InstallPrerequisites(void)
 			{NULL, NULL}
 			};
 
-		const char* valueName = urls[0].Name;
-		int index = 0;
-
-		while (valueName)
-			{
-			DWORD type;
-			char data[512];
-			DWORD size = sizeof(data);
-			result = RegQueryValueEx(key, valueName, NULL, &type, (LPBYTE)&data, &size);
-
-			// If the URL value is not found then add it.
-			const char* valueData = urls[index].Data;
-
-			if (ERROR_SUCCESS != result || (strcmp(valueData, data) != 0))
-				{
-				result = RegSetValueEx(key, valueName, NULL, REG_SZ, (CONST BYTE*)valueData,
-					(strlen(valueData) + 1));
-
-				if (ERROR_SUCCESS != result)
-					{
-					WWDEBUG_SAY(("Failed to create URL entry '%s' in registry\n", valueName));
-					char errorMsg[256];
-					sprintf(errorMsg, "Embedded Browser prerequisite error!\n\nURL key '%s'", valueName);
-					::MessageBox(NULL, errorMsg, "Renegade Warning!", MB_ICONWARNING|MB_OK);
-					break;
-					}
-				}
-
-			index++;
-			valueName = urls[index].Name;
-			}
-
-		RegCloseKey(key);
-		return (valueName == NULL);
-		}
-
-	RegCloseKey(key);
-
-	return true;
-	}
+    for (int index = 0; urls[index].Name; ++index) {
+        StringClass value;
+        settings.Get_String(urls[index].Name, value, urls[index].Data);
+        settings.Set_String(urls[index].Name, value);
+    }
+    return true;
+}
 #endif // _DEBUG
 
 
@@ -346,7 +256,7 @@ bool WebBrowser::FinalizeCreate(HWND window)
 			// Create the embedded browser component.
 			WWDEBUG_SAY(("WebBrowser: Creating WOLBrowser component\n"));
 
-			HRESULT hr = CoCreateInstance(CLSID_WOLBrowser, NULL, CLSCTX_INPROC_SERVER,
+			HRESULT hr = CreateCOMObjectFromLibrary("OnlineBrowser.dll", CLSID_WOLBrowser,
 					IID_IWOLBrowser, (void**)&mWOLBrowser);
 
 			if (FAILED(hr))
@@ -523,30 +433,11 @@ void WebBrowser::Hide(void)
 
 bool WebBrowser::RetrievePageURL(const char* page, char* url, int size)
 	{
-	HKEY key;
-	LONG result = RegOpenKeyEx(HKEY_LOCAL_MACHINE, APPLICATION_SUB_KEY_NAME_URL, 0, KEY_READ, &key);
-
-	if (result == ERROR_SUCCESS)
-		{
-		char valueName[64];
-		strcpy(valueName, page);
-
-		if (mWOLBrowser == NULL)
-			{
-			strcat(valueName, "X");
-			}
-
-		DWORD type;
-		DWORD sizeOfBuffer = size;
-		result = RegQueryValueEx(key, valueName, NULL, &type, (unsigned char*)url,
-				&sizeOfBuffer);
-
-		RegCloseKey(key);
-		}
-
-	WWASSERT(result == ERROR_SUCCESS && "RegtievePageURL() failed");
-
-	return (result == ERROR_SUCCESS);
+    SettingsClass settings(APPLICATION_SETTINGS_SECTION_URL);
+    StringClass valueName(page);
+    if (mWOLBrowser == NULL) valueName += "X";
+    settings.Get_String(valueName, url, size);
+    return url[0] != 0;
 	}
 
 
@@ -1040,77 +931,9 @@ STDMETHODIMP WebBrowser::OnRegisterLogin(const wchar_t* nick , const wchar_t* pa
 ******************************************************************************/
 
 bool WebBrowser::LaunchExternal(const char* url)
-	{
-	WWDEBUG_SAY(("WebBrowser: Launching external browser\n"));
-
-	// Just return if no URL specified
-	if (!url || (strlen(url) == 0))
-		{
-		return false;
-		}
-
-	// Create a temporary file with HTML content
-	char tempPath[MAX_PATH];
-	GetWindowsDirectory(tempPath, MAX_PATH);
-
-	char filename[MAX_PATH];
-	GetTempFileName(tempPath, "WWS", 0, filename);
-
-	char* extPtr = strrchr(filename, '.');
-	strcpy(extPtr, ".htm");
-
-	HANDLE file = CreateFile(filename, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
-			FILE_ATTRIBUTE_NORMAL, NULL);
-
-	WWASSERT(INVALID_HANDLE_VALUE != file && "Failed to create temporary HTML file.");
-
-	if (INVALID_HANDLE_VALUE == file)
-		{
-		return false;
-		}
-
-	// Write generic contents
-	const char* contents = "<title>ViewHTML</title>";
-	DWORD written;
-	WriteFile(file, contents, strlen(contents), &written, NULL);
-	CloseHandle(file);
-
-	// Find the executable that can launch this file
-	char exeName[MAX_PATH];
-	HINSTANCE hInst = FindExecutable(filename, NULL, exeName);
-	WWASSERT(((int)hInst > 32) && "Unable to find executable that will display HTML files.");
-
-	// Delete temporary file
-	DeleteFile(filename);
-
-	if ((int)hInst <= 32)
-		{
-		return false;
-		}
-
-	// Launch browser with specified URL
-	char commandLine[MAX_PATH];
-	sprintf(commandLine, "[open] %s", url);
-
-  STARTUPINFO startupInfo;
-	memset(&startupInfo, 0, sizeof(startupInfo));
-	startupInfo.cb = sizeof(startupInfo);
-
-	memset(&mProcessInfo, 0, sizeof(mProcessInfo));
-
-	BOOL createSuccess = CreateProcess(exeName, commandLine, NULL, NULL, FALSE,
-			0, NULL, NULL, &startupInfo, &mProcessInfo);
-
-	WWASSERT(createSuccess && "Failed to launch external WebBrowser.");
-
-	if (createSuccess)
-		{
-	  WaitForInputIdle(mProcessInfo.hProcess, 5000);
-		}
-
-	return (TRUE == createSuccess);
-	}
-
+{
+    return url && *url && reinterpret_cast<INT_PTR>(ShellExecuteA(NULL, "open", url, NULL, NULL, SW_SHOWNORMAL)) > 32;
+}
 
 /******************************************************************************
 *

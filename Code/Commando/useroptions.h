@@ -30,11 +30,11 @@
 #ifndef USEROPTIONS_H
 #define USEROPTIONS_H
 
-#include "regbool.h"
-#include "regint.h"
-#include "regfloat.h"
+#include "SettingsBool.h"
+#include "SettingsInt.h"
+#include "SettingsFloat.h"
 #include "boolean.h"
-#include "regstring.h"
+#include "SettingsString.h"
 #include "bandwidth.h"
 
 
@@ -56,33 +56,33 @@ class cUserOptions
 
 		static void Reread(void);
 
-		static cRegistryBool ShowNamesOnSoldier;
-		static cRegistryBool SkipQuitConfirmDialog;
-		static cRegistryBool SkipIngameQuitConfirmDialog;
-		static cRegistryBool CameraLockedToTurret;
-		static cRegistryBool PermitDiagLogging;
+		static cSettingsBool ShowNamesOnSoldier;
+		static cSettingsBool SkipQuitConfirmDialog;
+		static cSettingsBool SkipIngameQuitConfirmDialog;
+		static cSettingsBool CameraLockedToTurret;
+		static cSettingsBool PermitDiagLogging;
 
-		static cRegistryInt Sku;
+		static cSettingsInt Sku;
 
-		static cRegistryInt BandwidthBps;
-		static cRegistryInt BandwidthType;
+		static cSettingsInt BandwidthBps;
+		static cSettingsInt BandwidthType;
 
-		static cRegistryInt		GameSpyBandwidthType;
-		static cRegistryInt		PreferredGameSpyNic;
-		static cRegistryString	GameSpyNickname;
-		static cRegistryInt		GameSpyGamePort;
-		static cRegistryInt		GameSpyQueryPort;
-		static cRegistryInt		SplashCount;
-		static cRegistryBool	DoneClientBandwidthTest;
+		static cSettingsInt		GameSpyBandwidthType;
+		static cSettingsInt		PreferredGameSpyNic;
+		static cSettingsString	GameSpyNickname;
+		static cSettingsInt		GameSpyGamePort;
+		static cSettingsInt		GameSpyQueryPort;
+		static cSettingsInt		SplashCount;
+		static cSettingsBool	DoneClientBandwidthTest;
 
-		static cRegistryInt PreferredLanNic;
+		static cSettingsInt PreferredLanNic;
 
-		static cRegistryInt NetUpdateRate;
-		static cRegistryFloat ClientHintFactor;
-		static cRegistryFloat MaxFacingPenalty;
-		static cRegistryFloat IrrelevancePenalty;
+		static cSettingsInt NetUpdateRate;
+		static cSettingsFloat ClientHintFactor;
+		static cSettingsFloat MaxFacingPenalty;
+		static cSettingsFloat IrrelevancePenalty;
 
-		static cRegistryInt ResultsLogNumber;
+		static cSettingsInt ResultsLogNumber;
 
 	private:
 };
@@ -100,11 +100,11 @@ class cUserOptions
 
 
 /*
-		static cRegistryInt	GameListFilterMaxPing;
-		static cRegistryInt	GameListFilterMinPlayersPresent;
-		static cRegistryInt	GameListFilterMaxPlayersPresent;
-		static cRegistryInt	GameListFilterMaxPlayersPermitted;
-		static cRegistryBool	GameListFilterShowPrivateGames;
-		static cRegistryBool	GameListFilterShowOnlyDedicatedGames;
-		static cRegistryBool	GameListFilterShowOnlyGamesIRankFor;
+		static cSettingsInt	GameListFilterMaxPing;
+		static cSettingsInt	GameListFilterMinPlayersPresent;
+		static cSettingsInt	GameListFilterMaxPlayersPresent;
+		static cSettingsInt	GameListFilterMaxPlayersPermitted;
+		static cSettingsBool	GameListFilterShowPrivateGames;
+		static cSettingsBool	GameListFilterShowOnlyDedicatedGames;
+		static cSettingsBool	GameListFilterShowOnlyGamesIRankFor;
 */

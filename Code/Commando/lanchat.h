@@ -57,8 +57,8 @@ class cLanChat
       void						Accept_Actions(void);
       void						Refusal_Actions(void);
 
-      void						Load_Lan_Registry_Keys(void);
-      void						Save_Lan_Registry_Keys(void);
+      void						Load_Lan_Settings_Keys(void);
+      void						Save_Lan_Settings_Keys(void);
 
 		ChatLocationEnum		Get_Current_Location(void) {return CurrentLocation;}
 

@@ -38,7 +38,7 @@
 #include "autostart.h"
 //#include "dlgmplangametype.h"
 #include "gameinitmgr.h"
-#include "registry.h"
+#include "Settings.h"
 #include "_globals.h"
 #include "gamedata.h"
 #include "gameinitmgr.h"
@@ -70,12 +70,10 @@
 AutoRestartClass AutoRestart;
 
 /*
-** Registry entries.
+** Settings entries.
 */
-const char *AutoRestartClass::REG_VALUE_AUTO_RESTART_FLAG = "AutoRestartFlag";
-const char *AutoRestartClass::REG_VALUE_AUTO_RESTART_TYPE = "AutoRestartType";
-static const char *WINDOWS_SUB_KEY_RUN_ONCE = "Software\\Microsoft\\Windows\\CurrentVersion\\RunOnce\\";
-static const char *WINDOWS_SUB_KEY_RUN_ONCE_APP = "Renegade";
+const char *AutoRestartClass::SETTING_AUTO_RESTART_FLAG = "AutoRestartFlag";
+const char *AutoRestartClass::SETTING_AUTO_RESTART_TYPE = "AutoRestartType";
 
 /*
 ** Stupid extern for main loop exit.
@@ -128,9 +126,9 @@ void AutoRestartClass::Restart_Game(void)
 	if (RestartState == STATE_DONE) {
 		RestartState = STATE_FIRST;
 		CancelRequest = false;
-		RegistryClass registry (APPLICATION_SUB_KEY_NAME_WOLSETTINGS);
-		if (registry.Is_Valid()) {
-			GameMode = registry.Get_Int(REG_VALUE_AUTO_RESTART_TYPE, GameMode);
+		SettingsClass settings (APPLICATION_SETTINGS_SECTION_WOLSETTINGS);
+		if (settings.Is_Valid()) {
+			GameMode = settings.Get_Int(SETTING_AUTO_RESTART_TYPE, GameMode);
 		}
 		Set_Restart_Flag(false);
 	}
@@ -453,9 +451,9 @@ void AutoRestartClass::Think(void)
 
 			/*
 			int last_game_type = 0;
-			RegistryClass registry (APPLICATION_SUB_KEY_NAME_WOLSETTINGS);
-			if (registry.Is_Valid ()) {
-				last_game_type = registry.Get_Int(REG_VALUE_LAST_GAME_TYPE, last_game_type);
+			SettingsClass settings (APPLICATION_SETTINGS_SECTION_WOLSETTINGS);
+			if (settings.Is_Valid ()) {
+				last_game_type = settings.Get_Int(SETTING_LAST_GAME_TYPE, last_game_type);
 			}
 
 			last_game_type = min(last_game_type, NUM_GAME_TYPE_MENU_ENTRIES-1);
@@ -500,7 +498,7 @@ void AutoRestartClass::Think(void)
 			** Load alternate server settings if required.
 			*/
 			if (SlaveMaster.Am_I_Slave()) {
-				RegistryClass reg(APPLICATION_SUB_KEY_NAME_OPTIONS);
+				SettingsClass reg(APPLICATION_SETTINGS_SECTION_OPTIONS);
 				char file_name[MAX_PATH];
 				reg.Get_String("MultiplayerSettings", file_name, sizeof(file_name), "");
 				if (strlen(file_name)) {
@@ -877,9 +875,9 @@ void AutoRestartClass::ReceiveSignal(WolGameModeClass &game_mode)
  *=============================================================================================*/
 void AutoRestartClass::Set_Restart_Flag(bool enable)
 {
-	RegistryClass registry (APPLICATION_SUB_KEY_NAME_WOLSETTINGS);
-	if (registry.Is_Valid ()) {
-		registry.Set_Int(REG_VALUE_AUTO_RESTART_FLAG, enable ? 1 : 0);
+	SettingsClass settings (APPLICATION_SETTINGS_SECTION_WOLSETTINGS);
+	if (settings.Is_Valid ()) {
+		settings.Set_Int(SETTING_AUTO_RESTART_FLAG, enable ? 1 : 0);
 
 		GameModeClass *game_mode = GameModeManager::Find("WOL");
 		if (game_mode && game_mode->Is_Active()) {
@@ -892,49 +890,13 @@ void AutoRestartClass::Set_Restart_Flag(bool enable)
 		}
 
 		if (enable) {
-			registry.Set_Int(REG_VALUE_AUTO_RESTART_TYPE, GameMode);
+			settings.Set_Int(SETTING_AUTO_RESTART_TYPE, GameMode);
 			Set_Exit_On_Exception(true);
 		} else {
 			Set_Exit_On_Exception(false);
 		}
 
-		RegistryClass registry_too(WINDOWS_SUB_KEY_RUN_ONCE);
-		if (registry_too.Is_Valid()) {
 
-			if (enable) {
-				/*
-				** The the current path and build a path/file combo that points to the launcher.
-				*/
-				char path_to_exe[256];
-				char drive[_MAX_DRIVE];
-				char dir[_MAX_DIR];
-				char path[_MAX_PATH];
-				GetModuleFileName(ProgramInstance, path_to_exe, sizeof(path_to_exe));
-				_splitpath(path_to_exe, drive, dir, NULL, NULL);
-#ifdef FREEDEDICATEDSERVER
-				_makepath(path, drive, dir, "renegadeserver", "exe");
-#else  //FREEDEDICATEDSERVER
-				_makepath(path, drive, dir, "renegade", "exe");
-
-				char options[256];
-				options[0] = 0;
-				if (ServerSettingsClass::Is_Active()) {
-					sprintf(options, " /startserver=%s", ServerSettingsClass::Get_Settings_File_Name());
-				}
-
-				if (ConsoleBox.Is_Exclusive()) {
-					strcat(options, " /nodx");
-				}
-
-				strcat(path, options);
-#endif //FREEDEDICATEDSERVER
-				WWDEBUG_SAY(("Writing %s to RunOnce key\n", path));
-				registry_too.Set_String(WINDOWS_SUB_KEY_RUN_ONCE_APP, path);
-			} else {
-				WWDEBUG_SAY(("Removing RunOnce key\n"));
-				registry_too.Delete_Value(WINDOWS_SUB_KEY_RUN_ONCE_APP);
-			}
-		}
 	}
 }
 
@@ -942,7 +904,7 @@ void AutoRestartClass::Set_Restart_Flag(bool enable)
 
 
 /***********************************************************************************************
- * AutoRestartClass::Get_Restart_Flag -- Is a restart indicated by the registry?               *
+ * AutoRestartClass::Get_Restart_Flag -- Is a restart indicated by the settings?               *
  *                                                                                             *
  *                                                                                             *
  *                                                                                             *
@@ -959,9 +921,9 @@ bool AutoRestartClass::Get_Restart_Flag(void)
 {
 	bool flag = false;
 
-	RegistryClass registry (APPLICATION_SUB_KEY_NAME_WOLSETTINGS);
-	if (registry.Is_Valid()) {
-		int restart = registry.Get_Int(REG_VALUE_AUTO_RESTART_FLAG, 0);
+	SettingsClass settings (APPLICATION_SETTINGS_SECTION_WOLSETTINGS);
+	if (settings.Is_Valid()) {
+		int restart = settings.Get_Int(SETTING_AUTO_RESTART_FLAG, 0);
 		flag = restart ? true : false;
 	}
 	return(flag);

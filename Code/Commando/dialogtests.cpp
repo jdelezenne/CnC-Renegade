@@ -890,7 +890,7 @@ MPLanMenuClass::On_Command (int ctrl_id, int mesage_id, DWORD param)
 				WideStringClass wide_nick_name = edit_ctrl->Get_Text ();
 				if (wide_nick_name.Get_Length () > 0) {
 					cNetInterface::Set_Nickname(wide_nick_name);
-					PLC->Save_Lan_Registry_Keys ();
+					PLC->Save_Lan_Settings_Keys ();
 				}
 			}
 			break;

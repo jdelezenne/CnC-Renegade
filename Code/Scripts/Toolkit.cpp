@@ -35,6 +35,7 @@
 *
 ******************************************************************************/
 
+#include "Platform/Paths.h"
 #include "toolkit.h"
 #include "mission1.h"
 
@@ -96,7 +97,7 @@ DECLARE_SCRIPT(M00_Debug_Text_File_RMV, "Description=Object:string, Filename=Deb
 		current_time = time(NULL);
 		desc = Get_Parameter("Description");
 		filename = Get_Parameter("Filename");
-		file = fopen(filename, "wt");
+		file = Platform::OpenStream(filename, "wt");
 		
 		fprintf(file, "%s [ID %d] created.\n", desc, Commands->Get_ID(obj));
 	}

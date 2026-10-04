@@ -1,4 +1,6 @@
 add_library(ren_platform STATIC
+    SDL/Paths.cpp
+    Windows/Files.cpp
     SDL/Runtime.cpp
     Windows/NativeWindow.cpp)
 target_include_directories(ren_platform PUBLIC "${PROJECT_SOURCE_DIR}")

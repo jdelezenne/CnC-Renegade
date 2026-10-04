@@ -39,7 +39,7 @@
 #include <windows.h>
 #include "slavemaster.h"
 #include "wwdebug.h"
-#include "registry.h"
+#include "Settings.h"
 #include "_globals.h"
 #include "autostart.h"
 #include "ini.h"
@@ -69,12 +69,12 @@
 #define KEY_SLAVE_BANDWIDTH		"Bandwidth"
 #define KEY_SLAVE_PASSWORD			"Password"
 
-const char *RegistryFileName = "slave.ini";
+const char *SettingsFileName = "slave.ini";
 
 SlaveMasterClass SlaveMaster;
 
 
-extern char DefaultRegistryModifier[1024];
+extern char DefaultSettingsModifier[1024];
 
 
 /***********************************************************************************************
@@ -373,7 +373,7 @@ SlaveServerClass *SlaveMasterClass::Get_Slave(int index)
 
 
 /***********************************************************************************************
- * SlaveMasterClass::Save -- Save slave server info to registry                                *
+ * SlaveMasterClass::Save -- Save slave server info to settings                                *
  *                                                                                             *
  *                                                                                             *
  *                                                                                             *
@@ -388,7 +388,7 @@ SlaveServerClass *SlaveMasterClass::Get_Slave(int index)
  *=============================================================================================*/
 void SlaveMasterClass::Save(void)
 {
-	RegistryClass reg(APPLICATION_SUB_KEY_NAME_NET_SLAVE);
+	SettingsClass reg(APPLICATION_SETTINGS_SECTION_NET_SLAVE);
 	if (reg.Is_Valid()) {
 		reg.Set_Int(KEY_NUM_SLAVES, NumSlaveServers);
 	}
@@ -426,7 +426,7 @@ void SlaveMasterClass::Save(void)
 
 
 /***********************************************************************************************
- * SlaveMasterClass::Load -- Fetch slave server info from registry                             *
+ * SlaveMasterClass::Load -- Fetch slave server info from settings                             *
  *                                                                                             *
  *                                                                                             *
  *                                                                                             *
@@ -441,7 +441,7 @@ void SlaveMasterClass::Save(void)
  *=============================================================================================*/
 void SlaveMasterClass::Load(void)
 {
-	RegistryClass reg(APPLICATION_SUB_KEY_NAME_NET_SLAVE);
+	SettingsClass reg(APPLICATION_SETTINGS_SECTION_NET_SLAVE);
 	if (reg.Is_Valid()) {
 		NumSlaveServers = reg.Get_Int(KEY_NUM_SLAVES, 0);
 	}
@@ -560,10 +560,10 @@ bool SlaveMasterClass::Aquire_Slave(int index)
 	** Try the slaves record of his process ID. If it's not there, it can't have run yet.
 	*/
 	char slave_name[64];
-	sprintf(slave_name, "\\slave_%d", index);
-	strcpy(DefaultRegistryModifier, slave_name+1);
-	RegistryClass slave_reg(APPLICATION_SUB_KEY_NAME);
-	DefaultRegistryModifier[0] = 0;
+	sprintf(slave_name, "/slave_%d", index);
+	strcpy(DefaultSettingsModifier, slave_name+1);
+	SettingsClass slave_reg(APPLICATION_SETTINGS_SECTION);
+	DefaultSettingsModifier[0] = 0;
 	if (slave_reg.Is_Valid()) {
 		proc_id = slave_reg.Get_Int("ProcessId", proc_id);
 	}
@@ -572,7 +572,7 @@ bool SlaveMasterClass::Aquire_Slave(int index)
 	** Try our record of the slaves process ID.
 	*/
 	if (proc_id == 0) {
-		RegistryClass reg(APPLICATION_SUB_KEY_NAME_NET_SLAVE);
+		SettingsClass reg(APPLICATION_SETTINGS_SECTION_NET_SLAVE);
 		if (reg.Is_Valid()) {
 			char entry[128];
 			sprintf(entry, "%s%d", KEY_SLAVE_RUNNING_ID, index);
@@ -594,7 +594,7 @@ bool SlaveMasterClass::Aquire_Slave(int index)
 			GetWindowThreadProcessId(slave_window, &SlaveServers[index].ProcessInfo.dwProcessId);
 			WWDEBUG_SAY(("Slave found by HWND with process ID %d\n", SlaveServers[index].ProcessInfo.dwProcessId));
 
-			RegistryClass reg(APPLICATION_SUB_KEY_NAME_NET_SLAVE);
+			SettingsClass reg(APPLICATION_SETTINGS_SECTION_NET_SLAVE);
 			if (reg.Is_Valid()) {
 				char entry[128];
 				sprintf(entry, "%s%d", KEY_SLAVE_RUNNING_ID, index);
@@ -672,8 +672,8 @@ void SlaveMasterClass::Startup_Slaves(void)
 					Wait_For_Slave_Shutdown();
 
 					Load();
-					Delete_Registry_Copies();
-					Create_Registry_Copies();
+					Delete_Settings_Copies();
+					Create_Settings_Copies();
 
 					/*
 					** Spawn the servers.
@@ -685,13 +685,13 @@ void SlaveMasterClass::Startup_Slaves(void)
 							bool slave_running = false;
 
 							/*
-							** Get an access point into the slaves registry base.
+							** Get an access point into the slaves settings base.
 							*/
 							char slave_name[64];
-							sprintf(slave_name, "\\slave_%d", i);
-							strcpy(DefaultRegistryModifier, slave_name+1);
-							RegistryClass slave_reg(APPLICATION_SUB_KEY_NAME);
-							DefaultRegistryModifier[0] = 0;
+							sprintf(slave_name, "/slave_%d", i);
+							strcpy(DefaultSettingsModifier, slave_name+1);
+							SettingsClass slave_reg(APPLICATION_SETTINGS_SECTION);
+							DefaultSettingsModifier[0] = 0;
 
 							/*
 							** If we are autostarting then take inventory of which slaves are running already.
@@ -737,7 +737,7 @@ void SlaveMasterClass::Startup_Slaves(void)
 
 								/*
 								** The process ID we have here is actually the ID of the slaves launcher. We need the ID of the actual
-								** game process. Wait a few seconds until the slave sets his ID into his registry location.
+								** game process. Wait a few seconds until the slave sets his ID into his settings location.
 								*/
 								if (!slave_running) {
 									unsigned long time = TIMEGETTIME();
@@ -747,7 +747,7 @@ void SlaveMasterClass::Startup_Slaves(void)
 										}
 
 										/*
-										** Break out once we read the slaves process ID from the registry indicating that the slave
+										** Break out once we read the slaves process ID from the settings indicating that the slave
 										** has already parsed its command line.
 										*/
 										int process_id = slave_reg.Get_Int("ProcessId", 0);
@@ -760,10 +760,10 @@ void SlaveMasterClass::Startup_Slaves(void)
 								}
 
 								/*
-								** Set a registry flag to say this server is active. We need to know this if the master server (us)
+								** Set a settings flag to say this server is active. We need to know this if the master server (us)
 								** crashes and restarts.
 								*/
-								RegistryClass reg(APPLICATION_SUB_KEY_NAME_NET_SLAVE);
+								SettingsClass reg(APPLICATION_SETTINGS_SECTION_NET_SLAVE);
 								if (reg.Is_Valid()) {
 									char entry[128];
 									sprintf(entry, "%s%d", KEY_SLAVE_RUNNING_ID, i);
@@ -805,7 +805,7 @@ void SlaveMasterClass::Shutdown_Slaves(void)
 {
 	if (!SlaveMode) {
 		char password[64] = DEFAULT_SERVER_CONTROL_PASSWORD;
-		RegistryClass reg(APPLICATION_SUB_KEY_NAME_NET_SERVER_CONTROL);
+		SettingsClass reg(APPLICATION_SETTINGS_SECTION_NET_SERVER_CONTROL);
 		reg.Get_String(SERVER_CONTROL_PASSWORD_KEY, password, sizeof(password), password);
 
 		for (int i=0 ; i<NumSlaveServers ; i++) {
@@ -820,11 +820,11 @@ void SlaveMasterClass::Shutdown_Slaves(void)
 				** Set the slaves auto-restart flag to false or it will just start right up again.
 				*/
 				char slave_name[64];
-				sprintf(slave_name, "\\slave_%d", i);
-				strcpy(DefaultRegistryModifier, slave_name+1);
-				RegistryClass slave_reg(APPLICATION_SUB_KEY_NAME_WOLSETTINGS);
-				DefaultRegistryModifier[0] = 0;
-				slave_reg.Set_Int(AutoRestartClass::REG_VALUE_AUTO_RESTART_FLAG, 0);
+				sprintf(slave_name, "/slave_%d", i);
+				strcpy(DefaultSettingsModifier, slave_name+1);
+				SettingsClass slave_reg(APPLICATION_SETTINGS_SECTION_WOLSETTINGS);
+				DefaultSettingsModifier[0] = 0;
+				slave_reg.Set_Int(AutoRestartClass::SETTING_AUTO_RESTART_FLAG, 0);
 
 				/*
 				** Send the password to the slave to authenticate the connection.
@@ -836,7 +836,7 @@ void SlaveMasterClass::Shutdown_Slaves(void)
 				/*
 				** Remember that we shut this guy down.
 				*/
-				RegistryClass reg(APPLICATION_SUB_KEY_NAME_NET_SLAVE);
+				SettingsClass reg(APPLICATION_SETTINGS_SECTION_NET_SLAVE);
 				if (reg.Is_Valid()) {
 					char entry[128];
 					sprintf(entry, "%s%d", KEY_SLAVE_RUNNING_ID, i);
@@ -870,7 +870,7 @@ bool SlaveMasterClass::Shutdown_Slave(char *slave_login)
 {
 	if (!SlaveMode && slave_login) {
 		char password[64] = DEFAULT_SERVER_CONTROL_PASSWORD;
-		RegistryClass reg(APPLICATION_SUB_KEY_NAME_NET_SERVER_CONTROL);
+		SettingsClass reg(APPLICATION_SETTINGS_SECTION_NET_SERVER_CONTROL);
 		reg.Get_String(SERVER_CONTROL_PASSWORD_KEY, password, sizeof(password), password);
 
 		for (int i=0 ; i<NumSlaveServers ; i++) {
@@ -885,11 +885,11 @@ bool SlaveMasterClass::Shutdown_Slave(char *slave_login)
 				** Set the slaves auto-restart flag to false or it will just start right up again.
 				*/
 				char slave_name[64];
-				sprintf(slave_name, "\\slave_%d", i);
-				strcpy(DefaultRegistryModifier, slave_name+1);
-				RegistryClass slave_reg(APPLICATION_SUB_KEY_NAME_WOLSETTINGS);
-				DefaultRegistryModifier[0] = 0;
-				slave_reg.Set_Int(AutoRestartClass::REG_VALUE_AUTO_RESTART_FLAG, 0);
+				sprintf(slave_name, "/slave_%d", i);
+				strcpy(DefaultSettingsModifier, slave_name+1);
+				SettingsClass slave_reg(APPLICATION_SETTINGS_SECTION_WOLSETTINGS);
+				DefaultSettingsModifier[0] = 0;
+				slave_reg.Set_Int(AutoRestartClass::SETTING_AUTO_RESTART_FLAG, 0);
 
 				/*
 				** Send the password to the slave to authenticate the connection.
@@ -901,7 +901,7 @@ bool SlaveMasterClass::Shutdown_Slave(char *slave_login)
 				/*
 				** Remember that we shut this guy down.
 				*/
-				RegistryClass reg(APPLICATION_SUB_KEY_NAME_NET_SLAVE);
+				SettingsClass reg(APPLICATION_SETTINGS_SECTION_NET_SLAVE);
 				if (reg.Is_Valid()) {
 					char entry[128];
 					sprintf(entry, "%s%d", KEY_SLAVE_RUNNING_ID, i);
@@ -961,7 +961,7 @@ char *SlaveMasterClass::Get_Slave_Info(char *buffer, int buflen)
 
 
 /***********************************************************************************************
- * SlaveMasterClass::Create_Registry_Copies -- Create 'shadow' registry copies for slaves      *
+ * SlaveMasterClass::Create_Settings_Copies -- Create 'shadow' settings copies for slaves      *
  *                                                                                             *
  *                                                                                             *
  *                                                                                             *
@@ -974,42 +974,42 @@ char *SlaveMasterClass::Get_Slave_Info(char *buffer, int buflen)
  * HISTORY:                                                                                    *
  *   11/21/2001 3:44PM ST : Created                                                            *
  *=============================================================================================*/
-void SlaveMasterClass::Create_Registry_Copies(void)
+void SlaveMasterClass::Create_Settings_Copies(void)
 {
 	WWASSERT(!SlaveMode);
 
 	/*
-	** Make sure the Process ID isn't set in our base registry. It's shouldn't be unless I ran with the /slave command during dev.
+	** Make sure the Process ID isn't set in our base settings. It's shouldn't be unless I ran with the /slave command during dev.
 	*/
-	RegistryClass reg(APPLICATION_SUB_KEY_NAME);
+	SettingsClass reg(APPLICATION_SETTINGS_SECTION);
 	if (reg.Is_Valid()) {
 		reg.Delete_Value("ProcessId");
 	}
 
-	RegistryClass::Save_Registry(RegistryFileName, APPLICATION_SUB_KEY_NAME);
+	SettingsClass::Save_Settings(SettingsFileName, APPLICATION_SETTINGS_SECTION);
 
 	char new_path[1024];
 	char slave_name[64];
 
 	for (int i=0 ; i<NumSlaveServers ; i++) {
 		if (SlaveServers[i].Enable) {
-			strcpy(new_path, APPLICATION_SUB_KEY_NAME);
-			sprintf(slave_name, "\\slave_%d", i);
+			strcpy(new_path, APPLICATION_SETTINGS_SECTION);
+			sprintf(slave_name, "/slave_%d", i);
 			strcat(new_path, slave_name);
-			RegistryClass::Load_Registry(RegistryFileName, APPLICATION_SUB_KEY_NAME, new_path);
+			SettingsClass::Load_Settings(SettingsFileName, APPLICATION_SETTINGS_SECTION, new_path);
 
 			/*
-			** Store the slave settings into the registry.
+			** Store the slave settings into the settings.
 			*/
 
 			/*
 			** Port numbers.
 			*/
 			{
-				strcpy(DefaultRegistryModifier, slave_name+1);
-				RegistryClass reg(APPLICATION_SUB_KEY_NAME_NET_FIREWALL);
-				DefaultRegistryModifier[0] = 0;
-				RegistryClass my_reg(APPLICATION_SUB_KEY_NAME_NET_FIREWALL);
+				strcpy(DefaultSettingsModifier, slave_name+1);
+				SettingsClass reg(APPLICATION_SETTINGS_SECTION_NET_FIREWALL);
+				DefaultSettingsModifier[0] = 0;
+				SettingsClass my_reg(APPLICATION_SETTINGS_SECTION_NET_FIREWALL);
 
 				if (SlaveServers[i].Port != 0) {
 					reg.Set_Int("ForcePort", SlaveServers[i].Port);
@@ -1037,10 +1037,10 @@ void SlaveMasterClass::Create_Registry_Copies(void)
 			** Server control info.
 			*/
 			{
-				strcpy(DefaultRegistryModifier, slave_name+1);
-				RegistryClass reg(APPLICATION_SUB_KEY_NAME_NET_SERVER_CONTROL);
-				DefaultRegistryModifier[0] = 0;
-				RegistryClass my_reg(APPLICATION_SUB_KEY_NAME_NET_SERVER_CONTROL);
+				strcpy(DefaultSettingsModifier, slave_name+1);
+				SettingsClass reg(APPLICATION_SETTINGS_SECTION_NET_SERVER_CONTROL);
+				DefaultSettingsModifier[0] = 0;
+				SettingsClass my_reg(APPLICATION_SETTINGS_SECTION_NET_SERVER_CONTROL);
 
 				/*
 				** The password will be the same for all slaves but they each need a port to listen on.
@@ -1072,9 +1072,9 @@ void SlaveMasterClass::Create_Registry_Copies(void)
 			** Login name.
 			*/
 			{
-				strcpy(DefaultRegistryModifier, slave_name+1);
-				RegistryClass reg(APPLICATION_SUB_KEY_NAME_WOLSETTINGS);
-				DefaultRegistryModifier[0] = 0;
+				strcpy(DefaultSettingsModifier, slave_name+1);
+				SettingsClass reg(APPLICATION_SETTINGS_SECTION_WOLSETTINGS);
+				DefaultSettingsModifier[0] = 0;
 
 				reg.Set_String("AutoLogin", SlaveServers[i].NickName);
 				reg.Set_String("LastLogin", SlaveServers[i].NickName);
@@ -1084,9 +1084,9 @@ void SlaveMasterClass::Create_Registry_Copies(void)
 			** Password name.
 			*/
 			{
-				strcpy(DefaultRegistryModifier, slave_name+1);
-				RegistryClass reg(APPLICATION_SUB_KEY_NAME_WOLSETTINGS);
-				DefaultRegistryModifier[0] = 0;
+				strcpy(DefaultSettingsModifier, slave_name+1);
+				SettingsClass reg(APPLICATION_SETTINGS_SECTION_WOLSETTINGS);
+				DefaultSettingsModifier[0] = 0;
 
 				reg.Set_String("AutoPassword", SlaveServers[i].Password);
 			}
@@ -1096,9 +1096,9 @@ void SlaveMasterClass::Create_Registry_Copies(void)
 			** Serial number.
 			*/
 			{
-				strcpy(DefaultRegistryModifier, slave_name+1);
-				RegistryClass reg(APPLICATION_SUB_KEY_NAME);
-				DefaultRegistryModifier[0] = 0;
+				strcpy(DefaultSettingsModifier, slave_name+1);
+				SettingsClass reg(APPLICATION_SETTINGS_SECTION);
+				DefaultSettingsModifier[0] = 0;
 
 				StringClass serial(SlaveServers[i].Serial, true);
 				StringClass encrypted_serial = serial;
@@ -1112,19 +1112,19 @@ void SlaveMasterClass::Create_Registry_Copies(void)
 			** Make it autostart.
 			*/
 			{
-				strcpy(DefaultRegistryModifier, slave_name+1);
-				RegistryClass reg(APPLICATION_SUB_KEY_NAME_WOLSETTINGS);
-				DefaultRegistryModifier[0] = 0;
+				strcpy(DefaultSettingsModifier, slave_name+1);
+				SettingsClass reg(APPLICATION_SETTINGS_SECTION_WOLSETTINGS);
+				DefaultSettingsModifier[0] = 0;
 
 				if (reg.Is_Valid()) {
-					reg.Set_Int(AutoRestartClass::REG_VALUE_AUTO_RESTART_FLAG, 1);
+					reg.Set_Int(AutoRestartClass::SETTING_AUTO_RESTART_FLAG, 1);
 
 					int game_type = 0;
 					GameModeClass *game_mode = GameModeManager::Find("WOL");
 					if (game_mode && game_mode->Is_Active()) {
 						game_type = 1;
 					}
-					reg.Set_Int(AutoRestartClass::REG_VALUE_AUTO_RESTART_TYPE, game_type);
+					reg.Set_Int(AutoRestartClass::SETTING_AUTO_RESTART_TYPE, game_type);
 				}
 			}
 
@@ -1132,9 +1132,9 @@ void SlaveMasterClass::Create_Registry_Copies(void)
 			** Tell it which multiplayer settings to use.
 			*/
 			{
-				strcpy(DefaultRegistryModifier, slave_name+1);
-				RegistryClass reg(APPLICATION_SUB_KEY_NAME_OPTIONS);
-				DefaultRegistryModifier[0] = 0;
+				strcpy(DefaultSettingsModifier, slave_name+1);
+				SettingsClass reg(APPLICATION_SETTINGS_SECTION_OPTIONS);
+				DefaultSettingsModifier[0] = 0;
 				reg.Set_String("MultiplayerSettings", SlaveServers[i].SettingsFileName);
 			}
 
@@ -1142,9 +1142,9 @@ void SlaveMasterClass::Create_Registry_Copies(void)
 			** Set the SKU number to be the FDS SKU. Do this whether the Master is a FDS or not.
 			*/
 			{
-				strcpy(DefaultRegistryModifier, slave_name+1);
-				RegistryClass reg(APPLICATION_SUB_KEY_NAME);
-				DefaultRegistryModifier[0] = 0;
+				strcpy(DefaultSettingsModifier, slave_name+1);
+				SettingsClass reg(APPLICATION_SETTINGS_SECTION);
+				DefaultSettingsModifier[0] = 0;
 				reg.Set_Int("SKU", RENEGADE_FDS_SKU);
 			}
 
@@ -1155,12 +1155,12 @@ void SlaveMasterClass::Create_Registry_Copies(void)
 			{
 				int bw = SlaveServers[i].Bandwidth;
 				if (bw != -1) {
-					strcpy(DefaultRegistryModifier, slave_name+1);
-					RegistryClass reg_netopt(APPLICATION_SUB_KEY_NAME_NETOPTIONS);
-					RegistryClass reg_bw(APPLICATION_SUB_KEY_NAME_BANDTEST);
-					DefaultRegistryModifier[0] = 0;
-					RegistryClass my_reg_netopt(APPLICATION_SUB_KEY_NAME_NETOPTIONS);
-					RegistryClass my_reg_bw(APPLICATION_SUB_KEY_NAME_BANDTEST);
+					strcpy(DefaultSettingsModifier, slave_name+1);
+					SettingsClass reg_netopt(APPLICATION_SETTINGS_SECTION_NETOPTIONS);
+					SettingsClass reg_bw(APPLICATION_SETTINGS_SECTION_BANDTEST);
+					DefaultSettingsModifier[0] = 0;
+					SettingsClass my_reg_netopt(APPLICATION_SETTINGS_SECTION_NETOPTIONS);
+					SettingsClass my_reg_bw(APPLICATION_SETTINGS_SECTION_BANDTEST);
 
 					//reg_netopt.Set_Int("BandwidthType", BANDWIDTH_AUTO);
 					cUserOptions::Set_Bandwidth_Type(BANDWIDTH_AUTO);
@@ -1187,9 +1187,9 @@ void SlaveMasterClass::Create_Registry_Copies(void)
 			** Give the window a different position so we are not completely overlapping.
 			*/
 			{
-				strcpy(DefaultRegistryModifier, slave_name+1);
-				RegistryClass reg(APPLICATION_SUB_KEY_NAME_OPTIONS);
-				DefaultRegistryModifier[0] = 0;
+				strcpy(DefaultSettingsModifier, slave_name+1);
+				SettingsClass reg(APPLICATION_SETTINGS_SECTION_OPTIONS);
+				DefaultSettingsModifier[0] = 0;
 				reg.Set_Int("WindowX", (i * 32) + 32);
 				reg.Set_Int("WindowY", (i * 32) + 32);
 			}
@@ -1203,7 +1203,7 @@ void SlaveMasterClass::Create_Registry_Copies(void)
 
 
 /***********************************************************************************************
- * SlaveMasterClass::Delete_Registry_Copies -- Delete old slave registry copies                *
+ * SlaveMasterClass::Delete_Settings_Copies -- Delete old slave settings copies                *
  *                                                                                             *
  *                                                                                             *
  *                                                                                             *
@@ -1216,22 +1216,18 @@ void SlaveMasterClass::Create_Registry_Copies(void)
  * HISTORY:                                                                                    *
  *   11/21/2001 3:44PM ST : Created                                                            *
  *=============================================================================================*/
-void SlaveMasterClass::Delete_Registry_Copies(void)
+void SlaveMasterClass::Delete_Settings_Copies(void)
 {
-	HKEY base_key;
-	long result = RegOpenKeyEx(HKEY_LOCAL_MACHINE, APPLICATION_SUB_KEY_NAME, 0, KEY_ALL_ACCESS, &base_key);
-	WWASSERT(result == ERROR_SUCCESS);
-
-	if (result == ERROR_SUCCESS) {
+	{
 		int index = 0;
 		char new_path[1024];
 		char slave_name[64];
 
 		while (index < MAX_SLAVES) {
-			strcpy(new_path, APPLICATION_SUB_KEY_NAME);
-			sprintf(slave_name, "\\slave_%d", index);
+			strcpy(new_path, APPLICATION_SETTINGS_SECTION);
+			sprintf(slave_name, "/slave_%d", index);
 			strcat(new_path, slave_name);
-			RegistryClass::Delete_Registry_Tree(new_path);
+			SettingsClass::Delete_Settings_Tree(new_path);
 			index++;
 		}
 	}

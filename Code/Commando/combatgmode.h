@@ -84,8 +84,8 @@ private:
 
 	void				Combat_Keyboard( void );
 
-	static	void	Load_Registry_Keys(void);
-	static	void	Save_Registry_Keys(void);
+	static	void	Load_Settings_Keys(void);
+	static	void	Save_Settings_Keys(void);
 
 	static	int	IsHudShown;
 

@@ -91,7 +91,7 @@
 ** Forward declarations.
 */
 class SocketHandlerClass;
-class RegistryClass;
+class SettingsClass;
 
 
 /*
@@ -198,9 +198,9 @@ class WOLNATInterfaceClass :	public Observer<WWOnline::UserEvent>,
 		/*
 		** Config.
 		*/
-		void Get_Config(RegistryClass *reg, int &port_number, bool &send_delay);
-		void Set_Config(RegistryClass *reg, int port_number, bool send_delay);
-		void Save_Firewall_Info_To_Registry(void);
+		void Get_Config(SettingsClass *reg, int &port_number, bool &send_delay);
+		void Set_Config(SettingsClass *reg, int port_number, bool send_delay);
+		void Save_Firewall_Info_To_Settings(void);
 		unsigned long Get_Reg_External_IP(void) {return(RegExternalIP);}
 		unsigned long Get_Reg_External_Port(void) {return(RegExternalPort);}
 		void Get_Compact_Log(StringClass &log_string);
@@ -318,7 +318,7 @@ class WOLNATInterfaceClass :	public Observer<WWOnline::UserEvent>,
 		unsigned short ForcePort;
 
 		/*
-		** External IP and port from the registry.
+		** External IP and port from the settings.
 		*/
 		unsigned long RegExternalIP;
 		unsigned short RegExternalPort;

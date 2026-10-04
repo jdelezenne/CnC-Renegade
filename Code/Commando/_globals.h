@@ -39,65 +39,51 @@
 
 #include "specialbuilds.h"
 
-/*
-#ifdef FREEDEDICATEDSERVER
-#define APP_SUB_KEY "Software\\Westwood\\RenegadeFDS"
-#else  //FREEDEDICATEDSERVER
-
-#ifdef MULTIPLAYERDEMO
-#define APP_SUB_KEY "Software\\Westwood\\RenegadeMPDemo"
-#else // MULTIPLAYERDEMO
-#define APP_SUB_KEY "Software\\Westwood\\Renegade"
-#endif //MULTIPLAYERDEMO
-
-#endif //FREEDEDICATEDSERVER
-*/
-
 #if	defined(FREEDEDICATEDSERVER)
-#define APP_SUB_KEY "Software\\Westwood\\RenegadeFDS"
+#define APP_SETTINGS_SECTION "RenegadeFDS"
 #elif defined(MULTIPLAYERDEMO)
-#define APP_SUB_KEY "Software\\Westwood\\RenegadeMPDemo"
+#define APP_SETTINGS_SECTION "RenegadeMPDemo"
 #elif defined(BETACLIENT)
-#define APP_SUB_KEY "Software\\Westwood\\RenegadeBeta"
+#define APP_SETTINGS_SECTION "RenegadeBeta"
 #elif defined(BETASERVER)
-#define APP_SUB_KEY "Software\\Westwood\\RenegadeBeta"
+#define APP_SETTINGS_SECTION "RenegadeBeta"
 #else
-#define APP_SUB_KEY "Software\\Westwood\\Renegade"
+#define APP_SETTINGS_SECTION "Renegade"
 #endif
 
 
-extern char *Build_Registry_Location_String(const char *base, const char *modifier, const char *sub);
+extern char *Build_Settings_Section(const char *base, const char *modifier, const char *sub);
 
-#define	APPLICATION_SUB_KEY_NAME							Build_Registry_Location_String(APP_SUB_KEY, NULL, "")
+#define	APPLICATION_SETTINGS_SECTION							Build_Settings_Section(APP_SETTINGS_SECTION, NULL, "")
 
-#define	APPLICATION_SUB_KEY_NAME_RENDER					Build_Registry_Location_String(APP_SUB_KEY, NULL, "Render")
-#define	APPLICATION_SUB_KEY_NAME_OPTIONS					Build_Registry_Location_String(APP_SUB_KEY, NULL, "Options")
-#define	APPLICATION_SUB_KEY_NAME_DEBUG					Build_Registry_Location_String(APP_SUB_KEY, NULL, "Debug")
-#define	APPLICATION_SUB_KEY_NAME_SYSTEM_SETTINGS		Build_Registry_Location_String(APP_SUB_KEY, NULL, "System Settings")
-#define	APPLICATION_SUB_KEY_NAME_CONTROLS				Build_Registry_Location_String(APP_SUB_KEY, NULL, "Controls")
-#define	APPLICATION_SUB_KEY_NAME_SOUND					Build_Registry_Location_String(APP_SUB_KEY, NULL, "Sound")
-#define	APPLICATION_SUB_KEY_NAME_MOVIES					Build_Registry_Location_String(APP_SUB_KEY, NULL, "Movies")
-#define	APPLICATION_SUB_KEY_NAME_WOLSETTINGS			Build_Registry_Location_String(APP_SUB_KEY, NULL, "WOLSettings")
-#define	APPLICATION_SUB_KEY_NAME_MISSION_RANKS			Build_Registry_Location_String(APP_SUB_KEY, NULL, "Ranks")
-#define	APPLICATION_SUB_KEY_NAME_INPUT					Build_Registry_Location_String(APP_SUB_KEY, NULL, "Input")
-#define	APPLICATION_SUB_KEY_NAME_GAMESPY					Build_Registry_Location_String(APP_SUB_KEY, NULL, "GameSpy")
-#define	APPLICATION_SUB_KEY_NAME_WOLSETTINGS			Build_Registry_Location_String(APP_SUB_KEY, NULL, "WOLSettings")
-#define	APPLICATION_SUB_KEY_NAME_URL						Build_Registry_Location_String(APP_SUB_KEY, NULL, "WOLSettings\\URL")
-#define	APPLICATION_SUB_KEY_NAME_LOGINS					Build_Registry_Location_String(APP_SUB_KEY, NULL, "WOLSettings\\Logins")
-#define	APPLICATION_SUB_KEY_NAME_QUICKMATCH				Build_Registry_Location_String(APP_SUB_KEY, NULL, "WOLSettings\\QuickMatch")
-#define	APPLICATION_SUB_KEY_NAME_IGNORE_LIST			Build_Registry_Location_String(APP_SUB_KEY, NULL, "WOLSettings\\Ignore List")
-#define	APPLICATION_SUB_KEY_NAME_SERVER_LIST			Build_Registry_Location_String(APP_SUB_KEY, NULL, "WOLSettings\\Servers")
-#define	APPLICATION_SUB_KEY_NAME_SKIN_LIST				Build_Registry_Location_String(APP_SUB_KEY, NULL, "MP Settings\\Skins")
+#define	APPLICATION_SETTINGS_SECTION_RENDER					Build_Settings_Section(APP_SETTINGS_SECTION, NULL, "Render")
+#define	APPLICATION_SETTINGS_SECTION_OPTIONS					Build_Settings_Section(APP_SETTINGS_SECTION, NULL, "Options")
+#define	APPLICATION_SETTINGS_SECTION_DEBUG					Build_Settings_Section(APP_SETTINGS_SECTION, NULL, "Debug")
+#define	APPLICATION_SETTINGS_SECTION_SYSTEM_SETTINGS		Build_Settings_Section(APP_SETTINGS_SECTION, NULL, "System Settings")
+#define	APPLICATION_SETTINGS_SECTION_CONTROLS				Build_Settings_Section(APP_SETTINGS_SECTION, NULL, "Controls")
+#define	APPLICATION_SETTINGS_SECTION_SOUND					Build_Settings_Section(APP_SETTINGS_SECTION, NULL, "Sound")
+#define	APPLICATION_SETTINGS_SECTION_MOVIES					Build_Settings_Section(APP_SETTINGS_SECTION, NULL, "Movies")
+#define	APPLICATION_SETTINGS_SECTION_WOLSETTINGS			Build_Settings_Section(APP_SETTINGS_SECTION, NULL, "WOLSettings")
+#define	APPLICATION_SETTINGS_SECTION_MISSION_RANKS			Build_Settings_Section(APP_SETTINGS_SECTION, NULL, "Ranks")
+#define	APPLICATION_SETTINGS_SECTION_INPUT					Build_Settings_Section(APP_SETTINGS_SECTION, NULL, "Input")
+#define	APPLICATION_SETTINGS_SECTION_GAMESPY					Build_Settings_Section(APP_SETTINGS_SECTION, NULL, "GameSpy")
+#define	APPLICATION_SETTINGS_SECTION_WOLSETTINGS			Build_Settings_Section(APP_SETTINGS_SECTION, NULL, "WOLSettings")
+#define	APPLICATION_SETTINGS_SECTION_URL						Build_Settings_Section(APP_SETTINGS_SECTION, NULL, "WOLSettings\\URL")
+#define	APPLICATION_SETTINGS_SECTION_LOGINS					Build_Settings_Section(APP_SETTINGS_SECTION, NULL, "WOLSettings\\Logins")
+#define	APPLICATION_SETTINGS_SECTION_QUICKMATCH				Build_Settings_Section(APP_SETTINGS_SECTION, NULL, "WOLSettings\\QuickMatch")
+#define	APPLICATION_SETTINGS_SECTION_IGNORE_LIST			Build_Settings_Section(APP_SETTINGS_SECTION, NULL, "WOLSettings\\Ignore List")
+#define	APPLICATION_SETTINGS_SECTION_SERVER_LIST			Build_Settings_Section(APP_SETTINGS_SECTION, NULL, "WOLSettings\\Servers")
+#define	APPLICATION_SETTINGS_SECTION_SKIN_LIST				Build_Settings_Section(APP_SETTINGS_SECTION, NULL, "MP Settings\\Skins")
 
-#define	APPLICATION_SUB_KEY_NAME_NETOPTIONS				Build_Registry_Location_String(APP_SUB_KEY, NULL, "Networking\\Options")
-#define	APPLICATION_SUB_KEY_NAME_NETDEBUG				Build_Registry_Location_String(APP_SUB_KEY, NULL, "Networking\\Debug")
-#define	APPLICATION_SUB_KEY_NAME_NET_FIREWALL			Build_Registry_Location_String(APP_SUB_KEY, NULL, "Networking\\Firewall")
-#define	APPLICATION_SUB_KEY_NAME_NET_SLAVE				Build_Registry_Location_String(APP_SUB_KEY, NULL, "Networking\\Slave")
-#define	APPLICATION_SUB_KEY_NAME_NET_SERVER_CONTROL	Build_Registry_Location_String(APP_SUB_KEY, NULL, "Networking\\ServerControl")
+#define	APPLICATION_SETTINGS_SECTION_NETOPTIONS				Build_Settings_Section(APP_SETTINGS_SECTION, NULL, "Networking\\Options")
+#define	APPLICATION_SETTINGS_SECTION_NETDEBUG				Build_Settings_Section(APP_SETTINGS_SECTION, NULL, "Networking\\Debug")
+#define	APPLICATION_SETTINGS_SECTION_NET_FIREWALL			Build_Settings_Section(APP_SETTINGS_SECTION, NULL, "Networking\\Firewall")
+#define	APPLICATION_SETTINGS_SECTION_NET_SLAVE				Build_Settings_Section(APP_SETTINGS_SECTION, NULL, "Networking\\Slave")
+#define	APPLICATION_SETTINGS_SECTION_NET_SERVER_CONTROL	Build_Settings_Section(APP_SETTINGS_SECTION, NULL, "Networking\\ServerControl")
 
-#define	COMBAT_SUB_KEY_NAME_DEBUG							Build_Registry_Location_String(APP_SUB_KEY, NULL, "Debug")
+#define	COMBAT_SETTINGS_SECTION_DEBUG							Build_Settings_Section(APP_SETTINGS_SECTION, NULL, "Debug")
 
-#define	APPLICATION_SUB_KEY_NAME_BANDTEST				Build_Registry_Location_String(APP_SUB_KEY, NULL, "Bandtest")
+#define	APPLICATION_SETTINGS_SECTION_BANDTEST				Build_Settings_Section(APP_SETTINGS_SECTION, NULL, "Bandtest")
 
 #define  RENEGADE_BASE_SKU										3072
 #define	RENEGADE_FDS_SKU										12288

@@ -41,7 +41,9 @@ set_target_properties(scripts PROPERTIES OUTPUT_NAME Scripts)
 set_target_properties(bandtest PROPERTIES OUTPUT_NAME BandTest)
 target_link_libraries(scripts PRIVATE kernel32 user32 gdi32 winspool comdlg32 advapi32
     shell32 ole32 oleaut32 uuid odbc32 odbccp32)
-target_link_libraries(bandtest PRIVATE kernel32 advapi32 ws2_32 winmm)
+target_link_libraries(bandtest PRIVATE wwlib kernel32 ws2_32 winmm)
+target_include_directories(bandtest PRIVATE
+    "${PROJECT_SOURCE_DIR}/Code/wwlib" "${PROJECT_SOURCE_DIR}/Code/wwdebug")
 
 # Only stage the DX8 headers. The old SDK also ships Windows headers such as
 # basetsd.h that must not override the Windows SDK selected by Visual Studio.

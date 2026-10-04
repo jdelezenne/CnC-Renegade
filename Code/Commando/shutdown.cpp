@@ -35,6 +35,8 @@
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 
+#include "Platform/Windows/Files.h"
+#include "Platform/Paths.h"
 #include "shutdown.h"
 #include "wwmath.h"
 #include "wwsaveload.h"
@@ -76,7 +78,7 @@
 #include "systeminfolog.h"
 #include "cpudetect.h"
 #include "dx8caps.h"
-#include "registry.h"
+#include "Settings.h"
 #include "specialbuilds.h"
 #include <windows.h>
 #include <lmcons.h>	// UNLEN
@@ -100,24 +102,24 @@ const char *VALUE_NAME_TEXTURE_FILTER_MODE="Texture_Filter_Mode";
 static void Get_Detail_String(StringClass& str)
 {
 	str="";
-	RegistryClass registry (APPLICATION_SUB_KEY_NAME_SYSTEM_SETTINGS);
-	if (registry.Is_Valid ()) {
+	SettingsClass settings (APPLICATION_SETTINGS_SECTION_SYSTEM_SETTINGS);
+	if (settings.Is_Valid ()) {
 
 		//
-		//	Read the values from the registry
+		//	Read the values from the settings
 		//
-		int dynamic_lod		= registry.Get_Int (VALUE_NAME_DYN_LOD, 3000);
-		int static_lod			= registry.Get_Int (VALUE_NAME_STATIC_LOD, 3000);
+		int dynamic_lod		= settings.Get_Int (VALUE_NAME_DYN_LOD, 3000);
+		int static_lod			= settings.Get_Int (VALUE_NAME_STATIC_LOD, 3000);
 
-		int dynamic_shadows	= registry.Get_Int (VALUE_NAME_DYN_SHADOWS, 1);
-		int static_shadows	= registry.Get_Int (VALUE_NAME_STATIC_SHADOWS, 1);
+		int dynamic_shadows	= settings.Get_Int (VALUE_NAME_DYN_SHADOWS, 1);
+		int static_shadows	= settings.Get_Int (VALUE_NAME_STATIC_SHADOWS, 1);
 
-		int texture_filter	= registry.Get_Int (VALUE_NAME_TEXTURE_FILTER_MODE, TextureClass::TEXTURE_FILTER_BILINEAR);
-		int prelit_mode		= registry.Get_Int (VALUE_NAME_PRELIT_MODE, WW3D::PRELIT_MODE_LIGHTMAP_MULTI_TEXTURE);
-		int shadow_mode		= registry.Get_Int (VALUE_NAME_SHADOW_MODE, PhysicsSceneClass::SHADOW_MODE_BLOBS_PLUS);
-		int texture_red		= registry.Get_Int (VALUE_NAME_TEXTURE_RES, 0);
-		int surface_effect	= registry.Get_Int (VALUE_NAME_SURFACE_EFFECT, 1);
-		int particle_detail	= registry.Get_Int (VALUE_NAME_PARTICLE_DETAIL, 1);
+		int texture_filter	= settings.Get_Int (VALUE_NAME_TEXTURE_FILTER_MODE, TextureClass::TEXTURE_FILTER_BILINEAR);
+		int prelit_mode		= settings.Get_Int (VALUE_NAME_PRELIT_MODE, WW3D::PRELIT_MODE_LIGHTMAP_MULTI_TEXTURE);
+		int shadow_mode		= settings.Get_Int (VALUE_NAME_SHADOW_MODE, PhysicsSceneClass::SHADOW_MODE_BLOBS_PLUS);
+		int texture_red		= settings.Get_Int (VALUE_NAME_TEXTURE_RES, 0);
+		int surface_effect	= settings.Get_Int (VALUE_NAME_SURFACE_EFFECT, 1);
+		int particle_detail	= settings.Get_Int (VALUE_NAME_PARTICLE_DETAIL, 1);
 
 		StringClass tmp;
 		tmp.Format("Dynamic LOD budget: %d\r\n",dynamic_lod);
@@ -192,10 +194,10 @@ static void Get_Detail_String(StringClass& str)
 		str+="\r\n";
 
 		const char *VALUE_NAME_SOUND_DEVICE_NAME = "device name";
-		RegistryClass registry_sound( APPLICATION_SUB_KEY_NAME_SOUND );
-		if ( registry_sound.Is_Valid() ) {
+		SettingsClass settings_sound( APPLICATION_SETTINGS_SECTION_SOUND );
+		if ( settings_sound.Is_Valid() ) {
 			char temp_buffer[256] = { 0 };
-			registry.Get_String (VALUE_NAME_SOUND_DEVICE_NAME, temp_buffer, sizeof (temp_buffer));
+			settings.Get_String (VALUE_NAME_SOUND_DEVICE_NAME, temp_buffer, sizeof (temp_buffer));
 			tmp.Format("Sound device: %s\r\n",temp_buffer);
 			str+=tmp;
 		}
@@ -217,24 +219,24 @@ static void Get_Detail_String(StringClass& str)
 void Get_Compact_Detail_String(StringClass& str)
 {
 	str="";
-	RegistryClass registry (APPLICATION_SUB_KEY_NAME_SYSTEM_SETTINGS);
-	if (registry.Is_Valid ()) {
+	SettingsClass settings (APPLICATION_SETTINGS_SECTION_SYSTEM_SETTINGS);
+	if (settings.Is_Valid ()) {
 
 		//
-		//	Read the values from the registry
+		//	Read the values from the settings
 		//
-		int dynamic_lod		= registry.Get_Int (VALUE_NAME_DYN_LOD, 3000);
-		int static_lod			= registry.Get_Int (VALUE_NAME_STATIC_LOD, 3000);
+		int dynamic_lod		= settings.Get_Int (VALUE_NAME_DYN_LOD, 3000);
+		int static_lod			= settings.Get_Int (VALUE_NAME_STATIC_LOD, 3000);
 
-		int dynamic_shadows	= registry.Get_Int (VALUE_NAME_DYN_SHADOWS, 1);
-		int static_shadows	= registry.Get_Int (VALUE_NAME_STATIC_SHADOWS, 1);
+		int dynamic_shadows	= settings.Get_Int (VALUE_NAME_DYN_SHADOWS, 1);
+		int static_shadows	= settings.Get_Int (VALUE_NAME_STATIC_SHADOWS, 1);
 
-		int texture_filter	= registry.Get_Int (VALUE_NAME_TEXTURE_FILTER_MODE, TextureClass::TEXTURE_FILTER_BILINEAR);
-		int prelit_mode		= registry.Get_Int (VALUE_NAME_PRELIT_MODE, WW3D::PRELIT_MODE_LIGHTMAP_MULTI_TEXTURE);
-		int shadow_mode		= registry.Get_Int (VALUE_NAME_SHADOW_MODE, PhysicsSceneClass::SHADOW_MODE_BLOBS_PLUS);
-		int texture_red		= registry.Get_Int (VALUE_NAME_TEXTURE_RES, 0);
-		int surface_effect	= registry.Get_Int (VALUE_NAME_SURFACE_EFFECT, 1);
-		int particle_detail	= registry.Get_Int (VALUE_NAME_PARTICLE_DETAIL, 1);
+		int texture_filter	= settings.Get_Int (VALUE_NAME_TEXTURE_FILTER_MODE, TextureClass::TEXTURE_FILTER_BILINEAR);
+		int prelit_mode		= settings.Get_Int (VALUE_NAME_PRELIT_MODE, WW3D::PRELIT_MODE_LIGHTMAP_MULTI_TEXTURE);
+		int shadow_mode		= settings.Get_Int (VALUE_NAME_SHADOW_MODE, PhysicsSceneClass::SHADOW_MODE_BLOBS_PLUS);
+		int texture_red		= settings.Get_Int (VALUE_NAME_TEXTURE_RES, 0);
+		int surface_effect	= settings.Get_Int (VALUE_NAME_SURFACE_EFFECT, 1);
+		int particle_detail	= settings.Get_Int (VALUE_NAME_PARTICLE_DETAIL, 1);
 
 		StringClass tmp;
 		tmp.Format("%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t",dynamic_lod,static_lod,shadow_mode,dynamic_shadows,static_shadows,prelit_mode,texture_red,surface_effect,particle_detail,texture_filter);
@@ -266,7 +268,7 @@ public:
 	void Thread_Function()
 	{
 		DWORD written;
-		HANDLE file = CreateFile(Filename, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
+		HANDLE file = Platform::OpenFile(Filename, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
 				FILE_ATTRIBUTE_NORMAL, NULL);
 		if (INVALID_HANDLE_VALUE != file) {
 			WriteFile(file, String, strlen(String), &written, NULL);
@@ -328,14 +330,14 @@ static void Log_System_Information()
 	HANDLE file;
 
 #ifdef WWDEBUG
-	RegistryClass registry( APPLICATION_SUB_KEY_NAME_DEBUG );
-	if ( registry.Is_Valid() ) {
-		int disable=registry.Get_Int( SYSTEM_INFO_LOG_DISABLE );
+	SettingsClass settings( APPLICATION_SETTINGS_SECTION_DEBUG );
+	if ( settings.Is_Valid() ) {
+		int disable=settings.Get_Int( SYSTEM_INFO_LOG_DISABLE );
 		if (!disable) {
 			if (!SysInfoCopyThread.Is_Running()) {
 				StringClass filename(0,true);
 	//			filename="\\\\havoc\\rock\\projects\\renegade\\logs\\";
-				filename="\\\\tanya\\game\\Projects\\Renegade\\_sysinfo_logs\\";
+				filename=Platform::UserPath("Logs/SystemInfo/").c_str();
 				tmp.Format("%d_%d_",DX8Wrapper::Get_Current_Caps()->Get_Vendor(),DX8Wrapper::Get_Current_Caps()->Get_Device());
 				filename+=tmp;
 				filename+=name;
@@ -350,7 +352,7 @@ static void Log_System_Information()
 #endif
 
 	// Write log to local work folder
-	file = CreateFile("sysinfo.txt", GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
+	file = Platform::OpenFile("sysinfo.txt", GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
 			FILE_ATTRIBUTE_NORMAL, NULL);
 	if (INVALID_HANDLE_VALUE != file) {
 		WriteFile(file, string, strlen(string), &written, NULL);
@@ -411,7 +413,7 @@ void Game_Shutdown(void)
 	//	Shutdown the input control system
 	//
 	InputConfigMgrClass::Shutdown();
-	Input::Save_Registry( APPLICATION_SUB_KEY_NAME_CONTROLS );
+	Input::Save_Settings( APPLICATION_SETTINGS_SECTION_CONTROLS );
 	Input::Shutdown();
 
 	DiagLogClass::Shutdown();
@@ -439,7 +441,7 @@ void Game_Shutdown(void)
 //	WW3DAssetManager::Get_Instance()->Free_Assets();
 	Debug_Refs();
 
-	DebugManager::Save_Registry_Settings( APPLICATION_SUB_KEY_NAME_DEBUG );
+	DebugManager::Save_Settings( APPLICATION_SETTINGS_SECTION_DEBUG );
 	DebugManager::Shutdown();
 
 	WSA_CHECK(WSACleanup());
@@ -461,9 +463,9 @@ void Game_Shutdown(void)
 	}
 
 
-	RegistryClass registry( APPLICATION_SUB_KEY_NAME_DEBUG );
-	if ( registry.Is_Valid() ) {
-		registry.Set_Int( VALUE_NAME_APPLICATION_CRASH_VERSION, 0 );
+	SettingsClass settings( APPLICATION_SETTINGS_SECTION_DEBUG );
+	if ( settings.Is_Valid() ) {
+		settings.Set_Int( VALUE_NAME_APPLICATION_CRASH_VERSION, 0 );
 	}
 
 #ifdef FREEDEDICATEDSERVER

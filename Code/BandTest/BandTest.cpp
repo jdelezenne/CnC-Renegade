@@ -40,6 +40,7 @@
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 #define WIN32_LEAN_AND_MEAN
+#include "Platform/Windows/Files.h"
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #pragma warning(disable:4201)
@@ -53,6 +54,7 @@
 #include <assert.h>
 
 #include "BandTest.h"
+#include "Settings.h"
 
 #include "..\combat\specialbuilds.h"
 
@@ -145,24 +147,24 @@ SOCKET RawSocket = INVALID_SOCKET;
 SOCKET ICMPRawSocket = INVALID_SOCKET;
 
 /*
-** Registry.
+** Settings.
 */
-static HKEY RegistryKey;
+static SettingsClass* SettingsKey;
 
-//static char BandTestRegistryLocation[64] = {"Software\\Westwood\\Renegade\\BandTest\\"};
+//static char BandTestSettingsSection[64] = {"Renegade\\BandTest\\"};
 
 #if	defined(FREEDEDICATEDSERVER)
-static char BandTestRegistryLocation[64] = {"Software\\Westwood\\RenegadeFDS\\BandTest\\"};
+static char BandTestSettingsSection[64] = {"RenegadeFDS\\BandTest\\"};
 #elif defined(MULTIPLAYERDEMO)
-static char BandTestRegistryLocation[64] = {"Software\\Westwood\\RenegadeMPDemo\\BandTest\\"};
+static char BandTestSettingsSection[64] = {"RenegadeMPDemo\\BandTest\\"};
 #elif defined(BETACLIENT)
-static char BandTestRegistryLocation[64] = {"Software\\Westwood\\RenegadeBeta\\BandTest\\"};
+static char BandTestSettingsSection[64] = {"RenegadeBeta\\BandTest\\"};
 #else
-static char BandTestRegistryLocation[64] = {"Software\\Westwood\\Renegade\\BandTest\\"};
+static char BandTestSettingsSection[64] = {"Renegade\\BandTest\\"};
 #endif
 
 
-static char RegistryPath[1024];
+static char SettingsPath[1024];
 
 /*
 ** Packet loss.
@@ -203,10 +205,10 @@ static float Lowest_Ping(int num_pings, unsigned long *ping_times);
 static int Get_Path_To_Server(unsigned long *path, unsigned long my_ip, unsigned long server_ip);
 static void Ping_Profile(SOCKADDR_IN *router_addr, unsigned long my_ip);
 
-static bool Set_Registry_Int(const char *name, int value);
-static int Get_Registry_Int(const char *name, int def_value);
-static bool Open_Registry(void);
-static void Close_Registry(void);
+static bool Set_Settings_Int(const char *name, int value);
+static int Get_Settings_Int(const char *name, int def_value);
+static bool Open_Settings(void);
+static void Close_Settings(void);
 
 
 #ifdef _DEBUG
@@ -267,12 +269,12 @@ unsigned long Detect_Bandwidth(unsigned long server_ip, unsigned long my_ip, int
 	}
 
 	if (regpath == NULL) {
-		strcpy(RegistryPath, BandTestRegistryLocation);
+		strcpy(SettingsPath, BandTestSettingsSection);
 	} else {
-		strcpy(RegistryPath, regpath);
+		strcpy(SettingsPath, regpath);
 	}
 
-	if (!Open_Registry()) {
+	if (!Open_Settings()) {
 		failure_code = BANDTEST_UNKNOWN_ERROR;
 		return(0);
 	}
@@ -299,10 +301,10 @@ unsigned long Detect_Bandwidth(unsigned long server_ip, unsigned long my_ip, int
 			StatsValid = true;
 			if (PingsSent) {
 				DebugString("Packet loss: %d percent\n", (100 * PingsLost) / PingsSent);
-				Set_Registry_Int("PingLoss", (100 * PingsLost) / PingsSent);
+				Set_Settings_Int("PingLoss", (100 * PingsLost) / PingsSent);
 				if (NumPingsCheckedForConsistency) {
 					DebugString("Connection quality: %d percent\n", (100 * NumConsistentPings) / NumPingsCheckedForConsistency);
-					Set_Registry_Int("Quality", (100 * NumConsistentPings) / NumPingsCheckedForConsistency);
+					Set_Settings_Int("Quality", (100 * NumConsistentPings) / NumPingsCheckedForConsistency);
 				}
 			}
 			break;
@@ -352,7 +354,7 @@ unsigned long Detect_Bandwidth(unsigned long server_ip, unsigned long my_ip, int
 
 
 	timeEndPeriod(1);
-	Close_Registry();
+	Close_Settings();
 	return(bps);
 }
 
@@ -755,26 +757,26 @@ unsigned long Upstream_Detect(unsigned long server_ip, unsigned long my_ip, int 
 
 
 	/*
-	** If the bandwidth in the registry is close to what we just calculated then use the old downstream calculation from the
-	** registry.
+	** If the bandwidth in the settings is close to what we just calculated then use the old downstream calculation from the
+	** settings.
 	*/
 	unsigned long downstream_bandwidth = upstream_bandwidth;
-	int old_band = Get_Registry_Int("Up", 0);
+	int old_band = Get_Settings_Int("Up", 0);
 	unsigned long old_bandwidth = static_cast<unsigned long>(old_band);
 	unsigned long diff = upstream_bandwidth > old_bandwidth
 		? upstream_bandwidth - old_bandwidth : old_bandwidth - upstream_bandwidth;
 	bool calc_down = true;
 	if (diff < upstream_bandwidth / 10) {
-		downstream_bandwidth = Get_Registry_Int("Down", upstream_bandwidth);
+		downstream_bandwidth = Get_Settings_Int("Down", upstream_bandwidth);
 		if (downstream_bandwidth) {
 			calc_down = false;
 		}
 	}
 
 	/*
-	** Store the calculated bandwidth into the registry.
+	** Store the calculated bandwidth into the settings.
 	*/
-	Set_Registry_Int("Up", upstream_bandwidth);
+	Set_Settings_Int("Up", upstream_bandwidth);
 
 
 	/*
@@ -986,7 +988,7 @@ unsigned long Upstream_Detect(unsigned long server_ip, unsigned long my_ip, int 
 			}
 
 			DebugString("Took %d ms to calculate downstream bandwidth\n", timeGetTime() - performance_timer);
-			Set_Registry_Int("Down", downstream_bandwidth);
+			Set_Settings_Int("Down", downstream_bandwidth);
 		}
 	}
 
@@ -1225,12 +1227,12 @@ int Get_Path_To_Server(unsigned long *path, unsigned long my_ip, unsigned long s
 	unsigned long ping_dest_address = htonl(my_ip);
 
 	/*
-	** See if the path in the registry looks valid.
+	** See if the path in the settings looks valid.
 	*/
-	int reg_my_ip = Get_Registry_Int("MyIP", 0);
-	int reg_server_ip = Get_Registry_Int("ServerIP", 0);
-	int reg_path_length = Get_Registry_Int("PathLength", 0);
-	int reg_path_time = Get_Registry_Int("PathValid", 0);
+	int reg_my_ip = Get_Settings_Int("MyIP", 0);
+	int reg_server_ip = Get_Settings_Int("ServerIP", 0);
+	int reg_path_length = Get_Settings_Int("PathLength", 0);
+	int reg_path_time = Get_Settings_Int("PathValid", 0);
 
 	/*
 	** If the ip at either end of the route has changed then the path isn't valid anymore.
@@ -1249,11 +1251,11 @@ int Get_Path_To_Server(unsigned long *path, unsigned long my_ip, unsigned long s
 		if ((last_path_time < time) && (time - last_path_time < (TIMER_SECOND * 60 * 120))) {
 
 			/*
-			** OK, the path in the registry looks good - just return that.
+			** OK, the path in the settings looks good - just return that.
 			*/
 			for (int i=0 ; i<reg_path_length ; i++) {
 				sprintf(reg_name, "Path%02d", i);
-				path[i] = (unsigned long) Get_Registry_Int(reg_name, 0);
+				path[i] = (unsigned long) Get_Settings_Int(reg_name, 0);
 				if (path[i]) {
 					path_size++;
 				} else {
@@ -1262,7 +1264,7 @@ int Get_Path_To_Server(unsigned long *path, unsigned long my_ip, unsigned long s
 			}
 
 			if (reg_path_length == path_size) {
-				DebugString("Using path from registry\n");
+				DebugString("Using path from settings\n");
 				return(path_size);
 			}
 		}
@@ -1270,7 +1272,7 @@ int Get_Path_To_Server(unsigned long *path, unsigned long my_ip, unsigned long s
 
 
 	/*
-	** The path in the registry isn't any good. Discover it for ourselves.
+	** The path in the settings isn't any good. Discover it for ourselves.
 	*/
 	address.sin_addr.s_addr = htonl(server_ip);
 	address.sin_port = 80;		//www port number. We can use anything here.
@@ -1336,18 +1338,18 @@ int Get_Path_To_Server(unsigned long *path, unsigned long my_ip, unsigned long s
 	}
 
 	/*
-	** If we got a good path then store it in the registry.
+	** If we got a good path then store it in the settings.
 	*/
 	if (hops_to_server > 0 && path[hops_to_server - 1] == server_ip) {
 
-		Set_Registry_Int("MyIP", my_ip);
-		Set_Registry_Int("ServerIP", server_ip);
-		Set_Registry_Int("PathLength", hops_to_server);
-		Set_Registry_Int("PathValid", (int)timeGetTime());
+		Set_Settings_Int("MyIP", my_ip);
+		Set_Settings_Int("ServerIP", server_ip);
+		Set_Settings_Int("PathLength", hops_to_server);
+		Set_Settings_Int("PathValid", (int)timeGetTime());
 
 		for (int i=0 ; i<hops_to_server ; i++) {
 			sprintf(reg_name, "Path%02d", i);
-			Set_Registry_Int(reg_name, path[i]);
+			Set_Settings_Int(reg_name, path[i]);
 		}
 		return(hops_to_server);
 	}
@@ -2129,40 +2131,27 @@ unsigned short Get_IP_Checksum(unsigned short *buffer, int size)
 
 
 
-bool Set_Registry_Int(const char *name, int value)
+bool Set_Settings_Int(const char *name, int value)
 {
-	int result = RegSetValueEx(RegistryKey, name, 0, REG_DWORD, (unsigned char*)&value, sizeof(value));
-	return((result == ERROR_SUCCESS) ? true : false);
+    SettingsKey->Set_Int(name, value);
+    return true;
 }
 
-int Get_Registry_Int(const char *name, int def_value)
+int Get_Settings_Int(const char *name, int def_value)
 {
-	unsigned long type;
-	unsigned long data;
-	unsigned long data_size = sizeof(data);
-
-	if (RegQueryValueEx(RegistryKey, name, NULL, &type, (unsigned char*)&data, &data_size) == ERROR_SUCCESS) {
-		return(data);
-	}
-	return(def_value);
+    return SettingsKey->Get_Int(name, def_value);
 }
 
-
-bool Open_Registry(void)
+bool Open_Settings(void)
 {
-	HKEY key;
-	unsigned long disposition;
-	long result = RegCreateKeyEx(HKEY_LOCAL_MACHINE, RegistryPath, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &key, &disposition);
-	if (result == ERROR_SUCCESS) {
-		RegistryKey = key;
-		return(true);
-	}
-	return(false);
+    SettingsKey = new SettingsClass(SettingsPath);
+    return SettingsKey->Is_Valid();
 }
 
-void Close_Registry(void)
+void Close_Settings(void)
 {
-	RegCloseKey(RegistryKey);
+    delete SettingsKey;
+    SettingsKey = NULL;
 }
 
 
@@ -2208,9 +2197,9 @@ void DebugString (char const * string, ...)
 		GetModuleFileName (GetModuleHandle(NULL), &path_to_exe[0], 512);
 		_splitpath(path_to_exe, drive, dir, NULL, NULL);
 		_makepath(DebugFileName, drive, dir, "bandtest", "txt");
-		DebugFile = CreateFile(DebugFileName, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+		DebugFile = Platform::OpenFile(DebugFileName, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 	} else {
-		DebugFile = CreateFile(DebugFileName, GENERIC_WRITE, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+		DebugFile = Platform::OpenFile(DebugFileName, GENERIC_WRITE, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 	}
 
 	OutputDebugString (buffer);

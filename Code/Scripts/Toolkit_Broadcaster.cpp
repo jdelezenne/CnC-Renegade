@@ -89,14 +89,14 @@ DECLARE_SCRIPT (M00_Broadcaster_Register_RAD, "Terminal_ID:int, Send_Attempts=3:
 			current_send++;
 			if (current_send > send_attempts)
 			{
-				DebugPrint("ERROR - M00_Broadcaster_Registry_RAD - Object %d cannot find Terminal %d to register with!\n", item_id, terminal_id);
+				DebugPrint("ERROR - M00_Broadcaster_Settings_RAD - Object %d cannot find Terminal %d to register with!\n", item_id, terminal_id);
 			}
 			else
 			{
 				terminal_obj = Commands->Find_Object(terminal_id);
 				if (terminal_obj)
 				{
-					SCRIPT_DEBUG_MESSAGE(("M00_Broadcaster_Registry_RAD is sending custom type M00_CUSTOM_BROADCASTER_REGISTRATION, param %d.\n", item_id));
+					SCRIPT_DEBUG_MESSAGE(("M00_Broadcaster_Settings_RAD is sending custom type M00_CUSTOM_BROADCASTER_REGISTRATION, param %d.\n", item_id));
 					Commands->Send_Custom_Event (obj, terminal_obj, M00_CUSTOM_BROADCASTER_REGISTRATION, item_id);
 				}
 				else
@@ -109,14 +109,14 @@ DECLARE_SCRIPT (M00_Broadcaster_Register_RAD, "Terminal_ID:int, Send_Attempts=3:
 
 	virtual void Custom (GameObject* obj, int type, int param, GameObject* sender)
 	{
-		if (type == M00_CUSTOM_BROADCASTER_REGISTRY_ERROR)
+		if (type == M00_CUSTOM_BROADCASTER_SETTINGS_ERROR)
 		{
-			SCRIPT_DEBUG_MESSAGE(("M00_Broadcaster_Registry_RAD received custom type M00_CUSTOM_BROADCASTER_REGISTRY_ERROR, param %d.\n", param));
+			SCRIPT_DEBUG_MESSAGE(("M00_Broadcaster_Settings_RAD received custom type M00_CUSTOM_BROADCASTER_SETTINGS_ERROR, param %d.\n", param));
 			Commands->Start_Timer (obj, this, send_delay, 0);
 		}
 		else
 		{
-			SCRIPT_DEBUG_MESSAGE(("ERROR - M00_Broadcaster_Registry_RAD received custom type %d, param %d - unknown!\n", type, param));
+			SCRIPT_DEBUG_MESSAGE(("ERROR - M00_Broadcaster_Settings_RAD received custom type %d, param %d - unknown!\n", type, param));
 		}
 	}
 
@@ -126,7 +126,7 @@ DECLARE_SCRIPT (M00_Broadcaster_Register_RAD, "Terminal_ID:int, Send_Attempts=3:
 		terminal_obj = Commands->Find_Object(terminal_id);
 		if (terminal_obj)
 		{
-			SCRIPT_DEBUG_MESSAGE(("M00_Broadcaster_Registry_RAD is sending custom type M00_CUSTOM_BROADCASTER_REGISTRATION, param 0.\n"));
+			SCRIPT_DEBUG_MESSAGE(("M00_Broadcaster_Settings_RAD is sending custom type M00_CUSTOM_BROADCASTER_REGISTRATION, param 0.\n"));
 			Commands->Send_Custom_Event (obj, terminal_obj, M00_CUSTOM_BROADCASTER_REGISTRATION, 0);
 		}
 	}
@@ -140,8 +140,8 @@ Editor Script - M00_Broadcaster_Terminal_RAD
 
   Values:
 
-  object_specific_record	= Storage of each registry item one at a time.
-  object_random_record		= Storage of any registry item as many times as desired.
+  object_specific_record	= Storage of each settings item one at a time.
+  object_random_record		= Storage of any settings item as many times as desired.
   object_prompts			= Storage of any sent prompts from objects.
 	0 = Object ID that is prompting.
 	1 = custom type to send with next regular custom.
@@ -474,9 +474,9 @@ DECLARE_SCRIPT (M00_Broadcaster_Terminal_RAD, "Random_Percentage=100.0:float, Ra
 		{
 			// Terminal is not ready for customs. Send an error message.
 
-			SCRIPT_DEBUG_MESSAGE(("M00_Broadcaster_Terminal_RAD is sending custom type M00_CUSTOM_BROADCASTER_REGISTRY_ERROR, param 0.\n"));
+			SCRIPT_DEBUG_MESSAGE(("M00_Broadcaster_Terminal_RAD is sending custom type M00_CUSTOM_BROADCASTER_SETTINGS_ERROR, param 0.\n"));
 
-			Commands->Send_Custom_Event (obj, sender, M00_CUSTOM_BROADCASTER_REGISTRY_ERROR, 0);
+			Commands->Send_Custom_Event (obj, sender, M00_CUSTOM_BROADCASTER_SETTINGS_ERROR, 0);
 		}
 	}
 };

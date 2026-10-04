@@ -53,7 +53,7 @@ the main window, event pump, gameplay keyboard/mouse/joystick input, game timer,
 and movie audio. Existing control bindings keep their original key IDs.
 
 Retained native implementations live under `Platform/Windows/`: the Windows
-entry point, registry, single-instance handling, browser/IME message bridge,
+entry point, single-instance handling, browser/IME message bridge,
 and Direct3D 8 device/renderer implementation. The game still targets Windows;
 Direct3D 8 rendering and Miles game audio remain during this stage. SDL GPU
 is the next renderer migration, using the SDL window and platform layer.
@@ -68,8 +68,27 @@ its obsolete DSP/DSW build files have been removed.
 
 The game still requires the original data files, Miles runtime and drivers,
 and other runtime DLLs from an owned installation. BandTest is linked into the
-executable. Build output includes the matching Scripts DLL; use it with the executable in a separate game directory containing
-those assets.
+executable. Build output includes the matching Scripts DLL. Run the executable
+with your installed game folder as its working directory.
+
+For VS Code, set `renegade.gameDirectory` in `.vscode/settings.json` to your
+installation folder (currently `D:\EA Games\Renegade`). Select `Debug` or
+`Release` in Run and Debug and press F5. The launch task builds that preset,
+then runs the executable from `Binaries` against the installed data and runtime
+DLLs. Configure the preset once using the commands above. The Microsoft C/C++
+extension is required. No game files are copied.
+
+Settings are stored in `Settings.ini` under SDL's per-user preferences folder,
+`%APPDATA%\Electronic Arts\Renegade` on Windows. The game starts with defaults;
+there is no import from the registry or an older installation. Saves, input
+profiles, logs, caches, and downloads are written beneath this folder. The
+installation folder is used only to read assets and runtime DLLs.
+
+The original WOLAPI and WOLBrowser binaries are not loaded. Their client interfaces
+are retained for a compatible replacement supplied as `OnlineServices.dll` and
+`OnlineBrowser.dll` beside the executable, loaded without COM registration.
+Until a replacement is available, Westwood Online is unavailable; single-player
+and LAN remain supported.
 
 ### Free Dedicated Server
 It’s possible to build the Windows version of the FDS (Free Dedicated Server) for Command & Conquer Renegade from the source code in this repository, just uncomment `#define FREEDEDICATEDSERVER` in [Code/Combat/specialbuilds.h](Code/Combat/specialbuilds.h) and perform a “Rebuild All” action on the Release config.
@@ -78,9 +97,7 @@ It’s possible to build the Windows version of the FDS (Free Dedicated Server) 
 ### Graphics configuration utility
 
 `Code/Tools/WWConfig` retains the graphics/audio configuration utility sources.
-It is not part of the current CMake build. The game can launch the installed
-`WWConfig.exe` for graphics troubleshooting and driver warnings, so keep that
-executable with the original game assets.
+It is not part of the current CMake build.
 
 ## Known Issues
 

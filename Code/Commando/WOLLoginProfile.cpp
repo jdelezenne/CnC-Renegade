@@ -41,7 +41,7 @@
 #include <WWOnline\WOLLoginInfo.h>
 #include <WWUI\DialogBase.h>
 #include <WWUI\ListCtrl.h>
-#include <WWLib\Registry.h>
+#include <WWLib\Settings.h>
 #include "String_IDs.h"
 #include <WWTranslateDB\TranslateDB.h>
 #include <stdio.h>
@@ -50,11 +50,11 @@ using namespace WWOnline;
 
 #define MAX_STRING_LEN 64;
 
-static const char* REG_VALUE_SERVER   = "Server";
-static const char* REG_VALUE_SIDEPREF = "SidePref";
-static const char* REG_VALUE_GAMESPLAYED = "Played";
-static const char* REG_VALUE_TEAMRANK = "RankTeam";
-static const char* REG_VALUE_CLANRANK = "RankClan";
+static const char* SETTING_SERVER   = "Server";
+static const char* SETTING_SIDEPREF = "SidePref";
+static const char* SETTING_GAMESPLAYED = "Played";
+static const char* SETTING_TEAMRANK = "RankTeam";
+static const char* SETTING_CLANRANK = "RankClan";
 
 // Profile ranking columns
 static enum
@@ -155,9 +155,9 @@ LoginProfile* LoginProfile::Get(const wchar_t* loginName, bool createOK)
 			}
 
 		StringClass regKey(255, true);
-		regKey.Format("%s\\%S", APPLICATION_SUB_KEY_NAME_LOGINS, loginName);
+		regKey.Format("%s\\%S", APPLICATION_SETTINGS_SECTION_LOGINS, loginName);
 
-		if (RegistryClass::Exists(regKey) || createOK)
+		if (SettingsClass::Exists(regKey) || createOK)
 			{
 			return Create(loginName);
 			}
@@ -225,13 +225,13 @@ void LoginProfile::Delete(const wchar_t* loginName)
 	{
 	if (loginName && wcslen(loginName))
 		{
-		RegistryClass registry(APPLICATION_SUB_KEY_NAME_LOGINS, false);
+		SettingsClass settings(APPLICATION_SETTINGS_SECTION_LOGINS, false);
 	
-		if (registry.Is_Valid())
+		if (settings.Is_Valid())
 			{
 			char valueName[64];
 			wcstombs(valueName, loginName, sizeof(valueName));
-			registry.Delete_Value(valueName);
+			settings.Delete_Value(valueName);
 			}
 		}
 	}
@@ -511,19 +511,19 @@ void LoginProfile::LoadSettings(void)
 
 	// Get login preferences
 	StringClass regKey(255, true);
-	regKey.Format("%s\\%S", APPLICATION_SUB_KEY_NAME_LOGINS, GetName());
+	regKey.Format("%s\\%S", APPLICATION_SETTINGS_SECTION_LOGINS, GetName());
 
-	RegistryClass registry(regKey, false);
+	SettingsClass settings(regKey, false);
 	
-	if (registry.Is_Valid())
+	if (settings.Is_Valid())
 		{
-		registry.Get_String(REG_VALUE_SERVER, mServer, "");
-		mSidePref = registry.Get_Int(REG_VALUE_SIDEPREF, -1);
-		mGamesPlayed = registry.Get_Int(REG_VALUE_GAMESPLAYED, 0);
+		settings.Get_String(SETTING_SERVER, mServer, "");
+		mSidePref = settings.Get_Int(SETTING_SIDEPREF, -1);
+		mGamesPlayed = settings.Get_Int(SETTING_GAMESPLAYED, 0);
 		}
 
-	LoadRank(REG_VALUE_TEAMRANK, mTeamRank);
-	LoadRank(REG_VALUE_CLANRANK, mClanRank);
+	LoadRank(SETTING_TEAMRANK, mTeamRank);
+	LoadRank(SETTING_CLANRANK, mClanRank);
 	}
 
 
@@ -561,19 +561,19 @@ void LoginProfile::SaveSettings(void)
 		{
 		// Save login preferences
 		StringClass regKey(255, true);
-		regKey.Format("%s\\%S", APPLICATION_SUB_KEY_NAME_LOGINS, GetName());
+		regKey.Format("%s\\%S", APPLICATION_SETTINGS_SECTION_LOGINS, GetName());
 
-		RegistryClass registry(regKey);
+		SettingsClass settings(regKey);
 	
-		if (registry.Is_Valid())
+		if (settings.Is_Valid())
 			{
-			registry.Set_String(REG_VALUE_SERVER, mServer);
-			registry.Set_Int(REG_VALUE_SIDEPREF, mSidePref);
-			registry.Set_Int(REG_VALUE_GAMESPLAYED, mGamesPlayed);
+			settings.Set_String(SETTING_SERVER, mServer);
+			settings.Set_Int(SETTING_SIDEPREF, mSidePref);
+			settings.Set_Int(SETTING_GAMESPLAYED, mGamesPlayed);
 			}
 
-		SaveRank(REG_VALUE_TEAMRANK, mTeamRank);
-		SaveRank(REG_VALUE_CLANRANK, mClanRank);
+		SaveRank(SETTING_TEAMRANK, mTeamRank);
+		SaveRank(SETTING_CLANRANK, mClanRank);
 		}
 	}
 
@@ -587,7 +587,7 @@ void LoginProfile::SaveSettings(void)
 *     Load cached ranking data.
 *
 * INPUTS
-*     Key  - Registry key to load ranking from.
+*     Key  - Settings key to load ranking from.
 *     Rank - Ranking data to initialize.
 *
 * RESULT
@@ -600,14 +600,14 @@ void LoginProfile::LoadRank(const char* valueName, LoginProfile::Ranking& rank)
 	WWASSERT(valueName);
 
 	StringClass regKey(255, true);
-	regKey.Format("%s\\%S", APPLICATION_SUB_KEY_NAME_LOGINS, GetName());
+	regKey.Format("%s\\%S", APPLICATION_SETTINGS_SECTION_LOGINS, GetName());
 
-	RegistryClass registry(regKey, false);
+	SettingsClass settings(regKey, false);
 	
-	if (registry.Is_Valid())
+	if (settings.Is_Valid())
 		{
  		char rankData[255];
-		registry.Get_String(valueName, rankData, sizeof(rankData), "");
+		settings.Get_String(valueName, rankData, sizeof(rankData), "");
 
 		sscanf(rankData, "%d,%d,%d,%d,%d,%d", &rank.Wins, &rank.Losses,
 			&rank.Deaths, &rank.Kills, &rank.Points, &rank.Rank);
@@ -633,7 +633,7 @@ void LoginProfile::LoadRank(const char* valueName, LoginProfile::Ranking& rank)
 *     Save current ranking data.
 *
 * INPUTS
-*     Key  - Registry key to save ranking data to.
+*     Key  - Settings key to save ranking data to.
 *     Rank - Ranking data to save.
 *
 * RESULT
@@ -646,17 +646,17 @@ void LoginProfile::SaveRank(const char* valueName, const LoginProfile::Ranking& 
 	WWASSERT(valueName);
 
 	StringClass regKey(255, true);
-	regKey.Format("%s\\%S", APPLICATION_SUB_KEY_NAME_LOGINS, GetName());
+	regKey.Format("%s\\%S", APPLICATION_SETTINGS_SECTION_LOGINS, GetName());
 
-	RegistryClass registry(regKey);
+	SettingsClass settings(regKey);
 	
-	if (registry.Is_Valid())
+	if (settings.Is_Valid())
 		{
  		char rankData[255];
 		sprintf(rankData, "%d,%d,%d,%d,%d,%d", rank.Wins, rank.Losses, rank.Deaths,
 			rank.Kills, rank.Points, rank.Rank);
 
-		registry.Set_String(valueName, rankData);
+		settings.Set_String(valueName, rankData);
 		}
 	}
 

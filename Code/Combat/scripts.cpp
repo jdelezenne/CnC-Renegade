@@ -34,6 +34,7 @@
  * Functions:                                                                                  * 
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
+#include "Platform/Paths.h"
 #include "scripts.h"
 #include "debug.h"
 #include "scriptcommands.h"
@@ -148,6 +149,7 @@ void ScriptManager::Destroy_Pending(void)
 */
 void ScriptManager::Load_Scripts(const char* dll_filename)
 {
+	StringClass mod_script_filename;
 	Debug_Say(("Script Manager Loading Script File %s\n", dll_filename));
 
 
@@ -188,7 +190,8 @@ void ScriptManager::Load_Scripts(const char* dll_filename)
 
 				// change 'dll_filename' so that we load the newly created dll
 				if (cur_pos == scripts_size) {
-					dll_filename = _TMP_SCRIPTS_DLL_FILENAME;
+					mod_script_filename = Platform::WritePath(_TMP_SCRIPTS_DLL_FILENAME).c_str();
+					dll_filename = mod_script_filename;
 				}
 
 				unpacked_scripts.Close();

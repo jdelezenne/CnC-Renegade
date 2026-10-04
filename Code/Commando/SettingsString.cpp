@@ -17,64 +17,60 @@
 */
 
 //
-// Filename:     regfloat.cpp
+// Filename:     SettingsString.cpp
 // Author:       Tom Spencer-Smith
 // Date:         Dec 1998
-// Description:  
+// Description:
 //
 
-#include "regfloat.h"
+#include "SettingsString.h" // I WANNA BE FIRST!
 
 #include "string.h"
-#include "registry.h"
+#include "Settings.h"
 #include "wwdebug.h"
-#include "wwmemlog.h"
 
 //
 // Class statics
 //
 
 //-----------------------------------------------------------------------------
-cRegistryFloat::cRegistryFloat(LPCSTR registry_location, LPCSTR key_name, float default_value)
+cSettingsString::cSettingsString(LPCSTR settings_section, LPCSTR key_name,
+	LPCSTR default_value)
 {
-   WWMEMLOG(MEM_GAMEDATA);
-	if (registry_location == NULL) {
-      strcpy(RegistryLocation, "");
+   WWASSERT(default_value != NULL);
+
+   if (settings_section == NULL) {
+      strcpy(SettingsSection, "");
       strcpy(KeyName, "");
       Set(default_value);
    } else {
+      WWASSERT(strlen(settings_section) < sizeof(SettingsSection));
       WWASSERT(key_name != NULL);
-      WWASSERT(strlen(registry_location) < sizeof(RegistryLocation));
       WWASSERT(strlen(key_name) < sizeof(KeyName));
-      strcpy(RegistryLocation, registry_location);
+      strcpy(SettingsSection, settings_section);
       strcpy(KeyName, key_name);
 
-	   RegistryClass * registry = new RegistryClass(RegistryLocation);
-	   WWASSERT(registry != NULL && registry->Is_Valid());
-		int temp_1 = 0;
-		WWASSERT(sizeof(temp_1) == sizeof(default_value));
-		::memcpy(&temp_1, &default_value, sizeof(default_value));
-		int temp_2 = registry->Get_Int(KeyName, temp_1);
-		WWASSERT(sizeof(temp_2) == sizeof(Value));
-		::memcpy(&Value, &temp_2, sizeof(temp_2));
-   	delete registry;
+	   SettingsClass * settings = new SettingsClass(SettingsSection);
+	   WWASSERT(settings != NULL && settings->Is_Valid());
+		settings->Get_String(KeyName, Value, sizeof(Value), default_value);
+	delete settings;
 
       Set(Value);
    }
 }
 
 //-----------------------------------------------------------------------------
-void cRegistryFloat::Set(float value)
+void cSettingsString::Set(LPCSTR value)
 {
-   Value = value;
+   WWASSERT(value != NULL);
+   WWASSERT(strlen(value) < sizeof(Value));
 
-   if (strcmp(RegistryLocation, "")) {
-	   RegistryClass * registry = new RegistryClass(RegistryLocation);
-	   WWASSERT(registry != NULL && registry->Is_Valid());
-		int temp = 0;
-		WWASSERT(sizeof(temp) == sizeof(Value));
-		::memcpy(&temp, &Value, sizeof(Value));
-      registry->Set_Int(KeyName, temp);
-   	delete registry;
+   strcpy(Value, value);
+
+   if (strcmp(SettingsSection, "")) {
+	   SettingsClass * settings = new SettingsClass(SettingsSection);
+	   WWASSERT(settings != NULL && settings->Is_Valid());
+		settings->Set_String(KeyName, Value);
+	delete settings;
    }
 }

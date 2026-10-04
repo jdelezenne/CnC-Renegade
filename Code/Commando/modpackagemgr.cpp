@@ -36,7 +36,7 @@
 
 #include "modpackagemgr.h"
 
-#include "registry.h"
+#include "Settings.h"
 #include "_globals.h"
 #include "realcrc.h"
 #include "ffactorylist.h"
@@ -68,19 +68,19 @@ ModPackageMgrClass::Initialize (void)
 {
 	Shutdown ();
 
-// (gth) Day 120 patch, don't re-load the package name from the registry
+// (gth) Day 120 patch, don't re-load the package name from the settings
 #if 0
 	//
-	//	Get the currently selected package name from the registry
+	//	Get the currently selected package name from the settings
 	//
-	RegistryClass registry (APPLICATION_SUB_KEY_NAME_OPTIONS);
-	if (registry.Is_Valid ()) {
+	SettingsClass settings (APPLICATION_SETTINGS_SECTION_OPTIONS);
+	if (settings.Is_Valid ()) {
 
 		//
-		//	Get the current package name from the registry
+		//	Get the current package name from the settings
 		//
 		StringClass package_filename;
-		registry.Get_String (CURR_MOD_REG_VALUE, package_filename, "");
+		settings.Get_String (CURR_MOD_REG_VALUE, package_filename, "");
 
 		//
 		//	Initialize the current package
@@ -172,11 +172,11 @@ ModPackageMgrClass::Set_Current_Package (const char *package_filename)
 	CurrentPackage.Set_Package_Filename (package_filename);
 
 	//
-	//	Write the name of hte package to the registry
+	//	Write the name of hte package to the settings
 	//
-	RegistryClass registry (APPLICATION_SUB_KEY_NAME_OPTIONS);
-	if (registry.Is_Valid ()) {
-		registry.Set_String (CURR_MOD_REG_VALUE, package_filename);
+	SettingsClass settings (APPLICATION_SETTINGS_SECTION_OPTIONS);
+	if (settings.Is_Valid ()) {
+		settings.Set_String (CURR_MOD_REG_VALUE, package_filename);
 	}
 
 	return ;

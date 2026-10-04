@@ -34,12 +34,14 @@
  * Functions:                                                                                  *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
+#include "Platform/Paths.h"
+#include "Platform/Windows/Files.h"
 #include "inputconfigmgr.h"
 #include "dlgcontrols.h"
 #include "input.h"
 #include "rawfile.h"
 #include "ffactory.h"
-#include "registry.h"
+#include "Settings.h"
 #include "chunkio.h"
 #include "debug.h"
 #include "translatedb.h"
@@ -53,9 +55,9 @@
 static const char *CFG_DICTIONARY_FILENAME = "CONFIG.DAT";
 
 ////////////////////////////////////////////////////////////////
-//	Registry key names
+//	Settings key names
 ////////////////////////////////////////////////////////////////
-//static const char *REGISTRY_SUB_KEY		= "Software\\Westwood\\Renegade\\Input";
+//static const char *SETTINGS_SUB_KEY		= "Renegade\\Input";
 static const char *REG_CURRENT_CONFIG	= "Current Config";
 
 ////////////////////////////////////////////////////////////////
@@ -257,7 +259,7 @@ InputConfigMgrClass::Delete_Configuration (int index)
 	//
 	//	Delete the configuration file
 	//
-	::DeleteFile (full_path);
+	Platform::RemoveFile(full_path);
 
 	//
 	//	Now remove this entry from the list
@@ -688,23 +690,6 @@ InputConfigMgrClass::Load_Variables (ChunkLoadClass &cload)
 void
 InputConfigMgrClass::Get_Config_Path (StringClass &full_path)
 {
-	//
-	//	Lookup the path of the executable
-	//
-	char path[MAX_PATH] = { 0 };
-	::GetModuleFileName (NULL, path, sizeof (path));
-
-	//
-	//	Strip off the filename
-	//
-	char *filename_portion = ::strrchr (path, '\\');
-	if (filename_portion != NULL) {
-		filename_portion[0] = 0;
-	}
-
-	//
-	//	Build the full path from the EXE's directory
-	//
-	full_path.Format ("%s\\data\\config", path);
+	full_path = Platform::UserPath("data/config").c_str();
 	return ;
 }

@@ -35,6 +35,7 @@
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 
+#include "Platform/Windows/Files.h"
 #include "dlgserversaveload.h"
 #include "resource.h"
 #include "listctrl.h"
@@ -820,7 +821,7 @@ void ServerSettingsManagerClass::Delete_Configuration(ServerSettingsClass *setti
 	if (!settings->Is_Default()) {
 		char filename[MAX_PATH];
 		sprintf(filename, "data\\%s", settings->RawFileName);
-		DeleteFile(filename);
+		Platform::RemoveFile(filename);
 		for (int i=0 ; i<ServerSettingsList.Count() ; i++) {
 			if (strcmp(settings->RawFileName, ServerSettingsList[i]->RawFileName) == 0) {
 				delete ServerSettingsList[i];

@@ -39,7 +39,7 @@
 #include "playermanager.h"
 #include "combat.h"
 #include "cnetwork.h"
-#include "registry.h"
+#include "Settings.h"
 #include "_globals.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -51,7 +51,7 @@ static RenegadeCheatMgrClass _TheCheatMgr;
 //////////////////////////////////////////////////////////////////////
 //	Constants
 //////////////////////////////////////////////////////////////////////
-//static const char *KEY_NAME_SETTINGS	= "Software\\Westwood\\Renegade\\Options";
+//static const char *KEY_NAME_SETTINGS	= "Renegade\\Options";
 static const char *VALUE_NAME_CHEATS	= "Cheats";
 
 
@@ -63,15 +63,15 @@ static const char *VALUE_NAME_CHEATS	= "Cheats";
 RenegadeCheatMgrClass::RenegadeCheatMgrClass (void)
 {
 	//
-	//	Attempt to open the registry key
+	//	Attempt to open the settings key
 	//
-	RegistryClass registry (APPLICATION_SUB_KEY_NAME_OPTIONS);
-	if (registry.Is_Valid ()) {
+	SettingsClass settings (APPLICATION_SETTINGS_SECTION_OPTIONS);
+	if (settings.Is_Valid ()) {
 
 		//
-		//	Read the values from the registry
+		//	Read the values from the settings
 		//
-		//Flags = registry.Get_Int (VALUE_NAME_CHEATS, 0);
+		//Flags = settings.Get_Int (VALUE_NAME_CHEATS, 0);
 	}
 
 	return ;
@@ -102,11 +102,11 @@ RenegadeCheatMgrClass::Enable_Cheat (int cheat, bool onoff)
 	CheatMgrClass::Enable_Cheat (cheat, onoff);
 
 	//
-	//	Save the values to the registry
+	//	Save the values to the settings
 	//
-	RegistryClass registry (APPLICATION_SUB_KEY_NAME_OPTIONS);
-	if (registry.Is_Valid ()) {
-		registry.Set_Int (VALUE_NAME_CHEATS, Flags);
+	SettingsClass settings (APPLICATION_SETTINGS_SECTION_OPTIONS);
+	if (settings.Is_Valid ()) {
+		settings.Set_Int (VALUE_NAME_CHEATS, Flags);
 	}
 
 	if (cheat == CHEAT_INVULNERABILITY) {

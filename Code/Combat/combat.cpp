@@ -207,6 +207,7 @@ void	CombatManager::Init( bool render_available )
 */
 void	CombatManager::Shutdown( void )
 {
+	ConversationMgrClass::Shutdown ();
 //	Debug_Say(("CombatManager::Shutdown\n"));
 	ScreenFadeManager::Shutdown();
 	HUDClass::Shutdown();
@@ -256,7 +257,7 @@ void	CombatManager::Shutdown( void )
 		MessageWindow = NULL;
 	}
 
-	ConversationMgrClass::Shutdown ();
+
 
 //	Debug_Say(( "Combat Shutdown %d refs\n", RefCountClass::Total_Refs() ));
 }

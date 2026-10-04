@@ -33,6 +33,9 @@
 *
 ******************************************************************************/
 
+#include "Platform/Paths.h"
+#include "Platform/Windows/Files.h"
+#include "WWCOMUtil.h"
 #include <WWLib\Always.h>
 #include "WOLDownload.h"
 #include "WOLProduct.h"
@@ -148,7 +151,7 @@ bool Download::CreateDownloadObject(void)
 	WWDEBUG_SAY(("WOL: Creating IID_IDownload object\n"));
 
 	WOL::IDownload* downloadObject = NULL;
-	HRESULT hr = CoCreateInstance(WOL::CLSID_Download, NULL, CLSCTX_INPROC_SERVER,
+	HRESULT hr = CreateCOMObjectFromLibrary("OnlineServices.dll", WOL::CLSID_Download,
 			WOL::IID_IDownload, (void **)&downloadObject);
 
 	if (FAILED(hr))
@@ -252,8 +255,9 @@ bool Download::Start(void)
 		}
 
 	// Attempt to create the target path for the download file.
-	const char* localPath = GetLocalPath();
-	int dirCreated = CreateDirectory(localPath, NULL);
+	StringClass userPath(Platform::WritePath(GetLocalPath()).c_str());
+	const char* localPath = userPath;
+	int dirCreated = Platform::MakeDirectory(localPath, NULL);
 
 	if (!dirCreated && (ERROR_ALREADY_EXISTS != GetLastError()))
 		{
@@ -277,10 +281,9 @@ bool Download::Start(void)
 	const char* server = GetServerName();
 	const char* login = GetLoginName();
 	const char* password = GetPassword();
-	const char* regPath = product->GetRegistryPath();
 
 	WWDEBUG_SAY(("WOL: Downloading '%s' to '%s'\n", (const char*)downloadFile, (const char*)localFile));
-	HRESULT hr = mDownloadObject->DownloadFile(server, login, password, downloadFile, localFile, regPath);
+	HRESULT hr = mDownloadObject->DownloadFile(server, login, password, downloadFile, localFile, NULL);
 
 	if (FAILED(hr))
 		{

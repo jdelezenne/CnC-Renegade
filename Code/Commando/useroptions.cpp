@@ -29,7 +29,7 @@
 #include "wwdebug.h"
 #include "player.h"
 #include "cnetwork.h"
-#include "registry.h"
+#include "Settings.h"
 #include "player.h"
 #include "playertype.h"
 #include "bandwidth.h"
@@ -48,38 +48,38 @@
 #include "specialbuilds.h"
 #include "useroptions.h"
 
-extern char DefaultRegistryModifier[1024];
+extern char DefaultSettingsModifier[1024];
 
 //
 // Class statics
 //
-cRegistryBool cUserOptions::ShowNamesOnSoldier(					APPLICATION_SUB_KEY_NAME_NETOPTIONS, "ShowNamesOnSoldier",           true);
-cRegistryBool cUserOptions::SkipQuitConfirmDialog(				APPLICATION_SUB_KEY_NAME_OPTIONS,	"SkipQuitConfirmDialog",			false);
-cRegistryBool cUserOptions::SkipIngameQuitConfirmDialog(		APPLICATION_SUB_KEY_NAME_OPTIONS,	"SkipIngameQuitConfirmDialog",	false);
-cRegistryBool cUserOptions::CameraLockedToTurret(				APPLICATION_SUB_KEY_NAME_OPTIONS,	"CameraLockedToTurret",				false);
-cRegistryBool cUserOptions::PermitDiagLogging(					APPLICATION_SUB_KEY_NAME_OPTIONS,	"PermitDiagLogging",					true);
+cSettingsBool cUserOptions::ShowNamesOnSoldier(					APPLICATION_SETTINGS_SECTION_NETOPTIONS, "ShowNamesOnSoldier",           true);
+cSettingsBool cUserOptions::SkipQuitConfirmDialog(				APPLICATION_SETTINGS_SECTION_OPTIONS,	"SkipQuitConfirmDialog",			false);
+cSettingsBool cUserOptions::SkipIngameQuitConfirmDialog(		APPLICATION_SETTINGS_SECTION_OPTIONS,	"SkipIngameQuitConfirmDialog",	false);
+cSettingsBool cUserOptions::CameraLockedToTurret(				APPLICATION_SETTINGS_SECTION_OPTIONS,	"CameraLockedToTurret",				false);
+cSettingsBool cUserOptions::PermitDiagLogging(					APPLICATION_SETTINGS_SECTION_OPTIONS,	"PermitDiagLogging",					true);
 
-cRegistryInt cUserOptions::Sku(										APPLICATION_SUB_KEY_NAME,				 "SKU",									RENEGADE_BASE_SKU);
+cSettingsInt cUserOptions::Sku(										APPLICATION_SETTINGS_SECTION,				 "SKU",									RENEGADE_BASE_SKU);
 
-cRegistryInt cUserOptions::BandwidthType(							APPLICATION_SUB_KEY_NAME_NETOPTIONS, "BandwidthType",						BANDWIDTH_AUTO);
-cRegistryInt cUserOptions::BandwidthBps(							APPLICATION_SUB_KEY_NAME_NETOPTIONS, "BandwidthBps",						33600);
+cSettingsInt cUserOptions::BandwidthType(							APPLICATION_SETTINGS_SECTION_NETOPTIONS, "BandwidthType",						BANDWIDTH_AUTO);
+cSettingsInt cUserOptions::BandwidthBps(							APPLICATION_SETTINGS_SECTION_NETOPTIONS, "BandwidthBps",						33600);
 
-cRegistryInt		cUserOptions::GameSpyBandwidthType(			APPLICATION_SUB_KEY_NAME_GAMESPY,	 "GameSpyBandwidthType",			BANDWIDTH_AUTO);
-cRegistryInt		cUserOptions::PreferredGameSpyNic(			APPLICATION_SUB_KEY_NAME_GAMESPY,    "PreferredGameSpyNic",				0);
-cRegistryString	cUserOptions::GameSpyNickname(				APPLICATION_SUB_KEY_NAME_GAMESPY,	 "GameSpyNickname",					"");
-cRegistryInt		cUserOptions::GameSpyQueryPort(			APPLICATION_SUB_KEY_NAME_GAMESPY,    "GameSpyQueryPort",				25300);
-cRegistryInt		cUserOptions::GameSpyGamePort(			APPLICATION_SUB_KEY_NAME_GAMESPY,    "GameSpyGamePort",				4848);
-cRegistryInt		cUserOptions::SplashCount(			APPLICATION_SUB_KEY_NAME_GAMESPY,    "SplashCount",				0);
-cRegistryBool		cUserOptions::DoneClientBandwidthTest(			APPLICATION_SUB_KEY_NAME_GAMESPY,    "DoneClientBandwidthTest",				false);
+cSettingsInt		cUserOptions::GameSpyBandwidthType(			APPLICATION_SETTINGS_SECTION_GAMESPY,	 "GameSpyBandwidthType",			BANDWIDTH_AUTO);
+cSettingsInt		cUserOptions::PreferredGameSpyNic(			APPLICATION_SETTINGS_SECTION_GAMESPY,    "PreferredGameSpyNic",				0);
+cSettingsString	cUserOptions::GameSpyNickname(				APPLICATION_SETTINGS_SECTION_GAMESPY,	 "GameSpyNickname",					"");
+cSettingsInt		cUserOptions::GameSpyQueryPort(			APPLICATION_SETTINGS_SECTION_GAMESPY,    "GameSpyQueryPort",				25300);
+cSettingsInt		cUserOptions::GameSpyGamePort(			APPLICATION_SETTINGS_SECTION_GAMESPY,    "GameSpyGamePort",				4848);
+cSettingsInt		cUserOptions::SplashCount(			APPLICATION_SETTINGS_SECTION_GAMESPY,    "SplashCount",				0);
+cSettingsBool		cUserOptions::DoneClientBandwidthTest(			APPLICATION_SETTINGS_SECTION_GAMESPY,    "DoneClientBandwidthTest",				false);
 
 
-cRegistryInt cUserOptions::PreferredLanNic(						APPLICATION_SUB_KEY_NAME_NETOPTIONS, "PreferredLanNic",					0);
-cRegistryInt cUserOptions::NetUpdateRate(							APPLICATION_SUB_KEY_NAME_NETOPTIONS, "NetUpdateRate",						10);
-cRegistryFloat cUserOptions::ClientHintFactor(					APPLICATION_SUB_KEY_NAME_NETOPTIONS, "ClientHintFactor",					10.0f);
-cRegistryFloat cUserOptions::MaxFacingPenalty(					APPLICATION_SUB_KEY_NAME_NETOPTIONS, "MaxFacingPenalty",					0.3f);
-cRegistryFloat cUserOptions::IrrelevancePenalty(				APPLICATION_SUB_KEY_NAME_NETOPTIONS, "IrrelevancePenalty",				0.2f);
+cSettingsInt cUserOptions::PreferredLanNic(						APPLICATION_SETTINGS_SECTION_NETOPTIONS, "PreferredLanNic",					0);
+cSettingsInt cUserOptions::NetUpdateRate(							APPLICATION_SETTINGS_SECTION_NETOPTIONS, "NetUpdateRate",						10);
+cSettingsFloat cUserOptions::ClientHintFactor(					APPLICATION_SETTINGS_SECTION_NETOPTIONS, "ClientHintFactor",					10.0f);
+cSettingsFloat cUserOptions::MaxFacingPenalty(					APPLICATION_SETTINGS_SECTION_NETOPTIONS, "MaxFacingPenalty",					0.3f);
+cSettingsFloat cUserOptions::IrrelevancePenalty(				APPLICATION_SETTINGS_SECTION_NETOPTIONS, "IrrelevancePenalty",				0.2f);
 
-cRegistryInt cUserOptions::ResultsLogNumber(						APPLICATION_SUB_KEY_NAME_NETOPTIONS, "ResultsLogNumber",					1);
+cSettingsInt cUserOptions::ResultsLogNumber(						APPLICATION_SETTINGS_SECTION_NETOPTIONS, "ResultsLogNumber",					1);
 
 //-----------------------------------------------------------------------------
 bool cUserOptions::Parse_Command_Line(LPCSTR command)
@@ -132,9 +132,9 @@ bool cUserOptions::Parse_Command_Line(LPCSTR command)
 		}
 
 		if (strstr(cmd, "REGMOD=")) {
-			strcpy(DefaultRegistryModifier, strstr(cmd, "REGMOD=") + 7);
+			strcpy(DefaultSettingsModifier, strstr(cmd, "REGMOD=") + 7);
 			#ifdef WWDEBUG
-			OutputDebugString("Registry modifier on command line\n");
+			OutputDebugString("Settings modifier on command line\n");
 			#endif //WWDEBUG
 			Reread();
 			continue;
@@ -146,15 +146,15 @@ bool cUserOptions::Parse_Command_Line(LPCSTR command)
 
 			// Save out process ID so our master server can find us.
 			char tempmod[512];
-			strcpy(tempmod, DefaultRegistryModifier);
-			strcpy(DefaultRegistryModifier, "");
-			RegistryClass reg(APPLICATION_SUB_KEY_NAME);
+			strcpy(tempmod, DefaultSettingsModifier);
+			strcpy(DefaultSettingsModifier, "");
+			SettingsClass reg(APPLICATION_SETTINGS_SECTION);
 			if (reg.Is_Valid()) {
 				reg.Set_Int("ProcessId", GetCurrentProcessId());
 			}
-			strcpy(DefaultRegistryModifier, tempmod);
+			strcpy(DefaultSettingsModifier, tempmod);
 
-			RegistryClass::Set_Read_Only(true);
+			SettingsClass::Set_Read_Only(true);
 			continue;
 		}
 
@@ -171,10 +171,10 @@ bool cUserOptions::Parse_Command_Line(LPCSTR command)
 			if (file.Is_Available()) {
 				ServerSettingsClass::Set_Settings_File_Name(server_config_file);
 
-				RegistryClass registry (APPLICATION_SUB_KEY_NAME_WOLSETTINGS);
-				if (registry.Is_Valid ()) {
-					registry.Set_Int(AutoRestartClass::REG_VALUE_AUTO_RESTART_FLAG, 1);
-					registry.Set_Int(AutoRestartClass::REG_VALUE_AUTO_RESTART_TYPE, 0);
+				SettingsClass settings (APPLICATION_SETTINGS_SECTION_WOLSETTINGS);
+				if (settings.Is_Valid ()) {
+					settings.Set_Int(AutoRestartClass::SETTING_AUTO_RESTART_FLAG, 1);
+					settings.Set_Int(AutoRestartClass::SETTING_AUTO_RESTART_TYPE, 0);
 				}
 				cGameSpyAdmin::Set_Is_Server_Gamespy_Listed(true);
 				GameSpyQnR.Enable_Reporting(true);
@@ -330,10 +330,10 @@ void cUserOptions::Set_Server_INI_File(char *cmd_line_entry)
 	if (file.Is_Available()) {
 		ServerSettingsClass::Set_Settings_File_Name(server_config_file);
 
-		RegistryClass registry (APPLICATION_SUB_KEY_NAME_WOLSETTINGS);
-		if (registry.Is_Valid ()) {
-			registry.Set_Int(AutoRestartClass::REG_VALUE_AUTO_RESTART_FLAG, 1);
-			registry.Set_Int(AutoRestartClass::REG_VALUE_AUTO_RESTART_TYPE, 1);
+		SettingsClass settings (APPLICATION_SETTINGS_SECTION_WOLSETTINGS);
+		if (settings.Is_Valid ()) {
+			settings.Set_Int(AutoRestartClass::SETTING_AUTO_RESTART_FLAG, 1);
+			settings.Set_Int(AutoRestartClass::SETTING_AUTO_RESTART_TYPE, 1);
 		}
 	}
 }
@@ -390,10 +390,10 @@ void cUserOptions::Set_Bandwidth_Bps(int bandwidth_bps)
 //-----------------------------------------------------------------------------
 void cUserOptions::Reread(void)
 {
-	Sku.Set(RegistryClass(APPLICATION_SUB_KEY_NAME).Get_Int("SKU", Sku.Get()));
-	BandwidthType.Set(RegistryClass(APPLICATION_SUB_KEY_NAME_NETOPTIONS).Get_Int("BandwidthType", BandwidthType.Get()));
-	BandwidthBps.Set(RegistryClass(APPLICATION_SUB_KEY_NAME_NETOPTIONS).Get_Int("BandwidthBps", BandwidthBps.Get()));
-	GameSpyBandwidthType.Set(RegistryClass(APPLICATION_SUB_KEY_NAME_GAMESPY).Get_Int("GameSpyBandwidthType", GameSpyBandwidthType.Get()));
+	Sku.Set(SettingsClass(APPLICATION_SETTINGS_SECTION).Get_Int("SKU", Sku.Get()));
+	BandwidthType.Set(SettingsClass(APPLICATION_SETTINGS_SECTION_NETOPTIONS).Get_Int("BandwidthType", BandwidthType.Get()));
+	BandwidthBps.Set(SettingsClass(APPLICATION_SETTINGS_SECTION_NETOPTIONS).Get_Int("BandwidthBps", BandwidthBps.Get()));
+	GameSpyBandwidthType.Set(SettingsClass(APPLICATION_SETTINGS_SECTION_GAMESPY).Get_Int("GameSpyBandwidthType", GameSpyBandwidthType.Get()));
 }
 
 
@@ -409,13 +409,13 @@ void cUserOptions::Reread(void)
 
 
 /*
-cRegistryInt cUserOptions::GameListFilterMaxPing(				APPLICATION_SUB_KEY_NAME_NETOPTIONS, "GameListFilterMaxPing",								9999);
-cRegistryInt cUserOptions::GameListFilterMinPlayersPresent(	APPLICATION_SUB_KEY_NAME_NETOPTIONS, "GameListFilterMinPlayersPresent",					0);
-cRegistryInt cUserOptions::GameListFilterMaxPlayersPresent(	APPLICATION_SUB_KEY_NAME_NETOPTIONS, "GameListFilterMaxPlayersPresent",					99);
-cRegistryInt cUserOptions::GameListFilterMaxPlayersPermitted( APPLICATION_SUB_KEY_NAME_NETOPTIONS, "GameListFilterMaxPlayersPermitted",			99);
-cRegistryBool cUserOptions::GameListFilterShowPrivateGames(	APPLICATION_SUB_KEY_NAME_NETOPTIONS, "GameListFilterShowPrivateGames",					true);
-cRegistryBool cUserOptions::GameListFilterShowOnlyDedicatedGames(	APPLICATION_SUB_KEY_NAME_NETOPTIONS, "GameListFilterShowOnlyDedicatedGames",	false);
-cRegistryBool cUserOptions::GameListFilterShowOnlyGamesIRankFor(	APPLICATION_SUB_KEY_NAME_NETOPTIONS, "GameListFilterShowOnlyGamesIRankFor",	false);
+cSettingsInt cUserOptions::GameListFilterMaxPing(				APPLICATION_SETTINGS_SECTION_NETOPTIONS, "GameListFilterMaxPing",								9999);
+cSettingsInt cUserOptions::GameListFilterMinPlayersPresent(	APPLICATION_SETTINGS_SECTION_NETOPTIONS, "GameListFilterMinPlayersPresent",					0);
+cSettingsInt cUserOptions::GameListFilterMaxPlayersPresent(	APPLICATION_SETTINGS_SECTION_NETOPTIONS, "GameListFilterMaxPlayersPresent",					99);
+cSettingsInt cUserOptions::GameListFilterMaxPlayersPermitted( APPLICATION_SETTINGS_SECTION_NETOPTIONS, "GameListFilterMaxPlayersPermitted",			99);
+cSettingsBool cUserOptions::GameListFilterShowPrivateGames(	APPLICATION_SETTINGS_SECTION_NETOPTIONS, "GameListFilterShowPrivateGames",					true);
+cSettingsBool cUserOptions::GameListFilterShowOnlyDedicatedGames(	APPLICATION_SETTINGS_SECTION_NETOPTIONS, "GameListFilterShowOnlyDedicatedGames",	false);
+cSettingsBool cUserOptions::GameListFilterShowOnlyGamesIRankFor(	APPLICATION_SETTINGS_SECTION_NETOPTIONS, "GameListFilterShowOnlyGamesIRankFor",	false);
 */
 
 		/*

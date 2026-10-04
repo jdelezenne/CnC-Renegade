@@ -34,6 +34,8 @@
  * Functions:                                                                                  *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
+#include "Platform/Paths.h"
+#include "Platform/Windows/Files.h"
 #include "WOLGMode.h"
 #include "GameData.h"
 #include "GameChanList.h"
@@ -60,7 +62,7 @@
 #include "cpudetect.h"
 #include "dx8wrapper.h"
 #include "systeminfolog.h"
-#include "registry.h"
+#include "Settings.h"
 #include "init.h"
 #include "debug.h"
 #include <WWOnline\WOLString.h>
@@ -195,7 +197,7 @@ void WolGameModeClass::Init(void)
 	RefPtrConst<Product> product = Product::Current();
 
 	if (!product.IsValid()) {
-		Product::Initializer(APPLICATION_SUB_KEY_NAME, RENEGADE_GAMECODE, RENEGADE_LOBBY_PASSWORD, RENEGADE_BASE_SKU);
+		Product::Initializer(APPLICATION_SETTINGS_SECTION, RENEGADE_GAMECODE, RENEGADE_LOBBY_PASSWORD, RENEGADE_BASE_SKU);
 	}
 
 	mWOLSession = Session::GetInstance(true);
@@ -1266,7 +1268,7 @@ void WolGameModeClass::Ban_Player(const wchar_t* name, unsigned long ip)
 			sprintf(ipstr, "%u.%u.%u.%u\n", (unsigned int)ip_ptr[0], (unsigned int)ip_ptr[1], (unsigned int)ip_ptr[2], (unsigned int)ip_ptr[3]);
 			pn += ipstr;
 
-	   	FILE *kick_list = fopen("wolbanlist.txt", "at");
+		FILE *kick_list = Platform::OpenStream("wolbanlist.txt", "at");
 	   	if (kick_list != NULL) {
 			   fwrite(pn.Peek_Buffer(), 1, pn.Get_Length(), kick_list);
 			   fclose(kick_list);
@@ -1365,7 +1367,7 @@ bool WolGameModeClass::Is_Banned(const char *player_name, unsigned long ip)
  *=============================================================================================*/
 void WolGameModeClass::Read_Kick_List(void)
 {
-	FILE *kick_list = fopen("wolbanlist.txt", "rt");
+	FILE *kick_list = Platform::OpenStream("wolbanlist.txt", "rt");
 	if (kick_list) {
 
 		int i = 0;
@@ -1715,18 +1717,18 @@ void WolGameModeClass::HandleNotification(GameOptionsMessage& message)
 
 			if (cmd == request) {
 				static int sysinfo_log_disabled=-1;
-				if (sysinfo_log_disabled==-1) {	// Read from registry only once per run
-					RegistryClass registry( APPLICATION_SUB_KEY_NAME_DEBUG );
-					if ( registry.Is_Valid() ) {
-						sysinfo_log_disabled=registry.Get_Int( VALUE_NAME_DISABLE_SERVER_SYSINFO_COLLECTING, -1 );
-						// Write to registry to create the key if it didn't exist
+				if (sysinfo_log_disabled==-1) {	// Read from settings only once per run
+					SettingsClass settings( APPLICATION_SETTINGS_SECTION_DEBUG );
+					if ( settings.Is_Valid() ) {
+						sysinfo_log_disabled=settings.Get_Int( VALUE_NAME_DISABLE_SERVER_SYSINFO_COLLECTING, -1 );
+						// Write to settings to create the key if it didn't exist
 						if (sysinfo_log_disabled==-1) {
 							sysinfo_log_disabled=0;
-							registry.Set_Int( VALUE_NAME_DISABLE_SERVER_SYSINFO_COLLECTING, sysinfo_log_disabled);
+							settings.Set_Int( VALUE_NAME_DISABLE_SERVER_SYSINFO_COLLECTING, sysinfo_log_disabled);
 						}
 					}
 				}
-				// Only copy the sysinfo if it isn't disabled in registry
+				// Only copy the sysinfo if it isn't disabled in settings
 				if (sysinfo_log_disabled==0) {
 					const char* data = (request + strlen("SYSINFO:"));
 					int datalen=strlen(data);
@@ -1762,7 +1764,7 @@ void WolGameModeClass::HandleNotification(GameOptionsMessage& message)
 					StringClass dirname(0,true);
 					dirname.Format("sysinfo_%d",DebugManager::Get_Version_Number());
 					if (GetFileAttributes(dirname)==0xffffffff) {
-						if (!CreateDirectory(dirname,NULL)) {
+						if (!Platform::MakeDirectory(dirname,NULL)) {
 							return;
 						}
 					}
@@ -1776,7 +1778,7 @@ void WolGameModeClass::HandleNotification(GameOptionsMessage& message)
 
 					DWORD written;
 					HANDLE file;
-					file = CreateFile(filename, GENERIC_WRITE, 0, NULL, OPEN_ALWAYS,
+					file = Platform::OpenFile(filename, GENERIC_WRITE, 0, NULL, OPEN_ALWAYS,
 							FILE_ATTRIBUTE_NORMAL, NULL);
 					if (INVALID_HANDLE_VALUE != file) {
 						SetFilePointer(file, 0, NULL, FILE_END);

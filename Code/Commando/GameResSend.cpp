@@ -32,6 +32,7 @@
 *
 ******************************************************************************/
 
+#include "Platform/Windows/Files.h"
 #include "GameResSend.h"
 #include "GameData.h"
 #include "Player.h"
@@ -296,7 +297,7 @@ void SendGameResults(unsigned long gameID, cGameData* theGame, SList<cPlayer>* p
 
 #if(0)
 #ifdef _DEBUG
-	HANDLE file = CreateFile("GameRes.dat", GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
+	HANDLE file = Platform::OpenFile("GameRes.dat", GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
 			FILE_ATTRIBUTE_NORMAL, NULL);
 
 	if (INVALID_HANDLE_VALUE != file)

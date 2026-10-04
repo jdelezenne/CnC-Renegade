@@ -55,7 +55,7 @@
 #include "rddesc.h"
 #include "lightenvironment.h"
 #include "statistics.h"
-#include "registry.h"
+#include "Settings.h"
 #include "boxrobj.h"
 #include "pointgr.h"
 #include "render2d.h"
@@ -978,43 +978,43 @@ void DX8Wrapper::Get_Render_Target_Resolution(int & set_w,int & set_h,int & set_
 	return ;
 }
 
-bool DX8Wrapper::Registry_Save_Render_Device( const char * sub_key )
+bool DX8Wrapper::Settings_Save_Render_Device( const char * sub_key )
 {
 	int	width, height, depth;
 	bool	windowed;
 	Get_Device_Resolution(width, height, depth, windowed);
-	return Registry_Save_Render_Device(sub_key, CurRenderDevice, ResolutionWidth, ResolutionHeight, BitDepth, IsWindowed, TextureBitDepth);
+	return Settings_Save_Render_Device(sub_key, CurRenderDevice, ResolutionWidth, ResolutionHeight, BitDepth, IsWindowed, TextureBitDepth);
 }
 
-bool DX8Wrapper::Registry_Save_Render_Device( const char *sub_key, int device, int width, int height, int depth, bool windowed, int texture_depth)
+bool DX8Wrapper::Settings_Save_Render_Device( const char *sub_key, int device, int width, int height, int depth, bool windowed, int texture_depth)
 {
-	RegistryClass * registry = new RegistryClass( sub_key );
-	WWASSERT( registry );
+	SettingsClass * settings = new SettingsClass( sub_key );
+	WWASSERT( settings );
 
-	if ( !registry->Is_Valid() ) {
-		delete registry;
-		WWDEBUG_SAY(( "Error getting Registry\n" ));
+	if ( !settings->Is_Valid() ) {
+		delete settings;
+		WWDEBUG_SAY(( "Error getting Settings\n" ));
 		return false;
 	}
 
-	registry->Set_String( VALUE_NAME_RENDER_DEVICE_NAME,
+	settings->Set_String( VALUE_NAME_RENDER_DEVICE_NAME,
 		_RenderDeviceShortNameTable[device] );
-	registry->Set_Int( VALUE_NAME_RENDER_DEVICE_WIDTH,	width );
-	registry->Set_Int( VALUE_NAME_RENDER_DEVICE_HEIGHT, height );
-	registry->Set_Int( VALUE_NAME_RENDER_DEVICE_DEPTH, depth );
-	registry->Set_Int( VALUE_NAME_RENDER_DEVICE_WINDOWED, windowed );
-	registry->Set_Int( VALUE_NAME_RENDER_DEVICE_TEXTURE_DEPTH, texture_depth );
+	settings->Set_Int( VALUE_NAME_RENDER_DEVICE_WIDTH,	width );
+	settings->Set_Int( VALUE_NAME_RENDER_DEVICE_HEIGHT, height );
+	settings->Set_Int( VALUE_NAME_RENDER_DEVICE_DEPTH, depth );
+	settings->Set_Int( VALUE_NAME_RENDER_DEVICE_WINDOWED, windowed );
+	settings->Set_Int( VALUE_NAME_RENDER_DEVICE_TEXTURE_DEPTH, texture_depth );
 
-	delete registry;
+	delete settings;
 	return true;
 }
 
-bool DX8Wrapper::Registry_Load_Render_Device( const char * sub_key, bool resize_window )
+bool DX8Wrapper::Settings_Load_Render_Device( const char * sub_key, bool resize_window )
 {
 	char	name[ 200 ];
 	int	width,height,depth,windowed;
 
-	if (	Registry_Load_Render_Device(	sub_key,
+	if (	Settings_Load_Render_Device(	sub_key,
 													name,
 													sizeof(name),
 													width,
@@ -1095,24 +1095,24 @@ bool DX8Wrapper::Registry_Load_Render_Device( const char * sub_key, bool resize_
 		return true;
 	}
 
-	WWDEBUG_SAY(( "Error getting Registry\n" ));
+	WWDEBUG_SAY(( "Error getting Settings\n" ));
 
 	return Set_Any_Render_Device();
 }
 
-bool DX8Wrapper::Registry_Load_Render_Device( const char * sub_key, char *device, int device_len, int &width, int &height, int &depth, int &windowed, int &texture_depth)
+bool DX8Wrapper::Settings_Load_Render_Device( const char * sub_key, char *device, int device_len, int &width, int &height, int &depth, int &windowed, int &texture_depth)
 {
-	RegistryClass registry( sub_key );
+	SettingsClass settings( sub_key );
 
-	if ( registry.Is_Valid() ) {
-		registry.Get_String( VALUE_NAME_RENDER_DEVICE_NAME,
+	if ( settings.Is_Valid() ) {
+		settings.Get_String( VALUE_NAME_RENDER_DEVICE_NAME,
 			device, device_len);
 
-		width =		registry.Get_Int( VALUE_NAME_RENDER_DEVICE_WIDTH, -1 );
-		height =		registry.Get_Int( VALUE_NAME_RENDER_DEVICE_HEIGHT, -1 );
-		depth =		registry.Get_Int( VALUE_NAME_RENDER_DEVICE_DEPTH, -1 );
-		windowed =	registry.Get_Int( VALUE_NAME_RENDER_DEVICE_WINDOWED, -1 );
-		texture_depth = registry.Get_Int( VALUE_NAME_RENDER_DEVICE_TEXTURE_DEPTH, -1 );
+		width =		settings.Get_Int( VALUE_NAME_RENDER_DEVICE_WIDTH, -1 );
+		height =		settings.Get_Int( VALUE_NAME_RENDER_DEVICE_HEIGHT, -1 );
+		depth =		settings.Get_Int( VALUE_NAME_RENDER_DEVICE_DEPTH, -1 );
+		windowed =	settings.Get_Int( VALUE_NAME_RENDER_DEVICE_WINDOWED, -1 );
+		texture_depth = settings.Get_Int( VALUE_NAME_RENDER_DEVICE_TEXTURE_DEPTH, -1 );
 		return true;
 	}
 	*device=0;

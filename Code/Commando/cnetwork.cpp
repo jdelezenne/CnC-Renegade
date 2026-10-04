@@ -522,7 +522,7 @@ void cNetwork::Compute_Exe_Key(void)
 	// TSS 09/07/01
 	// N.B. Do not require scripts to be in sync any more, since they do not run on the client.
 	// Furthermore we would have to match the correct scripts target (d/p/r) and
-	// also handle the registry flag that forces scriptsd.dll.
+	// also handle the settings flag that forces scriptsd.dll.
 	//
 
 	//

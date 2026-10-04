@@ -41,6 +41,7 @@
 ******************************************************************************/
 
 #include "WOLProduct.h"
+#include "Settings.h"
 #include <WWLib\win.h>
 
 namespace WWOnline {
@@ -102,10 +103,10 @@ RefPtr<Product> Product::Current(void)
 *
 ******************************************************************************/
 
-RefPtr<Product> Product::Create(const char* registryPath, int gameCode,
+RefPtr<Product> Product::Create(const char* settingsPath, int gameCode,
 		const wchar_t* chanPass, unsigned long ladderSKU)
 	{
-	return new Product(registryPath, gameCode, chanPass, ladderSKU);
+	return new Product(settingsPath, gameCode, chanPass, ladderSKU);
 	}
 
 
@@ -122,8 +123,8 @@ RefPtr<Product> Product::Create(const char* registryPath, int gameCode,
 *
 ******************************************************************************/
 
-Product::Product(const char* registryPath, int gameCode, const wchar_t* chanPass, unsigned long ladderSKU) :
-		mRegistryPath(registryPath),
+Product::Product(const char* settingsPath, int gameCode, const wchar_t* chanPass, unsigned long ladderSKU) :
+		mSettingsPath(settingsPath),
 		mProductSKU(0),
 		mLadderSKU(0),
 		mProductVersion(0),
@@ -131,32 +132,13 @@ Product::Product(const char* registryPath, int gameCode, const wchar_t* chanPass
 		mGameCode(gameCode),
 		mChannelPassword(chanPass)
 	{
-	WWASSERT(registryPath && "Invalid parameter");
+	WWASSERT(settingsPath && "Invalid parameter");
 
-	HKEY rKey;
-	LONG result = RegOpenKeyEx(HKEY_LOCAL_MACHINE, registryPath, 0, KEY_READ, &rKey);
-	
-	if (result == ERROR_SUCCESS)
-		{
-		// Get SKU
-		DWORD type;
-		DWORD sku = 0;
-		DWORD sizeOfBuffer = sizeof(sku);
-		result = RegQueryValueEx(rKey, "SKU", NULL, &type, (unsigned char*)&sku, &sizeOfBuffer);
-
-		mProductSKU = sku;
-		mLanguageCode = (sku & 0xFF);
-		mLadderSKU = ladderSKU;
-
-		// Get version
-		DWORD version = 0;
-		sizeOfBuffer = sizeof(version);
-		result = RegQueryValueEx(rKey, "Version", NULL, &type, (unsigned char*)&version, &sizeOfBuffer);
-
-		mProductVersion = version;
-
-		RegCloseKey(rKey);
-		}
+    SettingsClass settings(settingsPath);
+    mProductSKU = settings.Get_Int("SKU", 3072);
+    mLanguageCode = mProductSKU & 0xFF;
+    mLadderSKU = ladderSKU;
+    mProductVersion = settings.Get_Int("Version", 0);
 	}
 
 
@@ -173,10 +155,10 @@ Product::Product(const char* registryPath, int gameCode, const wchar_t* chanPass
 *
 ******************************************************************************/
 
-Product::Initializer::Initializer(const char* registryPath, int gameCode,
+Product::Initializer::Initializer(const char* settingsPath, int gameCode,
 		const wchar_t* chanPass, unsigned long ladderSKU)
 	{
-	CurrentProduct() = Product::Create(registryPath, gameCode, chanPass, ladderSKU);
+	CurrentProduct() = Product::Create(settingsPath, gameCode, chanPass, ladderSKU);
 	}
 
 

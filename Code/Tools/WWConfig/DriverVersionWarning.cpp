@@ -26,7 +26,7 @@
 #include "dx8caps.h"
 #include "cpudetect.h"
 #include "dx8wrapper.h"
-#include "registry.h"
+#include "Settings.h"
 #include "formconv.h"
 #include "locale_api.h"
 #include "wwconfig_ids.h"
@@ -145,12 +145,12 @@ static void Get_Driver_Version_Warning_String(StringClass& str, DX8Caps& caps)
 void CheckDriverVersion()
 {
 	//
-	//	Attempt to open the registry key 
+	//	Attempt to open the settings key
 	//
-	RegistryClass render_registry(RENEGADE_SUB_KEY_NAME_RENDER);
-	if (!render_registry.Is_Valid()) return;
+	SettingsClass render_settings(RENEGADE_SETTINGS_SECTION_RENDER);
+	if (!render_settings.Is_Valid()) return;
 
-	int disabled=render_registry.Get_Int( "DriverVersionCheckDisabled" );
+	int disabled=render_settings.Get_Int( "DriverVersionCheckDisabled" );
 	if (disabled>=87) return;
 
 	IDirect3D8* d3d=NULL;
@@ -173,15 +173,15 @@ void CheckDriverVersion()
 			return;
 		}
 
-		// Select device. If there is already a device selected in the registry, use it.
+		// Select device. If there is already a device selected in the settings, use it.
 
 		int current_adapter_index=D3DADAPTER_DEFAULT;
 
 		//
-		//	Load the render device settings from the registry
+		//	Load the render device settings from the settings
 		//
 		char device_name[256] = { 0 };
-		render_registry.Get_String( VALUE_NAME_RENDER_DEVICE_NAME, device_name, sizeof(device_name));
+		render_settings.Get_String( VALUE_NAME_RENDER_DEVICE_NAME, device_name, sizeof(device_name));
 
 		int adapter_count = d3d->GetAdapterCount();
 		for (int adapter_index=0; adapter_index<adapter_count; adapter_index++) {
@@ -273,7 +273,7 @@ void CheckDriverVersion()
 		dlg.DoModal();
 	}
 */
-	render_registry.Set_Int( "DriverVersionCheckDisabled", 87 );	// Disable checking if driver version is good
+	render_settings.Set_Int( "DriverVersionCheckDisabled", 87 );	// Disable checking if driver version is good
 	GlobalExitValue=0;
 
 // IML: Disable driver warning message.
@@ -284,7 +284,7 @@ void CheckDriverVersion()
 	case DX8Caps::DRIVER_STATUS_GOOD:
 	case DX8Caps::DRIVER_STATUS_OK:
 	case DX8Caps::DRIVER_STATUS_UNKNOWN:
-		render_registry.Set_Int( "DriverVersionCheckDisabled", 87 );	// Disable checking if driver version is good
+		render_settings.Set_Int( "DriverVersionCheckDisabled", 87 );	// Disable checking if driver version is good
 		break;
 	case DX8Caps::DRIVER_STATUS_BAD:
 		{
@@ -303,9 +303,9 @@ void DriverVersionWarning::OnDisableDriverVersionDialogCheckbox()
 	// TODO: Add your control notification handler code here
 	
 	int is_disabled = SendDlgItemMessage (IDC_DISABLE_DRIVER_VERSION_DIALOG_CHECKBOX, BM_GETCHECK);
-	RegistryClass render_registry(RENEGADE_SUB_KEY_NAME_RENDER);
-	if (!render_registry.Is_Valid()) return;
-	render_registry.Set_Int( "DriverVersionCheckDisabled", is_disabled ? 87 : 0 );
+	SettingsClass render_settings(RENEGADE_SETTINGS_SECTION_RENDER);
+	if (!render_settings.Is_Valid()) return;
+	render_settings.Set_Int( "DriverVersionCheckDisabled", is_disabled ? 87 : 0 );
 }
 
 int DriverVersionWarning::DoModal() 

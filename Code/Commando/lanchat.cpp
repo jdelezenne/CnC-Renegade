@@ -41,7 +41,7 @@
 #include "langmode.h"
 #include "cnetwork.h"
 #include "gamemode.h"
-#include "registry.h"
+#include "Settings.h"
 #include "gamechanlist.h"
 #include "playermanager.h"
 #include "gametype.h"
@@ -74,8 +74,8 @@ cLanChat::cLanChat(void) :
 	ZeroMemory(&Socket, sizeof(Socket));
 	ZeroMemory(&LocalAddress, sizeof(LocalAddress));
 
-   Load_Lan_Registry_Keys();
-   Save_Lan_Registry_Keys();
+   Load_Lan_Settings_Keys();
+   Save_Lan_Settings_Keys();
 
 	Init_Lan_Protocol_And_Socket();
 
@@ -87,23 +87,23 @@ cLanChat::~cLanChat(void)
 {
    WWDEBUG_SAY(("cLanChat::~cLanChat\n"));
 
-	Save_Lan_Registry_Keys();
+	Save_Lan_Settings_Keys();
 	if (Socket != INVALID_SOCKET) {
 		cNetUtil::Close_Socket(Socket);
 	}
 }
 
 //-----------------------------------------------------------------------------
-void cLanChat::Load_Lan_Registry_Keys(void)
+void cLanChat::Load_Lan_Settings_Keys(void)
 {
-	WWDEBUG_SAY(("cLanChat::Load_Lan_Registry_Keys\n"));
+	WWDEBUG_SAY(("cLanChat::Load_Lan_Settings_Keys\n"));
 
-	RegistryClass * registry = new RegistryClass(APPLICATION_SUB_KEY_NAME_NETOPTIONS);
-	WWASSERT(registry);
-	WWASSERT(registry->Is_Valid());
+	SettingsClass * settings = new SettingsClass(APPLICATION_SETTINGS_SECTION_NETOPTIONS);
+	WWASSERT(settings);
+	WWASSERT(settings->Is_Valid());
 
    char name[200];
-	registry->Get_String("MyLanName", name, sizeof(name), "");
+	settings->Get_String("MyLanName", name, sizeof(name), "");
 
 	WideStringClass widename;
 	widename.Convert_From(name);
@@ -119,30 +119,30 @@ void cLanChat::Load_Lan_Registry_Keys(void)
 		}
 	}
 
-	int sidePref = registry->Get_Int("SidePref", -1);
+	int sidePref = settings->Get_Int("SidePref", -1);
 	cNetInterface::Set_Side_Preference(sidePref);
 
-	delete registry;
+	delete settings;
 }
 
 //-----------------------------------------------------------------------------
-void cLanChat::Save_Lan_Registry_Keys(void)
+void cLanChat::Save_Lan_Settings_Keys(void)
 {
-	WWDEBUG_SAY(("cLanChat::Save_Lan_Registry_Keys...\n"));
+	WWDEBUG_SAY(("cLanChat::Save_Lan_Settings_Keys...\n"));
 
-	RegistryClass * registry = new RegistryClass(APPLICATION_SUB_KEY_NAME_NETOPTIONS);
-	WWASSERT(registry);
-	WWASSERT(registry->Is_Valid());
+	SettingsClass * settings = new SettingsClass(APPLICATION_SETTINGS_SECTION_NETOPTIONS);
+	WWASSERT(settings);
+	WWASSERT(settings->Is_Valid());
 
 	if (!cGameSpyAdmin::Is_Gamespy_Game()) {
 		StringClass string;
 		cNetInterface::Get_Nickname().Convert_To(string);
-		registry->Set_String("MyLanName", string);
+		settings->Set_String("MyLanName", string);
 	}
 
-	registry->Set_Int("SidePref", cNetInterface::Get_Side_Preference());
+	settings->Set_Int("SidePref", cNetInterface::Get_Side_Preference());
 
-	delete registry;
+	delete settings;
 }
 
 //-----------------------------------------------------------------------------

@@ -56,7 +56,7 @@
 #include "gamedata.h"
 #include "imagectrl.h"
 #include "init.h"
-#include "registry.h"
+#include "Settings.h"
 #include "_globals.h"
 #include "dialogtests.h"
 #include "dlgwolwait.h"
@@ -88,7 +88,7 @@ MainMenuDialogClass::MainMenuDialogClass (void)	:
 	TitleTransModel	= WW3DAssetManager::Get_Instance ()->Create_Render_Obj ("IF_TITLETRANS");
 	GizmoModel			= WW3DAssetManager::Get_Instance ()->Create_Render_Obj ("IF_EVAGIZMO");
 
-	RegistryClass reg(APPLICATION_SUB_KEY_NAME_OPTIONS);
+	SettingsClass reg(APPLICATION_SETTINGS_SECTION_OPTIONS);
 	if (reg.Get_Int("DisableMenuAnim", 0) != 0) {
 		Animated = false;
 	}

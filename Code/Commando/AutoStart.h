@@ -100,8 +100,8 @@ class AutoRestartClass : public Observer<WOLLogonAction>, public Observer<WWOnli
 			STATE_DONE,
 		} RestartStateType;
 
-		static const char *REG_VALUE_AUTO_RESTART_FLAG;
-		static const char *REG_VALUE_AUTO_RESTART_TYPE;
+		static const char *SETTING_AUTO_RESTART_FLAG;
+		static const char *SETTING_AUTO_RESTART_TYPE;
 
 
 	private:

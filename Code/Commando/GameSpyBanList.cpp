@@ -44,11 +44,12 @@
 // Description:  Maintains a list of banned nicknames/hashes/ipaddresses for GameSpy Servers
 //
 
+#include "Platform/Paths.h"
 #include "cnetwork.h"
 #include "listnode.h"
 #include "GameSpyBanList.h"
 #include "ini.h"
-#include "registry.h"
+#include "Settings.h"
 #include "rawfile.h"
 #include "gamespyauthmgr.h"
 #include "sctextobj.h"
@@ -116,7 +117,7 @@ void cGameSpyBanList::Ban_User(const char *nickname, const char *challenge_respo
 	}
  	BanList->Add_Tail(t);
 
-	outf = fopen("banlist.txt", "at");
+	outf = Platform::OpenStream("banlist.txt", "at");
 
 	if (outf) {
 		fprintf(outf, "\"%s\" \"%s\" \"%s\" \"%s\" \"%s\"; \"%s\" console BAN\n", t->Get_Rule_Type() ? "Allow" : "Deny",
@@ -280,7 +281,7 @@ void cGameSpyBanList::LoadBans(void) {
 
 	if (!BanList->Is_Empty()) BanList->Delete();
 
-	outf = fopen("banlist.txt", "rt");
+	outf = Platform::OpenStream("banlist.txt", "rt");
 	if (!outf) return;
 	buff[sizeof(buff)-1] = 0;
 

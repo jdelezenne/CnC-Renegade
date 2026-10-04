@@ -34,6 +34,8 @@
  * Functions:                                                                                  *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
+#include "Platform/Paths.h"
+#include "Platform/Windows/Files.h"
 #include "consolemode.h"
 #include "consolefunction.h"
 #include "wwdebug.h"
@@ -473,7 +475,7 @@ const char *ConsoleModeClass::Get_Log_File_Name(void)
 			HANDLE find_handle = FindFirstFile("renlog_*.txt", &find_data);
 			while (find_handle != INVALID_HANDLE_VALUE) {
 				if (CompareFileTime(&find_data.ftLastWriteTime, &file_time) == -1) {
-					DeleteFile(find_data.cFileName);
+					Platform::RemoveFile(find_data.cFileName);
 				}
 				if (!FindNextFile(find_handle, &find_data)) {
 					break;
@@ -506,7 +508,7 @@ void ConsoleModeClass::Log_To_Disk(const char *string)
 {
 	if (ConsoleOutputHandle != INVALID_HANDLE_VALUE) {
 		if (ServerSettingsClass::Get_Disk_Log_Size() > 0) {
-   		FILE *log_file = fopen(Get_Log_File_Name(), "at");
+		FILE *log_file = Platform::OpenStream(Get_Log_File_Name(), "at");
    		if (log_file != NULL) {
 				char timestr[256] = "?";
 				GetTimeFormat(LOCALE_SYSTEM_DEFAULT, TIME_FORCE24HOURFORMAT, NULL, "'['HH':'mm':'ss'] '", timestr, 255);

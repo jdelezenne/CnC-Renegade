@@ -34,6 +34,7 @@
  * Functions:                                                                                  *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
+#include "Platform/Paths.h"
 #include "playermanager.h"
 
 #include <win.h>
@@ -1401,7 +1402,7 @@ void cPlayerManager::Log_Player_List(void)
 
 	StringClass results_filename;
 	results_filename.Format("results%d.txt", cUserOptions::ResultsLogNumber.Get());
-	FILE * file = ::fopen(results_filename, "at");
+	FILE * file = Platform::OpenStream(results_filename, "at");
 
    if (file != NULL) {
 

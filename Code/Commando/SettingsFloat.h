@@ -17,36 +17,36 @@
 */
 
 //
-// Filename:     regint.h
+// Filename:     SettingsFloat.h
 // Author:       Tom Spencer-Smith
 // Date:         Dec 1998
-// Description:  
+// Description:
 //
 //-----------------------------------------------------------------------------
 #if defined(_MSV_VER)
 #pragma once
 #endif
 
-#ifndef REGINT_H
-#define REGINT_H
+#ifndef REGFLOAT_H
+#define REGFLOAT_H
 
 #include "bittype.h"
 
 //-----------------------------------------------------------------------------
-class cRegistryInt
+class cSettingsFloat
 {
 	public:
-      cRegistryInt(LPCSTR registry_location, LPCSTR key_name, int initial_value);
+      cSettingsFloat(LPCSTR settings_section, LPCSTR key_name, float initial_value);
 
-      void Set(int value);
-      int Get(void) const {return Value;}
+      void Set(float value);
+      float Get(void) const {return Value;}
 
 	private:
 
-      int Value;
-      char RegistryLocation[400];
-      char KeyName[100];
+      float	Value;
+      char	SettingsSection[400];
+      char	KeyName[100];
 };
 
 //-----------------------------------------------------------------------------
-#endif // REGINT_H
+#endif // REGFLOAT_H

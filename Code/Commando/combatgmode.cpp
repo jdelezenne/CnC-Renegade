@@ -40,7 +40,7 @@
 #include "cnetwork.h"
 #include "AudibleSound.H"
 #include "debug.h"
-#include "registry.h"
+#include "Settings.h"
 #include "_globals.h"
 #include "console.h"
 #include "radar.h"
@@ -624,8 +624,8 @@ void CombatGameModeClass::Load_Level( void )
 	loading_screen.Render(true);
 
 	// Hack load reg for default first person.  Is dont again later.
-	Load_Registry_Keys();
-	WWLOG_INTERMEDIATE("Load_REgistry_Keys");
+	Load_Settings_Keys();
+	WWLOG_INTERMEDIATE("Load_Settings_Keys");
 
 	// Flush out current level
 	INIT_STATUS("Release current level");
@@ -764,10 +764,10 @@ void CombatGameModeClass::Load_Level( void )
 		GameModeManager::Set_Background_Color( Vector3( 0.0f, 0.0f, 0.4f ) );
 	}
 
-	INIT_STATUS("Registry keys");
-   Load_Registry_Keys();
-   Save_Registry_Keys();
-	WWLOG_INTERMEDIATE("SaveLoadRegistry");
+	INIT_STATUS("Settings keys");
+   Load_Settings_Keys();
+   Save_Settings_Keys();
+	WWLOG_INTERMEDIATE("SaveLoadSettings");
 
 	// Radar init --------------------------------------------------------------
 	INIT_STATUS("Init radar class");		// Init the radar after the game is loaded (so we have the global settings
@@ -1195,34 +1195,34 @@ void CombatGameModeClass::Core_Restart(void)
 /*
 **
 */
-void CombatGameModeClass::Load_Registry_Keys(void)
+void CombatGameModeClass::Load_Settings_Keys(void)
 {
-	RegistryClass * registry = new RegistryClass( APPLICATION_SUB_KEY_NAME_OPTIONS );
-	WWASSERT( registry );
-	if ( registry->Is_Valid() ) {
-		IsHudShown = registry->Get_Int( "IsHudShown", IsHudShown );
-		ForceGod = registry->Get_Int( "ForceGod", ForceGod );
+	SettingsClass * settings = new SettingsClass( APPLICATION_SETTINGS_SECTION_OPTIONS );
+	WWASSERT( settings );
+	if ( settings->Is_Valid() ) {
+		IsHudShown = settings->Get_Int( "IsHudShown", IsHudShown );
+		ForceGod = settings->Get_Int( "ForceGod", ForceGod );
 
 		//TSS
-		DefaultToFirstPerson = registry->Get_Int( "DefaultToFirstPerson", DefaultToFirstPerson );
+		DefaultToFirstPerson = settings->Get_Int( "DefaultToFirstPerson", DefaultToFirstPerson );
 		CombatManager::Set_First_Person_Default(DefaultToFirstPerson == TRUE);
 	}
-	delete registry;
+	delete settings;
 }
 
-void CombatGameModeClass::Save_Registry_Keys(void)
+void CombatGameModeClass::Save_Settings_Keys(void)
 {
-	RegistryClass * registry = new RegistryClass( APPLICATION_SUB_KEY_NAME_OPTIONS );
-	WWASSERT( registry );
-	if ( registry->Is_Valid() ) {
-		registry->Set_Int( "IsHudShown",	IsHudShown );
-		registry->Set_Int( "ForceGod",	ForceGod );
+	SettingsClass * settings = new SettingsClass( APPLICATION_SETTINGS_SECTION_OPTIONS );
+	WWASSERT( settings );
+	if ( settings->Is_Valid() ) {
+		settings->Set_Int( "IsHudShown",	IsHudShown );
+		settings->Set_Int( "ForceGod",	ForceGod );
 
 		//TSS
 		DefaultToFirstPerson = CombatManager::Get_First_Person_Default();
-		registry->Set_Int( "DefaultToFirstPerson",	DefaultToFirstPerson );
+		settings->Set_Int( "DefaultToFirstPerson",	DefaultToFirstPerson );
 	}
-	delete registry;
+	delete settings;
 }
 
 /*
@@ -1507,10 +1507,10 @@ void	CombatGameModeClass::Quick_Save( void )
 {
 	bool	saveA = true;
 
-	RegistryClass * registry = new RegistryClass( APPLICATION_SUB_KEY_NAME_OPTIONS );
-	WWASSERT( registry );
-	if ( registry->Is_Valid() ) {
-		saveA = registry->Get_Bool( "QuicksaveA", saveA );
+	SettingsClass * settings = new SettingsClass( APPLICATION_SETTINGS_SECTION_OPTIONS );
+	WWASSERT( settings );
+	if ( settings->Is_Valid() ) {
+		saveA = settings->Get_Bool( "QuicksaveA", saveA );
 	}
 
 #define	SAVEGAME_NAME_A	"save\\quicksaveA.sav"
@@ -1535,10 +1535,10 @@ void	CombatGameModeClass::Quick_Save( void )
 	}
 	saveA = !saveA;
 
-	if ( registry->Is_Valid() ) {
-		registry->Set_Bool( "QuicksaveA",	saveA );
+	if ( settings->Is_Valid() ) {
+		settings->Set_Bool( "QuicksaveA",	saveA );
 	}
-	delete registry;
+	delete settings;
 
 	// Display "Quick Saved"
 	HUDInfo::Set_HUD_Help_Text( TRANSLATE( IDS_M00DSGN_DSGN1017I1DSGN_TXT ), Vector3( 0,1,0 ) );

@@ -39,7 +39,7 @@
 #include "campaign.h"
 #include "input.h"
 #include "_globals.h"
-#include "registry.h"
+#include "Settings.h"
 #include "renegadedialogmgr.h"
 #include "wwmemlog.h"
 #include "gameinitmgr.h"
@@ -65,11 +65,11 @@ void	MovieGameModeClass::Init()
 	IsPending = false;
 	IsPlaying = false;
 
-	RegistryClass registry( APPLICATION_SUB_KEY_NAME_OPTIONS );
-	if ( registry.Is_Valid() ) {
-		IntroMovieSkipAllowed = registry.Get_Bool( "IntroMovieSkipAllowed", false );
-		SkipAllIntroMovies = registry.Get_Bool( "SkipAllIntroMovies", false );
-		registry.Set_Bool( "SkipAllIntroMovies", SkipAllIntroMovies );
+	SettingsClass settings( APPLICATION_SETTINGS_SECTION_OPTIONS );
+	if ( settings.Is_Valid() ) {
+		IntroMovieSkipAllowed = settings.Get_Bool( "IntroMovieSkipAllowed", false );
+		SkipAllIntroMovies = settings.Get_Bool( "SkipAllIntroMovies", false );
+		settings.Set_Bool( "SkipAllIntroMovies", SkipAllIntroMovies );
 	}
 
 }
@@ -137,9 +137,9 @@ void	MovieGameModeClass::Start_Movie( const char * filename )
 	bool force_cd = true;
 
 #ifdef WWDEBUG
-	RegistryClass registry( APPLICATION_SUB_KEY_NAME_DEBUG );
-	if ( registry.Is_Valid() ) {
-		force_cd = (registry.Get_Int( "DisableCDCheck", 0 ) == 0);
+	SettingsClass settings( APPLICATION_SETTINGS_SECTION_DEBUG );
+	if ( settings.Is_Valid() ) {
+		force_cd = (settings.Get_Int( "DisableCDCheck", 0 ) == 0);
 	}
 #endif //WWDEBUG
 
@@ -277,9 +277,9 @@ void	MovieGameModeClass::Movie_Done( void )
 
 		IntroMovieSkipAllowed = true;
 
-		RegistryClass registry( APPLICATION_SUB_KEY_NAME_OPTIONS );
-		if ( registry.Is_Valid() ) {
-			registry.Set_Bool( "IntroMovieSkipAllowed", true );
+		SettingsClass settings( APPLICATION_SETTINGS_SECTION_OPTIONS );
+		if ( settings.Is_Valid() ) {
+			settings.Set_Bool( "IntroMovieSkipAllowed", true );
 		}
 
 		Deactivate();

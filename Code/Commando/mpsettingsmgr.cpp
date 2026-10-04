@@ -36,7 +36,7 @@
 
 
 #include "mpsettingsmgr.h"
-#include "registry.h"
+#include "Settings.h"
 #include "bittype.h"
 #include "_globals.h"
 #include "wwonline\\wolsession.h"
@@ -70,22 +70,22 @@ static const int MAX_PERSONA_LEN			= 64;
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
-//	Registry key names
+//	Settings key names
 ////////////////////////////////////////////////////////////////////////////////////////////////
-//static const char *QUICKMATCH_SUB_KEY	= APPLICATION_SUB_KEY_NAME_WOLSETTINGS "\\QuickMatch";
+//static const char *QUICKMATCH_SUB_KEY	= APPLICATION_SETTINGS_SECTION_WOLSETTINGS "\\QuickMatch";
 
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
-//	Registry value names
+//	Settings value names
 ////////////////////////////////////////////////////////////////////////////////////////////////
-static const char *REG_VALUE_LAST_LOGIN			= "LastLogin";
-static const char *REG_VALUE_AUTOLOGIN				= "AutoLogin";
-static const char *REG_VALUE_AUTOPASSWORD			= "AutoPassword";
-static const char *REG_VALUE_SIDEBAR_HELP			= "SidebarHelp";
-static const char *REG_VALUE_AUTOLOGIN_PROMPT	= "AutoLoginPrompt";
-static const char *REG_VALUE_OPTIONS				= "Options";
-static const char *REG_VALUE_ARE_SKINS_UNLOCKED	= "PrimeSocket";
+static const char *SETTING_LAST_LOGIN			= "LastLogin";
+static const char *SETTING_AUTOLOGIN				= "AutoLogin";
+static const char *SETTING_AUTOPASSWORD			= "AutoPassword";
+static const char *SETTING_SIDEBAR_HELP			= "SidebarHelp";
+static const char *SETTING_AUTOLOGIN_PROMPT	= "AutoLoginPrompt";
+static const char *SETTING_OPTIONS				= "Options";
+static const char *SETTING_ARE_SKINS_UNLOCKED	= "PrimeSocket";
 
 
 ////////////////////////////////////////////////////////////////
@@ -99,24 +99,24 @@ MPSettingsMgrClass::Load_Settings (void)
 	//
 	//	Attempt to open the MP settings sub-key
 	//
-	RegistryClass registry (APPLICATION_SUB_KEY_NAME_WOLSETTINGS, false);
-	if (registry.Is_Valid ()) {
+	SettingsClass settings (APPLICATION_SETTINGS_SECTION_WOLSETTINGS, false);
+	if (settings.Is_Valid ()) {
 
 		//
-		//	Read the simple data from the registry
+		//	Read the simple data from the settings
 		//
-		registry.Get_String(REG_VALUE_LAST_LOGIN, LastLogin.Get_Buffer(MAX_PERSONA_LEN), MAX_PERSONA_LEN, "");
-		registry.Get_String(REG_VALUE_AUTOLOGIN, AutoLogin.Get_Buffer(MAX_PERSONA_LEN), MAX_PERSONA_LEN, "");
-		registry.Get_String(REG_VALUE_AUTOPASSWORD, AutoPassword.Get_Buffer(MAX_PERSONA_LEN), MAX_PERSONA_LEN, "");
+		settings.Get_String(SETTING_LAST_LOGIN, LastLogin.Get_Buffer(MAX_PERSONA_LEN), MAX_PERSONA_LEN, "");
+		settings.Get_String(SETTING_AUTOLOGIN, AutoLogin.Get_Buffer(MAX_PERSONA_LEN), MAX_PERSONA_LEN, "");
+		settings.Get_String(SETTING_AUTOPASSWORD, AutoPassword.Get_Buffer(MAX_PERSONA_LEN), MAX_PERSONA_LEN, "");
 
-		DisplaySidebarHelp			= registry.Get_Bool (REG_VALUE_SIDEBAR_HELP, true);
-		IsAutoLoginPromptEnabled	= registry.Get_Bool (REG_VALUE_AUTOLOGIN_PROMPT, true);
-		AreSkinsUnlocked				= registry.Get_Bool (REG_VALUE_ARE_SKINS_UNLOCKED, false);
+		DisplaySidebarHelp			= settings.Get_Bool (SETTING_SIDEBAR_HELP, true);
+		IsAutoLoginPromptEnabled	= settings.Get_Bool (SETTING_AUTOLOGIN_PROMPT, true);
+		AreSkinsUnlocked				= settings.Get_Bool (SETTING_ARE_SKINS_UNLOCKED, false);
 
 		// The default options are language specific
 		int defaultOptions = OPTION_DEFAULTS;
 
-		RegistryClass skuReg(APPLICATION_SUB_KEY_NAME, false);
+		SettingsClass skuReg(APPLICATION_SETTINGS_SECTION, false);
 
 		if (skuReg.Is_Valid()) {
 			unsigned long sku = skuReg.Get_Int("SKU", RENEGADE_BASE_SKU);
@@ -130,7 +130,7 @@ MPSettingsMgrClass::Load_Settings (void)
 			}
 		}
 
-		OptionFlags = registry.Get_Int (REG_VALUE_OPTIONS, defaultOptions);
+		OptionFlags = settings.Get_Int (SETTING_OPTIONS, defaultOptions);
 	}
 
 	return ;
@@ -147,10 +147,10 @@ MPSettingsMgrClass::Set_Last_Login(const char *name)
 {
 	LastLogin = name;
 
-	RegistryClass registry(APPLICATION_SUB_KEY_NAME_WOLSETTINGS);
+	SettingsClass settings(APPLICATION_SETTINGS_SECTION_WOLSETTINGS);
 
-	if (registry.Is_Valid()) {
-		registry.Set_String(REG_VALUE_LAST_LOGIN, LastLogin);
+	if (settings.Is_Valid()) {
+		settings.Set_String(SETTING_LAST_LOGIN, LastLogin);
 	}
 }
 
@@ -177,10 +177,10 @@ MPSettingsMgrClass::Set_Auto_Login(const char* login)
 {
 	AutoLogin = login;
 
-	RegistryClass registry(APPLICATION_SUB_KEY_NAME_WOLSETTINGS);
+	SettingsClass settings(APPLICATION_SETTINGS_SECTION_WOLSETTINGS);
 
-	if (registry.Is_Valid()) {
-		registry.Set_String(REG_VALUE_AUTOLOGIN, AutoLogin);
+	if (settings.Is_Valid()) {
+		settings.Set_String(SETTING_AUTOLOGIN, AutoLogin);
 	}
 }
 
@@ -208,10 +208,10 @@ MPSettingsMgrClass::Set_Auto_Password(const char* pass)
 {
 	AutoPassword = pass;
 
-	RegistryClass registry(APPLICATION_SUB_KEY_NAME_WOLSETTINGS);
+	SettingsClass settings(APPLICATION_SETTINGS_SECTION_WOLSETTINGS);
 
-	if (registry.Is_Valid()) {
-		registry.Set_String(REG_VALUE_AUTOPASSWORD, AutoPassword);
+	if (settings.Is_Valid()) {
+		settings.Set_String(SETTING_AUTOPASSWORD, AutoPassword);
 	}
 }
 
@@ -240,10 +240,10 @@ MPSettingsMgrClass::Get_QuickMatch_Mode_Preference (const char *mode)
 	GameModeMap::iterator modePref = _mModePrefs.find(mode);
 
 	if (modePref == _mModePrefs.end()) {
-		RegistryClass registry(APPLICATION_SUB_KEY_NAME_QUICKMATCH);
+		SettingsClass settings(APPLICATION_SETTINGS_SECTION_QUICKMATCH);
 
-		if (registry.Is_Valid()) {
-			int pref = registry.Get_Int(mode, 10);
+		if (settings.Is_Valid()) {
+			int pref = settings.Get_Int(mode, 10);
 			_mModePrefs[mode] = pref;
 			return pref;
 		}
@@ -274,13 +274,13 @@ MPSettingsMgrClass::Set_QuickMatch_Mode_Preference (const char *mode, int prefer
 void
 MPSettingsMgrClass::Save_QuickMatch_Mode_Preferences (void)
 {
-	RegistryClass registry(APPLICATION_SUB_KEY_NAME_QUICKMATCH);
+	SettingsClass settings(APPLICATION_SETTINGS_SECTION_QUICKMATCH);
 
-	if (registry.Is_Valid()) {
+	if (settings.Is_Valid()) {
 		GameModeMap::iterator iter = _mModePrefs.begin();
 
 		while (iter != _mModePrefs.end()) {
-			registry.Set_Int((*iter).first, (*iter).second);
+			settings.Set_Int((*iter).first, (*iter).second);
 			iter++;
 		}
 	}
@@ -300,9 +300,9 @@ MPSettingsMgrClass::Set_Is_Sidebar_Help_Displayed (bool onoff)
 	//
 	//	Attempt to open the MP settings sub-key
 	//
-	RegistryClass registry (APPLICATION_SUB_KEY_NAME_WOLSETTINGS);
-	if (registry.Is_Valid ()) {
-		registry.Set_Bool (REG_VALUE_SIDEBAR_HELP, DisplaySidebarHelp);
+	SettingsClass settings (APPLICATION_SETTINGS_SECTION_WOLSETTINGS);
+	if (settings.Is_Valid ()) {
+		settings.Set_Bool (SETTING_SIDEBAR_HELP, DisplaySidebarHelp);
 	}
 
 	return ;
@@ -322,9 +322,9 @@ MPSettingsMgrClass::Enable_Auto_Login_Prompt (bool onoff)
 	//
 	//	Attempt to open the MP settings sub-key
 	//
-	RegistryClass registry (APPLICATION_SUB_KEY_NAME_WOLSETTINGS);
-	if (registry.Is_Valid ()) {
-		registry.Set_Bool (REG_VALUE_AUTOLOGIN_PROMPT, IsAutoLoginPromptEnabled);
+	SettingsClass settings (APPLICATION_SETTINGS_SECTION_WOLSETTINGS);
+	if (settings.Is_Valid ()) {
+		settings.Set_Bool (SETTING_AUTOLOGIN_PROMPT, IsAutoLoginPromptEnabled);
 	}
 
 	return ;
@@ -346,11 +346,11 @@ MPSettingsMgrClass::Set_Option_Flag (OPTION flag, bool onoff)
 	}
 
 	//
-	//	Save this setting in the registry
+	//	Save this setting in the settings
 	//
-	RegistryClass registry (APPLICATION_SUB_KEY_NAME_WOLSETTINGS);
-	if (registry.Is_Valid ()) {
-		registry.Set_Int (REG_VALUE_OPTIONS, OptionFlags);
+	SettingsClass settings (APPLICATION_SETTINGS_SECTION_WOLSETTINGS);
+	if (settings.Is_Valid ()) {
+		settings.Set_Int (SETTING_OPTIONS, OptionFlags);
 	}
 
 	return ;
@@ -397,16 +397,16 @@ MPSettingsMgrClass::Are_Alternate_Skins_Unlocked (void)
 
 			//
 			//	If we've found out from WOL that the skins are unlocked, then cache
-			// this information in the registry.
+			// this information in the settings.
 			//
 			if (AreSkinsUnlocked) {
 				
 				//
-				//	Save this setting in the registry
+				//	Save this setting in the settings
 				//
-				RegistryClass registry (APPLICATION_SUB_KEY_NAME_WOLSETTINGS);
-				if (registry.Is_Valid ()) {
-					registry.Set_Bool (REG_VALUE_ARE_SKINS_UNLOCKED, AreSkinsUnlocked);
+				SettingsClass settings (APPLICATION_SETTINGS_SECTION_WOLSETTINGS);
+				if (settings.Is_Valid ()) {
+					settings.Set_Bool (SETTING_ARE_SKINS_UNLOCKED, AreSkinsUnlocked);
 				}
 			}
 

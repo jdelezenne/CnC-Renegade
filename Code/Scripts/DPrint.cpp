@@ -37,6 +37,7 @@
 
 #ifdef _DEBUG
 
+#include "Platform/Windows/Files.h"
 #include "dprint.h"
 #include <windows.h>
 #include <stdio.h>
@@ -104,12 +105,12 @@ void __cdecl DebugPrint(const char* string, ...)
 			_splitpath(path, drive, dir, NULL, NULL);
 			_makepath(_filename, drive, dir, LOGFILE_NAME, "txt");
 
-			file = CreateFile(_filename, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
+			file = Platform::OpenFile(_filename, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
 				FILE_ATTRIBUTE_NORMAL, NULL);
 			}
 		else
 			{
-			file = CreateFile(_filename, GENERIC_WRITE, 0, NULL, OPEN_ALWAYS,
+			file = Platform::OpenFile(_filename, GENERIC_WRITE, 0, NULL, OPEN_ALWAYS,
 				FILE_ATTRIBUTE_NORMAL, NULL);
 			}
 		

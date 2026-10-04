@@ -85,7 +85,7 @@
 #include "camera.h"
 #include "scene.h"
 #include "texfcach.h"
-#include "registry.h"
+#include "Settings.h"
 #include "segline.h"
 #include "shader.h"
 #include "vertmaterial.h"
@@ -662,7 +662,7 @@ void WW3D::Get_Device_Resolution(int & set_w,int & set_h,int & set_bits,bool & s
 
 
 /***********************************************************************************************
- * WW3D::Registry_Save_Render_Device -- Saves settings to Registry
+ * WW3D::Settings_Save_Render_Device -- Saves settings to Settings
  *                                                                                             *
  * INPUT:                                                                                      *
  *                                                                                             *
@@ -674,9 +674,9 @@ void WW3D::Get_Device_Resolution(int & set_w,int & set_h,int & set_bits,bool & s
  *   12/3/98    BMG : Created.                                                                 *
  *   1/25/2001  gth : converted to dx8                                                         *
  *=============================================================================================*/
-WW3DErrorType WW3D::Registry_Save_Render_Device( const char * sub_key )
+WW3DErrorType WW3D::Settings_Save_Render_Device( const char * sub_key )
 {
-	bool success = DX8Wrapper::Registry_Save_Render_Device(sub_key);
+	bool success = DX8Wrapper::Settings_Save_Render_Device(sub_key);
 	if (success) {
 		return WW3D_ERROR_OK;
 	} else {
@@ -685,7 +685,7 @@ WW3DErrorType WW3D::Registry_Save_Render_Device( const char * sub_key )
 }
 
 /***********************************************************************************************
- * WW3D::Registry_Save_Render_Device -- Saves settings to Registry
+ * WW3D::Settings_Save_Render_Device -- Saves settings to Settings
  *                                                                                             *
  * INPUT:                                                                                      *
  *                                                                                             *
@@ -696,9 +696,9 @@ WW3DErrorType WW3D::Registry_Save_Render_Device( const char * sub_key )
  * HISTORY:                                                                                    *
  *   12/3/98    BMG : Created.                                                                 *
  *=============================================================================================*/
-WW3DErrorType WW3D::Registry_Save_Render_Device( const char *sub_key, int device, int width, int height, int depth, bool windowed, int texture_depth )
+WW3DErrorType WW3D::Settings_Save_Render_Device( const char *sub_key, int device, int width, int height, int depth, bool windowed, int texture_depth )
 {
-	bool success = DX8Wrapper::Registry_Save_Render_Device(sub_key,device,width,height,depth,windowed,texture_depth);
+	bool success = DX8Wrapper::Settings_Save_Render_Device(sub_key,device,width,height,depth,windowed,texture_depth);
 	if (success) {
 		return WW3D_ERROR_OK;
 	} else {
@@ -708,7 +708,7 @@ WW3DErrorType WW3D::Registry_Save_Render_Device( const char *sub_key, int device
 
 
 /***********************************************************************************************
- * WW3D::Registry_Load_Render_Device -- Loads settings from Registry
+ * WW3D::Settings_Load_Render_Device -- Loads settings from Settings
  *                                                                                             *
  * INPUT:                                                                                      *
  *                                                                                             *
@@ -719,9 +719,9 @@ WW3DErrorType WW3D::Registry_Save_Render_Device( const char *sub_key, int device
  * HISTORY:                                                                                    *
  *   12/3/98    BMG : Created.                                                                 *
  *=============================================================================================*/
-WW3DErrorType WW3D::Registry_Load_Render_Device( const char * sub_key, bool resize_window )
+WW3DErrorType WW3D::Settings_Load_Render_Device( const char * sub_key, bool resize_window )
 {
-	bool success = DX8Wrapper::Registry_Load_Render_Device(sub_key,resize_window);
+	bool success = DX8Wrapper::Settings_Load_Render_Device(sub_key,resize_window);
 	if (success) {
 		return WW3D_ERROR_OK;
 	} else {
@@ -729,9 +729,9 @@ WW3DErrorType WW3D::Registry_Load_Render_Device( const char * sub_key, bool resi
 	}
 }
 
-bool WW3D::Registry_Load_Render_Device( const char * sub_key, char *device, int device_len, int &width, int &height, int &depth, int &windowed, int &texture_depth)
+bool WW3D::Settings_Load_Render_Device( const char * sub_key, char *device, int device_len, int &width, int &height, int &depth, int &windowed, int &texture_depth)
 {
-	return DX8Wrapper::Registry_Load_Render_Device(sub_key,device,device_len,width,height,depth,windowed,texture_depth);
+	return DX8Wrapper::Settings_Load_Render_Device(sub_key,device,device_len,width,height,depth,windowed,texture_depth);
 }
 
 void WW3D::_Invalidate_Mesh_Cache()

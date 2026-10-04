@@ -36,6 +36,7 @@
 *
 ******************************************************************************/
 
+#include "WWCOMUtil.h"
 #include <atlbase.h>
 #include "WOLSession.h"
 #include "WOLChatObserver.h"
@@ -165,7 +166,7 @@ bool Session::FinalizeCreate(void)
 	//---------------------------------------------------------------------------
 	WWDEBUG_SAY(("WOL: Creating IID_IChat object\n"));
 	WOL::IChat* chatObject = NULL;
-	HRESULT hr = CoCreateInstance(WOL::CLSID_Chat, NULL, CLSCTX_INPROC_SERVER,
+	HRESULT hr = CreateCOMObjectFromLibrary("OnlineServices.dll", WOL::CLSID_Chat,
 			WOL::IID_IChat, (void**)&chatObject);
 
 	if (FAILED(hr))
@@ -208,7 +209,7 @@ bool Session::FinalizeCreate(void)
 	WWDEBUG_SAY(("WOL: Creating IID_INetUtil object\n"));
 
 	WOL::INetUtil* utilObject = NULL;
-	hr = CoCreateInstance(WOL::CLSID_NetUtil, NULL, CLSCTX_INPROC_SERVER,
+	hr = CreateCOMObjectFromLibrary("OnlineServices.dll", WOL::CLSID_NetUtil,
 			WOL::IID_INetUtil, (void **)&utilObject);
 
 	if (FAILED(hr))
@@ -254,15 +255,6 @@ bool Session::FinalizeCreate(void)
 	if (!product.IsValid())
 		{
 		WWDEBUG_SAY(("WOLERROR: WOLProduct not initialized\n"));
-		return false;
-		}
-
-	const char* regPath = product->GetRegistryPath();
-	hr = mChat->SetAttributeValue("RegPath", regPath);
-
-	if (FAILED(hr))
-		{
-		WWDEBUG_SAY(("WOLERROR: SetAttributeValue(RegPath) HRESULT = %s\n", GetChatErrorString(hr)));
 		return false;
 		}
 
@@ -3283,7 +3275,7 @@ const CComPtr<WOL::IIGROptions>& Session::GetIGRObject(void)
 		WWDEBUG_SAY(("WOL: Creating IID_IIGROptions object\n"));
 		WOL::IIGROptions* igrObject = NULL;
 
-		HRESULT hr = CoCreateInstance(WOL::CLSID_IGROptions, NULL, CLSCTX_INPROC_SERVER,
+		HRESULT hr = CreateCOMObjectFromLibrary("OnlineServices.dll", WOL::CLSID_IGROptions,
 			WOL::IID_IIGROptions, (void**)&igrObject);
 
 		if (SUCCEEDED(hr))

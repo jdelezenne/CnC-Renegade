@@ -136,7 +136,7 @@ DlgConfigAudioTabClass::On_Init_Dialog (void)
 	ChildDialogClass::On_Init_Dialog ();
 
 	//
-	//	Read the audio library's settings from the registry
+	//	Read the audio library's settings from the settings
 	//	
 	bool is_stereo			= WWAudioClass::Get_Instance ()->Get_Playback_Stereo ();	
 	float sound_vol		= WWAudioClass::Get_Instance ()->Get_Sound_Effects_Volume ();
@@ -562,9 +562,9 @@ DlgConfigAudioTabClass::On_Apply (void)
 	speaker_type = combo_box->Get_Curr_Sel ();
 
 	//
-	//	Store these settings in the registry
+	//	Store these settings in the settings
 	//
-	WWAudioClass::Get_Instance ()->Save_To_Registry (APPLICATION_SUB_KEY_NAME_SOUND,
+	WWAudioClass::Get_Instance ()->Save_To_Settings (APPLICATION_SETTINGS_SECTION_SOUND,
 												device_name, is_stereo, bits, hertz, sound_on,	
 												music_on, dialog_on, cinematic_on, sound_vol, music_vol,
 												dialog_vol, cinematic_vol, speaker_type);

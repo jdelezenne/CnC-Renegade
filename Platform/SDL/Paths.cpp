@@ -1,0 +1,71 @@
+#include "Platform/Paths.h"
+#include <SDL3/SDL.h>
+#include <filesystem>
+#include <cstring>
+#include <stdexcept>
+
+namespace fs = std::filesystem;
+
+const std::string& Platform::PreferenceDirectory()
+{
+    static const std::string directory = [] {
+        char* path = SDL_GetPrefPath("Electronic Arts", "Renegade");
+        if (!path) throw std::runtime_error(SDL_GetError());
+        std::string result = fs::path(std::u8string(path, path + std::strlen(path))).string();
+        SDL_free(path);
+        return result;
+    }();
+    return directory;
+}
+
+std::string Platform::UserPath(const char* relativePath)
+{
+    const fs::path relative = fs::path(relativePath).lexically_normal();
+    if (relative.has_root_path() || (!relative.empty() && *relative.begin() == ".."))
+        throw std::invalid_argument("User paths must stay inside the preferences folder");
+    const fs::path path = fs::path(PreferenceDirectory()) / relative;
+    fs::create_directories(path.parent_path());
+    return path.string();
+}
+
+namespace {
+fs::path UserRelativePath(const char* name)
+{
+    const fs::path path(name);
+    if (!path.is_absolute()) return path.lexically_normal();
+    const fs::path absolute = path.lexically_normal();
+    const fs::path base = fs::current_path().lexically_normal();
+    auto item = absolute.begin();
+    for (auto root = base.begin(); root != base.end(); ++root, ++item) {
+        if (item == absolute.end() || _wcsicmp(item->c_str(), root->c_str()) != 0) return path;
+    }
+    fs::path relative;
+    for (; item != absolute.end(); ++item) relative /= *item;
+    if (!relative.empty() && *relative.begin() != "..") return relative;
+    return path;
+}
+}
+
+std::string Platform::WritePath(const char* path)
+{
+    const fs::path relative = UserRelativePath(path);
+    if (relative.is_absolute()) return relative.string();
+    return UserPath(relative.string().c_str());
+}
+
+std::string Platform::ReadPath(const char* path)
+{
+    const fs::path relative = UserRelativePath(path);
+    if (!relative.is_absolute() && (relative.empty() || *relative.begin() != "..")) {
+        const fs::path user = fs::path(PreferenceDirectory()) / relative;
+        if (fs::is_regular_file(user)) return user.string();
+    }
+    return path;
+}
+
+std::FILE* Platform::OpenStream(const char* path, const char* mode)
+{
+    const bool write = std::strpbrk(mode, "wa+") != nullptr;
+    const std::string resolved = write ? WritePath(path) : ReadPath(path);
+    return std::fopen(resolved.c_str(), mode);
+}

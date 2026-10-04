@@ -56,8 +56,8 @@ class Product :
 	public:
 		static RefPtr<Product> Current(void);
 
-		const char* GetRegistryPath(void) const
-			{return mRegistryPath;}
+		const char* GetSettingsPath(void) const
+			{return mSettingsPath;}
 
 		unsigned long GetSKU(void) const
 			{return mProductSKU;}
@@ -83,17 +83,17 @@ class Product :
 		class Initializer
 			{
 			public:
-				Initializer(const char* registryPath, int gameCode, const wchar_t* chanPass, unsigned long ladderSKU);
+				Initializer(const char* settingsPath, int gameCode, const wchar_t* chanPass, unsigned long ladderSKU);
 				~Initializer();
 			};
 
 	private:
 		friend class Initializer;
-		static RefPtr<Product> Create(const char* registryPath, int gameCode, const wchar_t* chanPass, unsigned long ladderSKU);
+		static RefPtr<Product> Create(const char* settingsPath, int gameCode, const wchar_t* chanPass, unsigned long ladderSKU);
 
-		Product(const char* registryPath, int gameCode, const wchar_t* chanPass, unsigned long ladderSKU);
+		Product(const char* settingsPath, int gameCode, const wchar_t* chanPass, unsigned long ladderSKU);
 
-		StringClass mRegistryPath;
+		StringClass mSettingsPath;
 		unsigned long mProductSKU;
 		unsigned long mProductVersion;
 		unsigned long mLanguageCode;

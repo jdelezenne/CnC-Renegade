@@ -35,7 +35,7 @@
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 #include "systemsettings.h"
-#include "registry.h"
+#include "Settings.h"
 //#include "menuentry.h"
 #include "_globals.h"
 
@@ -69,22 +69,22 @@ void	SystemSettings::Apply_All( void )
 /*
 **
 */
-void	SystemSettings::Registry_Save( const char * sub_key )
+void	SystemSettings::Settings_Save( const char * sub_key )
 {
-	RegistryClass registry( sub_key );
-	if ( registry.Is_Valid() ) {
+	SettingsClass settings( sub_key );
+	if ( settings.Is_Valid() ) {
 		for ( int index = 0; index < SettingList.Count(); index++ ) {
-			SettingList[ index ]->Registry_Save( registry );
+			SettingList[ index ]->Settings_Save( settings );
 		}
 	}
 }
 
-void	SystemSettings::Registry_Load( const char * sub_key )
+void	SystemSettings::Settings_Load( const char * sub_key )
 {
-	RegistryClass registry( sub_key );
-	if ( registry.Is_Valid() ) {
+	SettingsClass settings( sub_key );
+	if ( settings.Is_Valid() ) {
 		for ( int index = 0; index < SettingList.Count(); index++ ) {
-			SettingList[ index ]->Registry_Load( registry );
+			SettingList[ index ]->Settings_Load( settings );
 		}
 	}
 }
@@ -128,15 +128,15 @@ void	SystemSettingEntryBool::Apply( void )
 	State = Get_Bool();
 }
 
-void	SystemSettingEntryBool::Registry_Save( RegistryClass & registry )
+void	SystemSettingEntryBool::Settings_Save( SettingsClass & settings )
 {
-	registry.Set_Bool( Get_Name(), Get_State() );
+	settings.Set_Bool( Get_Name(), Get_State() );
 }
 
-void	SystemSettingEntryBool::Registry_Load( RegistryClass & registry )
+void	SystemSettingEntryBool::Settings_Load( SettingsClass & settings )
 {
 	State = Get_Bool();
-	Set_State( registry.Get_Bool( Get_Name(), Get_State() ) );
+	Set_State( settings.Get_Bool( Get_Name(), Get_State() ) );
 }
 
 ConsoleFunctionClass *	SystemSettingEntryBool::Create_Console_Function()
@@ -185,14 +185,14 @@ void	SystemSettingEntrySlider::Apply( void )
 	Value = Get_Slider();
 }
 
-void	SystemSettingEntrySlider::Registry_Save( RegistryClass & registry )
+void	SystemSettingEntrySlider::Settings_Save( SettingsClass & settings )
 {
-	registry.Set_Int( Get_Name(), Get_Value() );
+	settings.Set_Int( Get_Name(), Get_Value() );
 }
 
-void	SystemSettingEntrySlider::Registry_Load( RegistryClass & registry )
+void	SystemSettingEntrySlider::Settings_Load( SettingsClass & settings )
 {
-	Set_Value( registry.Get_Int( Get_Name(), Get_Value() ) );
+	Set_Value( settings.Get_Int( Get_Name(), Get_Value() ) );
 }
 
 ConsoleFunctionClass *	SystemSettingEntrySlider::Create_Console_Function()
@@ -237,14 +237,14 @@ void	SystemSettingEntryEnum::Apply( void )
 	Selection = Get_Enum();
 }
 
-void	SystemSettingEntryEnum::Registry_Save( RegistryClass & registry )
+void	SystemSettingEntryEnum::Settings_Save( SettingsClass & settings )
 {
-	registry.Set_Int( Get_Name(), Get_Selection() );
+	settings.Set_Int( Get_Name(), Get_Selection() );
 }
 
-void	SystemSettingEntryEnum::Registry_Load( RegistryClass & registry )
+void	SystemSettingEntryEnum::Settings_Load( SettingsClass & settings )
 {
-	Set_Selection( registry.Get_Int( Get_Name(), Get_Selection() ) );
+	Set_Selection( settings.Get_Int( Get_Name(), Get_Selection() ) );
 }
 
 ConsoleFunctionClass *	SystemSettingEntryEnum::Create_Console_Function()
@@ -333,7 +333,7 @@ public:
 	
 	int	Get_Slider( void )		{ Value = DlgConfigVideoTabClass::Get_Gamma (); return Value; }
 	void	Set_Slider( int value )	{ DlgConfigVideoTabClass::Set_Gamma (value); }
-	void	Registry_Save				( RegistryClass & registry ) { registry.Set_Int (Get_Name (), Get_Slider ()); }
+	void	Settings_Save				( SettingsClass & settings ) { settings.Set_Int (Get_Name (), Get_Slider ()); }
 
 protected:
 	StringClass formatstring;
@@ -354,7 +354,7 @@ public:
 	
 	int	Get_Slider( void )		{ Value = DlgConfigVideoTabClass::Get_Brightness (); return Value; }
 	void	Set_Slider( int value )	{ DlgConfigVideoTabClass::Set_Brightness (value); }
-	void	Registry_Save				( RegistryClass & registry ) { registry.Set_Int (Get_Name (), Get_Slider ()); }
+	void	Settings_Save				( SettingsClass & settings ) { settings.Set_Int (Get_Name (), Get_Slider ()); }
 
 protected:
 	StringClass formatstring;
@@ -374,7 +374,7 @@ public:
 
 	int	Get_Slider( void )		{ Value = DlgConfigVideoTabClass::Get_Contrast (); return Value; }
 	void	Set_Slider( int value )	{ DlgConfigVideoTabClass::Set_Contrast (value); }
-	void	Registry_Save				( RegistryClass & registry ) { registry.Set_Int (Get_Name (), Get_Slider ()); }
+	void	Settings_Save				( SettingsClass & settings ) { settings.Set_Int (Get_Name (), Get_Slider ()); }
 
 protected:
 	StringClass formatstring;
@@ -635,12 +635,12 @@ void SystemSettings::Init( void )
 	Add_Setting( new SystemSettingEntryBrightnessLevel )	;
 	Add_Setting( new SystemSettingEntryContrastLevel )	;
 
-	Registry_Load( APPLICATION_SUB_KEY_NAME_SYSTEM_SETTINGS );
+	Settings_Load( APPLICATION_SETTINGS_SECTION_SYSTEM_SETTINGS );
 }
 
 void SystemSettings::Shutdown( void )
 {
-	Registry_Save( APPLICATION_SUB_KEY_NAME_SYSTEM_SETTINGS );
+	Settings_Save( APPLICATION_SETTINGS_SECTION_SYSTEM_SETTINGS );
 
 	/*
 	** Free the system setting so they don't look like memory leaks when we exit. ST - 6/11/2001 8:32PM

@@ -17,36 +17,40 @@
 */
 
 //
-// Filename:     regfloat.h
+// Filename:     SettingsBool.h
 // Author:       Tom Spencer-Smith
 // Date:         Dec 1998
-// Description:  
+// Description:
 //
 //-----------------------------------------------------------------------------
 #if defined(_MSV_VER)
 #pragma once
 #endif
 
-#ifndef REGFLOAT_H
-#define REGFLOAT_H
+#ifndef REGBOOL_H
+#define REGBOOL_H
 
 #include "bittype.h"
 
 //-----------------------------------------------------------------------------
-class cRegistryFloat
+class cSettingsBool
 {
 	public:
-      cRegistryFloat(LPCSTR registry_location, LPCSTR key_name, float initial_value);
+      cSettingsBool(LPCSTR settings_section, LPCSTR key_name,
+			bool initial_value = false);
 
-      void Set(float value);
-      float Get(void) const {return Value;}
+      bool Toggle(void);
+      bool Set(bool value);
+      bool Get(void) const          {return Value == 1;}
+      bool Is_True(void) const      {return Value == 1;}
+      bool Is_False(void) const     {return Value == 0;}
 
 	private:
 
-      float	Value;
-      char	RegistryLocation[400];
-      char	KeyName[100];
+      int Value;
+      char SettingsSection[400];
+      char KeyName[100];
 };
 
 //-----------------------------------------------------------------------------
-#endif // REGFLOAT_H
+#endif // REGBOOL_H

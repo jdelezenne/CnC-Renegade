@@ -46,7 +46,7 @@
 #include "wwdebug.h"
 #include "CDKeyAuth.h"
 #include "gamespyauthmgr.h"
-#include "registry.h"
+#include "Settings.h"
 #include "playermanager.h"
 #include "_globals.h"
 #include "ServerSettings.h"
@@ -169,7 +169,7 @@ void CCDKeyAuth::AuthSerial(const char *challenge, StringClass &resp) {
 
 void CCDKeyAuth::GetSerialNum(StringClass &serial) {
 
-	RegistryClass main_reg(APPLICATION_SUB_KEY_NAME);
+	SettingsClass main_reg(APPLICATION_SETTINGS_SECTION);
 	StringClass stringval;
 	StringClass serial_out;
 	main_reg.Get_String("Serial", stringval);

@@ -53,7 +53,7 @@
 #include "nat.h"
 #include	"natsock.h"
 #include "crandom.h"
-#include	"registry.h"
+#include	"Settings.h"
 
 #include "wollogonmgr.h"
 #include	"packettype.h"
@@ -157,15 +157,15 @@ void WOLNATInterfaceClass::Init(void)
 	Observer<WWOnline::ConnectionStatus>::NotifyMe(*SessionPtr);
 
 	/*
-	** Read default values from the registry.
+	** Read default values from the settings.
 	*/
-	RegistryClass reg(APPLICATION_SUB_KEY_NAME_NET_FIREWALL);
+	SettingsClass reg(APPLICATION_SETTINGS_SECTION_NET_FIREWALL);
 	fw_assert(reg.Is_Valid());
 
 	if (reg.Is_Valid()) {
 
 		/*
-		** Read the FirewallHelper values from the registry.
+		** Read the FirewallHelper values from the settings.
 		*/
 		int last_behavior = reg.Get_Int("Behavior", 0);
 		int last_source_port_allocation_delta = reg.Get_Int("PortDelta", 1);
@@ -184,7 +184,7 @@ void WOLNATInterfaceClass::Init(void)
 		FirewallHelper.Set_Firewall_Info((unsigned long)last_behavior, last_source_port_allocation_delta, (unsigned short)source_port_pool, send_delay, confidence);
 
 		/*
-		** Read the local class values from the registry.
+		** Read the local class values from the settings.
 		*/
 		PortBase = reg.Get_Int("PortBase", PortBase);
 		//ForcePort = reg.Get_Int("ForcePort", ForcePort);
@@ -543,9 +543,9 @@ void WOLNATInterfaceClass::Shutdown(void)
 	SessionPtr.Release();
 
 	/*
-	** Now we need to write out any registry values that might have changed.
+	** Now we need to write out any settings values that might have changed.
 	*/
-	RegistryClass reg(APPLICATION_SUB_KEY_NAME_NET_FIREWALL);
+	SettingsClass reg(APPLICATION_SETTINGS_SECTION_NET_FIREWALL);
 	fw_assert(reg.Is_Valid());
 
 	if (reg.Is_Valid()) {
@@ -569,7 +569,7 @@ void WOLNATInterfaceClass::Shutdown(void)
 		//reg.Set_Bool("SendDelay", send_delay);
 
 		/*
-		** Set the local class values into the registry.
+		** Set the local class values into the settings.
 		*/
 		reg.Set_Int("PortBase", PortBase);
 		//reg.Set_Int("ForcePort", ForcePort);
@@ -588,11 +588,11 @@ void WOLNATInterfaceClass::Shutdown(void)
 
 
 /***********************************************************************************************
- * WOLNATInterfaceClass::Get_Config -- Get config settings from the registry.                  *
+ * WOLNATInterfaceClass::Get_Config -- Get config settings from the settings.                  *
  *                                                                                             *
  *                                                                                             *
  *                                                                                             *
- * INPUT:    Ptr to registry entry object (null for default)                                   *
+ * INPUT:    Ptr to settings entry object (null for default)                                   *
  *           Reference to port number to set                                                   *
  *           Reference to send delay flag to set                                               *
  *                                                                                             *
@@ -603,12 +603,12 @@ void WOLNATInterfaceClass::Shutdown(void)
  * HISTORY:                                                                                    *
  *   9/24/2001 12:38PM ST : Created                                                            *
  *=============================================================================================*/
-void WOLNATInterfaceClass::Get_Config(RegistryClass *reg, int &port_number, bool &send_delay)
+void WOLNATInterfaceClass::Get_Config(SettingsClass *reg, int &port_number, bool &send_delay)
 {
-	RegistryClass *local_reg = reg;
+	SettingsClass *local_reg = reg;
 
 	if (!local_reg) {
-		local_reg = new RegistryClass(APPLICATION_SUB_KEY_NAME_NET_FIREWALL);
+		local_reg = new SettingsClass(APPLICATION_SETTINGS_SECTION_NET_FIREWALL);
 	}
 
 	send_delay = local_reg->Get_Bool("SendDelay", FirewallHelper.Get_Send_Delay());
@@ -627,11 +627,11 @@ void WOLNATInterfaceClass::Get_Config(RegistryClass *reg, int &port_number, bool
 
 
 /***********************************************************************************************
- * WOLNATInterfaceClass::Set_Config -- Set config settings into the registry                   *
+ * WOLNATInterfaceClass::Set_Config -- Set config settings into the settings                   *
  *                                                                                             *
  *                                                                                             *
  *                                                                                             *
- * INPUT:    Ptr to registry entry object (null for default)                                   *
+ * INPUT:    Ptr to settings entry object (null for default)                                   *
  *           Port number to set                                                                *
  *           Send delay flag to set                                                            *
  *                                                                                             *
@@ -642,12 +642,12 @@ void WOLNATInterfaceClass::Get_Config(RegistryClass *reg, int &port_number, bool
  * HISTORY:                                                                                    *
  *   9/24/2001 12:39PM ST : Created                                                            *
  *=============================================================================================*/
-void WOLNATInterfaceClass::Set_Config(RegistryClass *reg, int port_number, bool send_delay)
+void WOLNATInterfaceClass::Set_Config(SettingsClass *reg, int port_number, bool send_delay)
 {
-	RegistryClass *local_reg = reg;
+	SettingsClass *local_reg = reg;
 
 	if (!local_reg) {
-		local_reg = new RegistryClass(APPLICATION_SUB_KEY_NAME_NET_FIREWALL);
+		local_reg = new SettingsClass(APPLICATION_SETTINGS_SECTION_NET_FIREWALL);
 	}
 
 	FirewallHelper.Set_Send_Delay(send_delay);
@@ -1561,7 +1561,7 @@ void WOLNATInterfaceClass::Set_Server_Negotiated_Address(IPAddressClass *server_
 
 
 /***********************************************************************************************
- * WOLNATInterfaceClass::Save_Firewall_Info_To_Registry -- Save detection info to registry     *
+ * WOLNATInterfaceClass::Save_Firewall_Info_To_Settings -- Save detection info to settings     *
  *                                                                                             *
  *                                                                                             *
  *                                                                                             *
@@ -1574,9 +1574,9 @@ void WOLNATInterfaceClass::Set_Server_Negotiated_Address(IPAddressClass *server_
  * HISTORY:                                                                                    *
  *   11/28/2001 9:39PM ST : Created                                                            *
  *=============================================================================================*/
-void WOLNATInterfaceClass::Save_Firewall_Info_To_Registry(void)
+void WOLNATInterfaceClass::Save_Firewall_Info_To_Settings(void)
 {
-	RegistryClass reg(APPLICATION_SUB_KEY_NAME_NET_FIREWALL);
+	SettingsClass reg(APPLICATION_SETTINGS_SECTION_NET_FIREWALL);
 	fw_assert(reg.Is_Valid());
 
 	if (reg.Is_Valid()) {

@@ -48,7 +48,7 @@
 #include "comnetrcv.h"
 #include "connect.h"
 #include "nethandler.h"
-#include "regbool.h"
+#include "SettingsBool.h"
 
 #define MAX_TEXTMESSAGE_LENGTH 200
 

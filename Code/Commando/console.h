@@ -80,8 +80,8 @@ public:
 
 	static	ConsoleGameModeClass * Get_Instance() { return Instance; }
 
-	static void Load_Registry_Keys(void);
-	static void Save_Registry_Keys(void);
+	static void Load_Settings_Keys(void);
+	static void Save_Settings_Keys(void);
 
 private:
 

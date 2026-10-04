@@ -40,7 +40,7 @@
 #include "render2D.h"
 #include "timemgr.h"
 #include "_globals.h"
-#include "registry.h"
+#include "Settings.h"
 #include "wwprofile.h"
 #include "combat.h"
 #include "ccamera.h"
@@ -91,7 +91,7 @@ void	TextDisplayGameModeClass::Init()
 		MaxScrollLines = 30;
 		ScrollLinesPersistTime = 10;
 
-		Load_Registry_Keys();
+		Load_Settings_Keys();
 
 		Display = new Render2DTextClass(Font);
 		Display->Set_Coordinate_Range( Render2DClass::Get_Screen_Resolution() );
@@ -114,7 +114,7 @@ void	TextDisplayGameModeClass::Init()
 void 	TextDisplayGameModeClass::Shutdown()
 {
 	if (!ConsoleBox.Is_Exclusive()) {
-		Save_Registry_Keys();
+		Save_Settings_Keys();
 
    	Flush();
 
@@ -139,26 +139,26 @@ void 	TextDisplayGameModeClass::Shutdown()
 /*
 **
 */
-void TextDisplayGameModeClass::Load_Registry_Keys(void)
+void TextDisplayGameModeClass::Load_Settings_Keys(void)
 {
-	RegistryClass * registry = new RegistryClass( APPLICATION_SUB_KEY_NAME_OPTIONS );
-	WWASSERT( registry );
-	if ( registry->Is_Valid() ) {
-		MaxScrollLines = registry->Get_Int( "MaxScrollLines", MaxScrollLines );
-		ScrollLinesPersistTime = registry->Get_Float( "ScrollLinesPersistTime", ScrollLinesPersistTime );
+	SettingsClass * settings = new SettingsClass( APPLICATION_SETTINGS_SECTION_OPTIONS );
+	WWASSERT( settings );
+	if ( settings->Is_Valid() ) {
+		MaxScrollLines = settings->Get_Int( "MaxScrollLines", MaxScrollLines );
+		ScrollLinesPersistTime = settings->Get_Float( "ScrollLinesPersistTime", ScrollLinesPersistTime );
 	}
-	delete registry;
+	delete settings;
 }
 
-void TextDisplayGameModeClass::Save_Registry_Keys(void)
+void TextDisplayGameModeClass::Save_Settings_Keys(void)
 {
-	RegistryClass * registry = new RegistryClass( APPLICATION_SUB_KEY_NAME_OPTIONS );
-	WWASSERT( registry );
-	if ( registry->Is_Valid() ) {
-		registry->Set_Int( "MaxScrollLines", MaxScrollLines );
-		registry->Set_Float( "ScrollLinesPersistTime", ScrollLinesPersistTime );
+	SettingsClass * settings = new SettingsClass( APPLICATION_SETTINGS_SECTION_OPTIONS );
+	WWASSERT( settings );
+	if ( settings->Is_Valid() ) {
+		settings->Set_Int( "MaxScrollLines", MaxScrollLines );
+		settings->Set_Float( "ScrollLinesPersistTime", ScrollLinesPersistTime );
 	}
-	delete registry;
+	delete settings;
 }
 
 /*

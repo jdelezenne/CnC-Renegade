@@ -49,7 +49,7 @@
 #include "SoundScene.H"
 #include "SoundPseudo3D.H"
 #include "FFactory.H"
-#include "Registry.H"
+#include "Settings.h"
 #include "Threads.H"
 #include "LogicalSound.h"
 #include "LogicalListener.h"
@@ -72,7 +72,7 @@ HANDLE WWAudioClass::_TimerSyncEvent = NULL;
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
-//	Registry value names
+//	Settings value names
 ////////////////////////////////////////////////////////////////////////////////////////////////
 const char *VALUE_NAME_IS_STEREO				= "stereo";
 const char *VALUE_NAME_BITS					= "bits";
@@ -2389,13 +2389,13 @@ WWAudioClass::Is_Disabled (void) const
 		#endif
 
 		//
-		//	Read the disabled key from the registry
+		//	Read the disabled key from the settings
 		//
-		RegistryClass registry ("SOFTWARE\\Westwood\\WWAudio");
-		if (registry.Is_Valid ()) {
-			if (registry.Get_Int ("Disabled", 0) == 1) {
+		SettingsClass settings ("Audio");
+		if (settings.Is_Valid ()) {
+			if (settings.Get_Int ("Disabled", 0) == 1) {
 				_disabled = true;
-				WWDEBUG_SAY (("WWAudio: Audio system disabled in registry.\r\n"));
+				WWDEBUG_SAY (("WWAudio: Audio system disabled in settings.\r\n"));
 			}
 		}
 	}
@@ -2410,16 +2410,16 @@ WWAudioClass::Is_Disabled (void) const
 //
 ////////////////////////////////////////////////////////////////////////////////////////////////
 void
-WWAudioClass::Initialize (const char *registry_subkey_name)
+WWAudioClass::Initialize (const char *settings_subkey_name)
 {
 	WWMEMLOG(MEM_SOUND);
 
 	if (Is_Disabled () == false) {
 
 		//
-		//	Initialize the audio system from the registry settings
+		//	Initialize the audio system from the settings settings
 		//
-		Load_From_Registry (registry_subkey_name);
+		Load_From_Settings (settings_subkey_name);
 
 		//
 		//	Grab the first (and only) filter for use with our 'tinny' effect.
@@ -3004,11 +3004,11 @@ WWAudioClass::Find_Sound_Object (uint32 sound_obj_id)
 
 ////////////////////////////////////////////////////////////////////////////////////////////
 //
-//	Load_From_Registry
+//	Load_From_Settings
 //
 ////////////////////////////////////////////////////////////////////////////////////////////
 bool
-WWAudioClass::Load_From_Registry (const char *subkey_name)
+WWAudioClass::Load_From_Settings (const char *subkey_name)
 {
 	bool retval = true;
 
@@ -3018,9 +3018,9 @@ WWAudioClass::Load_From_Registry (const char *subkey_name)
 	int hertz = 44100;
 
 	//
-	//	Load the settings from the registry
+	//	Load the settings from the settings
 	//
-	if (Load_From_Registry (subkey_name, device_name, is_stereo, bits, hertz,
+	if (Load_From_Settings (subkey_name, device_name, is_stereo, bits, hertz,
 			m_AreSoundEffectsEnabled, m_IsMusicEnabled, m_IsDialogEnabled, m_IsCinematicSoundEnabled,
 			m_SoundVolume, m_MusicVolume, m_DialogVolume, m_CinematicVolume, m_SpeakerType))
 	{
@@ -3056,11 +3056,11 @@ WWAudioClass::Load_From_Registry (const char *subkey_name)
 
 ////////////////////////////////////////////////////////////////////////////////////////////
 //
-//	Load_From_Registry
+//	Load_From_Settings
 //
 ////////////////////////////////////////////////////////////////////////////////////////////
 bool
-WWAudioClass::Load_From_Registry
+WWAudioClass::Load_From_Settings
 (
 	const char *	subkey_name,
 	StringClass &	device_name,
@@ -3081,10 +3081,10 @@ WWAudioClass::Load_From_Registry
 	bool retval = false;
 
 	//
-	//	Attempt to open the registry key
+	//	Attempt to open the settings key
 	//
-	RegistryClass registry (subkey_name);
-	if (registry.Is_Valid ()) {
+	SettingsClass settings (subkey_name);
+	if (settings.Is_Valid ()) {
 
 		int defaultmusicvolume, defaultsoundvolume, defaultdialogvolume, defaultcinematicvolume;
 
@@ -3092,33 +3092,33 @@ WWAudioClass::Load_From_Registry
 		//	Read the device name into a string object
 		//
 		char temp_buffer[256] = { 0 };
-		registry.Get_String (VALUE_NAME_DEVICE_NAME, temp_buffer, sizeof (temp_buffer));
+		settings.Get_String (VALUE_NAME_DEVICE_NAME, temp_buffer, sizeof (temp_buffer));
 		device_name = temp_buffer;
 
 		//
 		//	Read the 2D settings
 		//
-		is_stereo	= (registry.Get_Int (VALUE_NAME_IS_STEREO, true) == 1);
-		bits			= registry.Get_Int (VALUE_NAME_BITS, 16);
-		hertz			= registry.Get_Int (VALUE_NAME_HERTZ, 44100);
+		is_stereo	= (settings.Get_Int (VALUE_NAME_IS_STEREO, true) == 1);
+		bits			= settings.Get_Int (VALUE_NAME_BITS, 16);
+		hertz			= settings.Get_Int (VALUE_NAME_HERTZ, 44100);
 
 		//
 		//	Read the sound/music enabled settings
 		//
-		music_enabled		= (registry.Get_Int (VALUE_NAME_MUSIC_ENABLED, 1) == 1);
-		sound_enabled		= (registry.Get_Int (VALUE_NAME_SOUND_ENABLED, 1) == 1);
-		dialog_enabled		= (registry.Get_Int (VALUE_NAME_DIALOG_ENABLED, 1) == 1);
-		cinematic_enabled = (registry.Get_Int (VALUE_NAME_CINEMATIC_ENABLED, 1) == 1);
+		music_enabled		= (settings.Get_Int (VALUE_NAME_MUSIC_ENABLED, 1) == 1);
+		sound_enabled		= (settings.Get_Int (VALUE_NAME_SOUND_ENABLED, 1) == 1);
+		dialog_enabled		= (settings.Get_Int (VALUE_NAME_DIALOG_ENABLED, 1) == 1);
+		cinematic_enabled = (settings.Get_Int (VALUE_NAME_CINEMATIC_ENABLED, 1) == 1);
 
 		Load_Default_Volume (defaultmusicvolume, defaultsoundvolume, defaultdialogvolume, defaultcinematicvolume);
 
 		//
 		//	Read the volume information
 		//
-		music_volume		= registry.Get_Int (VALUE_NAME_MUSIC_VOL, defaultmusicvolume) / 100.0F;
-		sound_volume		= registry.Get_Int (VALUE_NAME_SOUND_VOL, defaultsoundvolume) / 100.0F;
-		dialog_volume		= registry.Get_Int (VALUE_NAME_DIALOG_VOL, defaultdialogvolume) / 100.0F;
-		cinematic_volume	= registry.Get_Int (VALUE_NAME_CINEMATIC_VOL, defaultcinematicvolume) / 100.0F;
+		music_volume		= settings.Get_Int (VALUE_NAME_MUSIC_VOL, defaultmusicvolume) / 100.0F;
+		sound_volume		= settings.Get_Int (VALUE_NAME_SOUND_VOL, defaultsoundvolume) / 100.0F;
+		dialog_volume		= settings.Get_Int (VALUE_NAME_DIALOG_VOL, defaultdialogvolume) / 100.0F;
+		cinematic_volume	= settings.Get_Int (VALUE_NAME_CINEMATIC_VOL, defaultcinematicvolume) / 100.0F;
 		music_volume		= WWMath::Clamp (music_volume, 0, 1.0F);
 		sound_volume		= WWMath::Clamp (sound_volume, 0, 1.0F);
 		dialog_volume		= WWMath::Clamp (dialog_volume, 0, 1.0F);
@@ -3127,7 +3127,7 @@ WWAudioClass::Load_From_Registry
 		//
 		//	Misc
 		//
-		speaker_type		= registry.Get_Int (VALUE_NAME_SPEAKER_TYPE, 0);
+		speaker_type		= settings.Get_Int (VALUE_NAME_SPEAKER_TYPE, 0);
 
 		retval		= true;
 	}
@@ -3138,11 +3138,11 @@ WWAudioClass::Load_From_Registry
 
 ////////////////////////////////////////////////////////////////////////////////////////////
 //
-//	Save_To_Registry
+//	Save_To_Settings
 //
 ////////////////////////////////////////////////////////////////////////////////////////////
 bool
-WWAudioClass::Save_To_Registry (const char *subkey_name)
+WWAudioClass::Save_To_Settings (const char *subkey_name)
 {
 	StringClass device_name;
 
@@ -3162,9 +3162,9 @@ WWAudioClass::Save_To_Registry (const char *subkey_name)
 	}
 
 	//
-	//	Save these settings to the registry
+	//	Save these settings to the settings
 	//
-	return Save_To_Registry (subkey_name, device_name, m_PlaybackStereo, m_PlaybackBits, m_PlaybackRate,
+	return Save_To_Settings (subkey_name, device_name, m_PlaybackStereo, m_PlaybackBits, m_PlaybackRate,
 				m_AreSoundEffectsEnabled, m_IsMusicEnabled, m_IsDialogEnabled, m_IsCinematicSoundEnabled,
 				m_SoundVolume, m_MusicVolume, m_DialogVolume, m_CinematicVolume, m_SpeakerType);
 }
@@ -3172,11 +3172,11 @@ WWAudioClass::Save_To_Registry (const char *subkey_name)
 
 ////////////////////////////////////////////////////////////////////////////////////////////
 //
-//	Save_To_Registry
+//	Save_To_Settings
 //
 ////////////////////////////////////////////////////////////////////////////////////////////
 bool
-WWAudioClass::Save_To_Registry
+WWAudioClass::Save_To_Settings
 (
 	const char *			subkey_name,
 	const StringClass &	device_name,
@@ -3197,27 +3197,27 @@ WWAudioClass::Save_To_Registry
 	bool retval = false;
 
 	//
-	//	Attempt to open the registry key
+	//	Attempt to open the settings key
 	//
-	RegistryClass registry (subkey_name);
-	if (registry.Is_Valid ()) {
+	SettingsClass settings (subkey_name);
+	if (settings.Is_Valid ()) {
 
 		//
-		//	Save the settings to the registry
+		//	Save the settings to the settings
 		//
-		registry.Set_String (VALUE_NAME_DEVICE_NAME, device_name);
-		registry.Set_Int (VALUE_NAME_IS_STEREO, is_stereo);
-		registry.Set_Int (VALUE_NAME_BITS, bits);
-		registry.Set_Int (VALUE_NAME_HERTZ, hertz);
-		registry.Set_Int (VALUE_NAME_MUSIC_ENABLED,		music_enabled);
-		registry.Set_Int (VALUE_NAME_SOUND_ENABLED,		sound_enabled);
-		registry.Set_Int (VALUE_NAME_DIALOG_ENABLED,		dialog_enabled);
-		registry.Set_Int (VALUE_NAME_CINEMATIC_ENABLED,	cinematic_enabled);
-		registry.Set_Int (VALUE_NAME_MUSIC_VOL,			music_volume * 100);
-		registry.Set_Int (VALUE_NAME_SOUND_VOL,			sound_volume * 100);
-		registry.Set_Int (VALUE_NAME_DIALOG_VOL,			dialog_volume * 100);
-		registry.Set_Int (VALUE_NAME_CINEMATIC_VOL,		cinematic_volume * 100);
-		registry.Set_Int (VALUE_NAME_SPEAKER_TYPE,		speaker_type);
+		settings.Set_String (VALUE_NAME_DEVICE_NAME, device_name);
+		settings.Set_Int (VALUE_NAME_IS_STEREO, is_stereo);
+		settings.Set_Int (VALUE_NAME_BITS, bits);
+		settings.Set_Int (VALUE_NAME_HERTZ, hertz);
+		settings.Set_Int (VALUE_NAME_MUSIC_ENABLED,		music_enabled);
+		settings.Set_Int (VALUE_NAME_SOUND_ENABLED,		sound_enabled);
+		settings.Set_Int (VALUE_NAME_DIALOG_ENABLED,		dialog_enabled);
+		settings.Set_Int (VALUE_NAME_CINEMATIC_ENABLED,	cinematic_enabled);
+		settings.Set_Int (VALUE_NAME_MUSIC_VOL,			music_volume * 100);
+		settings.Set_Int (VALUE_NAME_SOUND_VOL,			sound_volume * 100);
+		settings.Set_Int (VALUE_NAME_DIALOG_VOL,			dialog_volume * 100);
+		settings.Set_Int (VALUE_NAME_CINEMATIC_VOL,		cinematic_volume * 100);
+		settings.Set_Int (VALUE_NAME_SPEAKER_TYPE,		speaker_type);
 
 		retval = true;
 	}

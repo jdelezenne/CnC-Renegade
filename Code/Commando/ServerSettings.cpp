@@ -35,13 +35,14 @@
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 
+#include "Platform/Windows/Files.h"
 #include "ServerSettings.h"
 #include "slavemaster.h"
 #include "wwdebug.h"
 #include "gamedata.h"
 #include "gdcnc.h"
 #include "ini.h"
-#include "registry.h"
+#include "Settings.h"
 #include "rawfile.h"
 #include "consolemode.h"
 #include "specialbuilds.h"
@@ -242,16 +243,16 @@ bool ServerSettingsClass::Parse(bool apply)
 		** Restart Flag
 		*/
 
-		RegistryClass restart_reg(APPLICATION_SUB_KEY_NAME_WOLSETTINGS);
+		SettingsClass restart_reg(APPLICATION_SETTINGS_SECTION_WOLSETTINGS);
 		if (restart_reg.Is_Valid ()) {
-			restart_reg.Set_Int(AutoRestartClass::REG_VALUE_AUTO_RESTART_FLAG, 1);
+			restart_reg.Set_Int(AutoRestartClass::SETTING_AUTO_RESTART_FLAG, 1);
 			switch (GameMode) {
 				case MODE_WOL:
-					restart_reg.Set_Int(AutoRestartClass::REG_VALUE_AUTO_RESTART_TYPE, 1);
+					restart_reg.Set_Int(AutoRestartClass::SETTING_AUTO_RESTART_TYPE, 1);
 					break;
 				case MODE_LAN:
 				case MODE_GAMESPY:
-					restart_reg.Set_Int(AutoRestartClass::REG_VALUE_AUTO_RESTART_TYPE, 0);
+					restart_reg.Set_Int(AutoRestartClass::SETTING_AUTO_RESTART_TYPE, 0);
 					break;
 			}
 		}
@@ -262,7 +263,7 @@ bool ServerSettingsClass::Parse(bool apply)
 		ini.Get_String(MasterServerSection, "Nickname", "", master_nick, sizeof(master_nick));
 #ifdef FREEDEDICATEDSERVER
 		/*
-		** We only need to validate this for the FDS. The regular game can allow the login name to be specified in the registry.
+		** We only need to validate this for the FDS. The regular game can allow the login name to be specified in the settings.
 		*/
 		if (wol && strlen(master_nick) == 0) {
 			WWDEBUG_SAY(("Error - No login nickname specified for master server - aborting\n"));
@@ -278,7 +279,7 @@ bool ServerSettingsClass::Parse(bool apply)
 		ini.Get_String(MasterServerSection, "Password", "", master_pass, sizeof(master_pass));
 #ifdef FREEDEDICATEDSERVER
 		/*
-		** We only need to validate this for the FDS. The regular game can allow the login name to be specified in the registry.
+		** We only need to validate this for the FDS. The regular game can allow the login name to be specified in the settings.
 		*/
 		if (wol && strlen(master_pass) == 0) {
 			WWDEBUG_SAY(("Error - No login password specified for master server - aborting\n"));
@@ -295,7 +296,7 @@ bool ServerSettingsClass::Parse(bool apply)
 #ifdef FREEDEDICATEDSERVER
 		/*
 		** We only need to validate the serial number if we are the FDS. For the regular game, the master serial will be stored
-		** in the registry.
+		** in the settings.
 		*/
 		if (wol && strlen(master_serial) == 0) {
 			WWDEBUG_SAY(("Error - No serial number specified for master server - aborting\n"));
@@ -388,7 +389,7 @@ bool ServerSettingsClass::Parse(bool apply)
 		** Get the remote admin settings.
 		*/
 		bool allow_remote = ini.Get_Bool(MasterServerSection, "AllowRemoteAdmin", false);
-		RegistryClass reg_remote(APPLICATION_SUB_KEY_NAME_NET_SERVER_CONTROL);
+		SettingsClass reg_remote(APPLICATION_SETTINGS_SECTION_NET_SERVER_CONTROL);
 		if (allow_remote) {
 			ini.Get_String(MasterServerSection, "RemoteAdminPassword", "", remote_admin_pass, sizeof(remote_admin_pass));
 			int len = strlen(remote_admin_pass);
@@ -413,7 +414,7 @@ bool ServerSettingsClass::Parse(bool apply)
 			ServerControl.Allow_Remote_Admin(true);
 
 			/*
-			** Set the port number into the registry.
+			** Set the port number into the settings.
 			*/
 			if (admin_port == 0) {
 				admin_port = DEFAULT_SERVER_CONTROL_PORT;
@@ -421,7 +422,7 @@ bool ServerSettingsClass::Parse(bool apply)
 			reg_remote.Set_Int(SERVER_CONTROL_PORT_KEY, admin_port);
 
 			/*
-			** Set the password into the registry.
+			** Set the password into the settings.
 			*/
 			reg_remote.Set_String(SERVER_CONTROL_PASSWORD_KEY, remote_admin_pass);
 
@@ -448,7 +449,7 @@ bool ServerSettingsClass::Parse(bool apply)
 
 
 		/*
-		** Set the master settings into the registry.
+		** Set the master settings into the settings.
 		*/
 		//if (apply) {
 
@@ -460,7 +461,7 @@ bool ServerSettingsClass::Parse(bool apply)
 					StringClass serial(master_serial, true);
 					StringClass encrypted_serial;
 					Encrypt_Serial(serial, encrypted_serial);
-					RegistryClass reg_base(APPLICATION_SUB_KEY_NAME);
+					SettingsClass reg_base(APPLICATION_SETTINGS_SECTION);
 					if (reg_base.Is_Valid()) {
 						reg_base.Set_String(KEY_SLAVE_SERIAL, encrypted_serial.Peek_Buffer());
 					}
@@ -470,7 +471,7 @@ bool ServerSettingsClass::Parse(bool apply)
 				** Nickname.
 				*/
 				if (strlen(master_nick)) {
-					RegistryClass reg_wol(APPLICATION_SUB_KEY_NAME_WOLSETTINGS);
+					SettingsClass reg_wol(APPLICATION_SETTINGS_SECTION_WOLSETTINGS);
 					if (reg_wol.Is_Valid()) {
 						reg_wol.Set_String("AutoLogin", master_nick);
 						reg_wol.Set_String("LastLogin", master_nick);
@@ -488,7 +489,7 @@ bool ServerSettingsClass::Parse(bool apply)
 				** Port number.
 				*/
 				if (master_port != 0xffffffff) {
-					RegistryClass reg_fw(APPLICATION_SUB_KEY_NAME_NET_FIREWALL);
+					SettingsClass reg_fw(APPLICATION_SETTINGS_SECTION_NET_FIREWALL);
 					reg_fw.Set_Int("ForcePort", master_port);
 				}
 			}
@@ -497,7 +498,7 @@ bool ServerSettingsClass::Parse(bool apply)
 			** Bandwidth.
 			*/
 			if (master_bw != 0xffffffff) {
-				RegistryClass reg_netopt(APPLICATION_SUB_KEY_NAME_NETOPTIONS);
+				SettingsClass reg_netopt(APPLICATION_SETTINGS_SECTION_NETOPTIONS);
 				if (reg_netopt.Is_Valid()) {
 					if (cGameSpyAdmin::Is_Gamespy_Game()) {
 						if (master_bw == 0) master_bw = 1000000;
@@ -510,7 +511,7 @@ bool ServerSettingsClass::Parse(bool apply)
 							** We want this to be set always on the first time through, but not neccessarily on the second, apply, pass.
 							*/
 							if (master_bw != 0 || !apply) {
-								RegistryClass reg_bw(APPLICATION_SUB_KEY_NAME_BANDTEST);
+								SettingsClass reg_bw(APPLICATION_SETTINGS_SECTION_BANDTEST);
 								if (reg_bw.Is_Valid()) {
 									reg_bw.Set_Int("Up", master_bw);
 									reg_bw.Set_Int("Down", master_bw);
@@ -678,7 +679,7 @@ void ServerSettingsClass::Encrypt_Serial(StringClass serial_in, StringClass &ser
 	/*
 	** See if the key file is available. If not, don't bother encrypting.
 	*/
-	HANDLE handle = CreateFile ("woldata.key", GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
+	HANDLE handle = Platform::OpenFile("woldata.key", GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
 	if (handle == INVALID_HANDLE_VALUE) {
 		delete [] s;
 		serial_out = serial_in;

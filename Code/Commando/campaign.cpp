@@ -48,7 +48,7 @@
 #include "movie.h"
 #include "consolefunction.h"
 #include "renegadedialogmgr.h"
-#include "registry.h"
+#include "Settings.h"
 #include "_globals.h"
 #include "crandom.h"
 #include "god.h"
@@ -331,12 +331,12 @@ void	CampaignManager::Continue( bool success )
 			mode->Start_Movie( filename );
 
 			//
-			//	Add this movie name to the registry (that way the user
+			//	Add this movie name to the settings (that way the user
 			// can watch it later)
 			//	
-			RegistryClass registry( APPLICATION_SUB_KEY_NAME_MOVIES );
-			if ( registry.Is_Valid() ) {
-				registry.Set_String( filename, description );
+			SettingsClass settings( APPLICATION_SETTINGS_SECTION_MOVIES );
+			if ( settings.Is_Valid() ) {
+				settings.Set_String( filename, description );
 			}
 		}
 

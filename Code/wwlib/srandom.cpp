@@ -22,6 +22,7 @@
 
 #pragma warning(disable : 4514)	// unreferenced inline function removed....
 
+#include "Platform/Paths.h"
 #include "srandom.h"
 #include <stdlib.h>
 #include <stdio.h>
@@ -143,7 +144,7 @@ void SecureRandomClass::Generate_Seed(void)
 	// On UNIX we've already got a great random number souce.
 	// This should be used only for a seed since it's slow.
 	//
-	FILE *in=fopen("/dev/random","r");
+	FILE *in=Platform::OpenStream("/dev/random","r");
 	if (in)
 	{
 		for (i=0; i<SeedLength; i++)

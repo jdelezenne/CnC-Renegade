@@ -35,6 +35,8 @@
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 
+#include "Platform/Paths.h"
+#include "Platform/Windows/Files.h"
 #include "dlgloadspgame.h"
 #include "listctrl.h"
 #include "dialogresource.h"
@@ -49,7 +51,7 @@
 #include "dialogmgr.h"
 #include "renegadedialogmgr.h"
 #include "god.h"
-#include "registry.h"
+#include "Settings.h"
 #include "_globals.h"
 #include "dialogtests.h"
 #include "specialbuilds.h"
@@ -113,7 +115,7 @@ LoadSPGameMenuClass::On_Init_Dialog (void)
 #endif // WWDEBUG
 
 		start_index = Build_List (file_filter, start_index);
-		Build_List ("data\\save\\*.sav", start_index);
+		Build_List (Platform::UserPath("data\\save\\*.sav").c_str(), start_index);
 
 		//
 		//	Sort the list and select the first entry
@@ -305,13 +307,13 @@ LoadSPGameMenuClass::Get_Game_Rank
 	if ( name.Get_Length() > 4 ) {
 		name.Erase( name.Get_Length()-4, 4 );
 	}
-	RegistryClass * registry = new RegistryClass( APPLICATION_SUB_KEY_NAME_MISSION_RANKS );
-	WWASSERT( registry );
+	SettingsClass * settings = new SettingsClass( APPLICATION_SETTINGS_SECTION_MISSION_RANKS );
+	WWASSERT( settings );
 	int rank = 0;
-	if ( registry->Is_Valid() ) {
-		rank = registry->Get_Int( name,   0 );
+	if ( settings->Is_Valid() ) {
+		rank = settings->Get_Int( name,   0 );
 	}
-	delete registry;
+	delete settings;
 	return rank;
 }
 
@@ -333,18 +335,18 @@ LoadSPGameMenuClass::Set_Game_Rank
 	if ( name.Get_Length() > 4 ) {
 		name.Erase( name.Get_Length()-4, 4 );
 	}
-	RegistryClass * registry = new RegistryClass( APPLICATION_SUB_KEY_NAME_MISSION_RANKS );
-	WWASSERT( registry );
-	if ( registry->Is_Valid() ) {
-		int old_rank = registry->Get_Int( name, 0 );
+	SettingsClass * settings = new SettingsClass( APPLICATION_SETTINGS_SECTION_MISSION_RANKS );
+	WWASSERT( settings );
+	if ( settings->Is_Valid() ) {
+		int old_rank = settings->Get_Int( name, 0 );
 		// Set to the max of old and rank
 		if ( old_rank > rank ) {
 			rank = old_rank;
 		}
-		registry->Set_Int( name, rank );
+		settings->Set_Int( name, rank );
 
 	}
-	delete registry;
+	delete settings;
 }
 
 
@@ -723,7 +725,7 @@ LoadSPGameMenuClass::Delete_Game (bool prompt)
 					//
 					//	Delete the file and remove its entry from the list
 					//
-					if (::DeleteFile (filename) != 0) {
+					if (Platform::RemoveFile(filename) != 0) {
 						list_ctrl->Delete_Entry (item_index);
 					}
 				}

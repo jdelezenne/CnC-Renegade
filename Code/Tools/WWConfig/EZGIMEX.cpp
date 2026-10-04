@@ -53,6 +53,7 @@
 */
 
 #define __NOINLINE__ 1
+#include "Platform/Paths.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -147,9 +148,9 @@ GSTREAM * GCALL gopen(const char *filename)
 {
     FILE *handle;
 
-    handle = fopen( filename, "r+b" );
+    handle = Platform::OpenStream( filename, "r+b" );
     if ( !handle ) {
-        handle = fopen( filename, "rb" );
+        handle = Platform::OpenStream( filename, "rb" );
 	}
     return((GSTREAM *) handle);
 }
@@ -158,9 +159,9 @@ GSTREAM * GCALL gwopen(const char *filename)
 {
     FILE *handle;
 
-    handle = fopen(filename,"w+b");
+    handle = Platform::OpenStream(filename,"w+b");
     if (!handle)
-        handle = fopen(filename,"wb");
+        handle = Platform::OpenStream(filename,"wb");
 
     return((GSTREAM *) handle);
 }

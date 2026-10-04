@@ -44,7 +44,7 @@
 #include "vector.h"
 
 class	SystemSettingEntry;
-class	RegistryClass;
+class	SettingsClass;
 //DEADMENU class	MenuEntryClass;
 class	ConsoleFunctionClass;
 
@@ -53,7 +53,7 @@ class	ConsoleFunctionClass;
 // The settings will exist without other underlying subsystems
 // ( Static Shadow Settings even when no Physics Scene is allocated )
 // but can be applied when the subsystem is available.
-// The settings will save and load in the registry.
+// The settings will save and load in the settings.
 // The settings will be be made available to the console system.
 // The settings can be accessed from the menu system
 //
@@ -69,9 +69,9 @@ public:
 
 	static	void		Apply_All( void );
 
-	// Registry save and load
-	static	void		Registry_Save( const char * sub_key );
-	static	void		Registry_Load( const char * sub_key );
+	// Settings save and load
+	static	void		Settings_Save( const char * sub_key );
+	static	void		Settings_Load( const char * sub_key );
 
 	// Menu Entry Access
 	//DEADMENU static	MenuEntryClass	*	Create_Menu_Entry( const char * setting_name );
@@ -87,7 +87,7 @@ private:
 //
 // System Settings Entries manage each of the different settings.
 // Each can apply itself to underlying subsystems
-// Each can save and load itself in the registry
+// Each can save and load itself in the settings
 // Each can be accessed via the console system
 // Each can be accessed from the menu system
 //
@@ -99,9 +99,9 @@ public:
 	virtual	const char *	Get_Help( void )							= 0;
 	virtual	void				Apply( void )								= 0;
 
-	// Registry save and load
-	virtual	void	Registry_Save( RegistryClass & registry )		= 0;
-	virtual	void	Registry_Load( RegistryClass & registry )		= 0;
+	// Settings save and load
+	virtual	void	Settings_Save( SettingsClass & settings )		= 0;
+	virtual	void	Settings_Load( SettingsClass & settings )		= 0;
 
 	// Menu Entry Access
 	//DEADMENU virtual	MenuEntryClass	*	Create_Menu_Entry( void )			= 0;
@@ -120,8 +120,8 @@ public:
 
 	virtual	void					Apply( void );
 
-	virtual	void					Registry_Save( RegistryClass & registry );
-	virtual	void					Registry_Load( RegistryClass & registry );
+	virtual	void					Settings_Save( SettingsClass & settings );
+	virtual	void					Settings_Load( SettingsClass & settings );
 
 	//DEADMENU virtual	MenuEntryClass	*	Create_Menu_Entry( void );
 
@@ -148,8 +148,8 @@ public:
 
 	virtual	void					Apply( void );
 
-	virtual	void					Registry_Save( RegistryClass & registry );
-	virtual	void					Registry_Load( RegistryClass & registry );
+	virtual	void					Settings_Save( SettingsClass & settings );
+	virtual	void					Settings_Load( SettingsClass & settings );
 
 	//DEADMENU virtual	MenuEntryClass	*	Create_Menu_Entry( void );
 
@@ -185,8 +185,8 @@ public:
 
 	virtual	void					Apply( void );
 
-	virtual	void					Registry_Save( RegistryClass & registry );
-	virtual	void					Registry_Load( RegistryClass & registry );
+	virtual	void					Settings_Save( SettingsClass & settings );
+	virtual	void					Settings_Load( SettingsClass & settings );
 
 	//DEADMENU virtual	MenuEntryClass	*	Create_Menu_Entry( void );
 

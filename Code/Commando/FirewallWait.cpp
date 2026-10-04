@@ -129,7 +129,7 @@ WaitCondition::WaitResult FirewallDetectWait::GetResult(void)
 			if (result == WAIT_OBJECT_0)
 				{
 				WWDEBUG_SAY(("FirewallDetectWait: ConditionMet\n"));
-				WOLNATInterface.Save_Firewall_Info_To_Registry();
+				WOLNATInterface.Save_Firewall_Info_To_Settings();
 				EndWait(ConditionMet, TRANSLATION(IDS_FIREWALL_NEGOTIATION_COMPLETE));
 				}
 			else if (result == WAIT_FAILED)

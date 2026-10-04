@@ -34,6 +34,7 @@
  * Functions:                                                                                  * 
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
+#include "Platform/Windows/Files.h"
 #include "mixfile.h"
 #include "wwdebug.h"
 #include "ffactory.h"
@@ -363,8 +364,8 @@ MixFileFactoryClass::Flush_Changes (void)
 	//
 	//	Delete the old mix file and rename the new one
 	//
-	::DeleteFile (MixFilename);
-	::MoveFile (full_path, MixFilename);
+	Platform::RemoveFile(MixFilename);
+	Platform::RenameFile(full_path, MixFilename);
 
 	//
 	//	Reset the lists

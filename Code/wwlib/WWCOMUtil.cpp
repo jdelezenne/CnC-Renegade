@@ -160,79 +160,19 @@ STDMETHODIMP Dispatch_InvokeMethod(IDispatch* object, const OLECHAR* methodName,
 	}
 
 
-/******************************************************************************
-*
-* NAME
-*     RegisterCOMServer
-*
-* DESCRIPTION
-*     Register an in-process COM server DLL.
-*
-* INPUTS
-*     DLLName - Name of DLL to register.
-*
-* RESULT
-*     Success - True if operation successful.
-*
-******************************************************************************/
-
-bool RegisterCOMServer(const char* dllName)
-	{
-	bool success = false;
-
-	HINSTANCE hInst = LoadLibrary(dllName);
-
-	if (hInst != NULL)
-		{
-		FARPROC regServerProc = GetProcAddress(hInst, "DllRegisterServer");
-
-		if (regServerProc != NULL)
-			{
-			HRESULT hr = regServerProc();
-			success = SUCCEEDED(hr);
-			}
-
-		FreeLibrary(hInst);
-		}
-
-	return success;
-	}
-
-
-/******************************************************************************
-*
-* NAME
-*     UnregisterCOMServer
-*
-* DESCRIPTION
-*     Unregister a in-process COM server DLL.
-*
-* INPUTS
-*     DLLName - Name of DLL to unregister.
-*
-* RESULT
-*     Success - True if operation successful.
-*
-******************************************************************************/
-
-bool UnregisterCOMServer(const char* dllName)
-	{
-	bool success = false;
-
-	HINSTANCE hInst = LoadLibrary(dllName);
-
-	if (hInst != NULL)
-		{
-		FARPROC unregServerProc = GetProcAddress(hInst, "DllUnregisterServer");
-
-		if (unregServerProc != NULL)
-			{
-			HRESULT hr = unregServerProc();
-			success = SUCCEEDED(hr);
-			}
-
-		FreeLibrary(hInst);
-		}
-
-	return success;
-	}
+HRESULT CreateCOMObjectFromLibrary(const char* library, REFCLSID clsid, REFIID iid, void** object)
+{
+    *object = NULL;
+    HMODULE module = GetModuleHandleA(library);
+    if (!module) module = LoadLibraryA(library);
+    if (!module) return HRESULT_FROM_WIN32(GetLastError());
+    using GetClassObject = HRESULT (STDAPICALLTYPE *)(REFCLSID, REFIID, void**);
+    auto getClassObject = reinterpret_cast<GetClassObject>(GetProcAddress(module, "DllGetClassObject"));
+    if (!getClassObject) return HRESULT_FROM_WIN32(ERROR_PROC_NOT_FOUND);
+    IClassFactory* factory = NULL;
+    HRESULT result = getClassObject(clsid, IID_IClassFactory, reinterpret_cast<void**>(&factory));
+    if (FAILED(result)) return result;
+    result = factory->CreateInstance(NULL, iid, object);
+    factory->Release();
+    return result;
+}

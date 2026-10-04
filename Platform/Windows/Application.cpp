@@ -46,9 +46,7 @@
 #include "Platform/Platform.h"
 #include "Platform/Windows/WindowsMessages.h"
 #include <SDL3/SDL.h>
-#include <filesystem>
 #include <cstring>
-#include <string>
 #define _WIN32_WINDOWS 0x0401
 #include "win.h"
 #include "resource.h"
@@ -75,7 +73,7 @@
 #include "datasafe.h"
 
 #include "combatgmode.h"
-#include "registry.h"
+#include "Settings.h"
 #include "init.h"
 #include "mainloop.h"
 #include "_globals.h"
@@ -126,9 +124,7 @@ static bool Native_Game_Message(MSG& message);
 void On_Focus_Loss(void);
 void On_Focus_Restore(void);
 void Split_Command_Line_Args(HINSTANCE instance, char *path_to_exe, char *command_line);
-void Set_Working_Directory(char *old_path, char *new_path);
 int Start_Application( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow );
-void Set_Working_Directory(HINSTANCE hInstance);
 
 
 
@@ -234,182 +230,6 @@ int PASCAL WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 	return retval;
 }
 
-static bool Graphics_Settings_Trouble_Shooting()
-{
-	RegistryClass registry( APPLICATION_SUB_KEY_NAME_DEBUG );
-	if (!registry.Is_Valid()) return true;
-
-	int progress=registry.Get_Int( VALUE_NAME_GAME_INITIALIZATION_IN_PROGRESS, 0 );
-	if (progress) {
-		StringClass options="wwconfig.exe ";
-		char* opts=options.Peek_Buffer();
-		STARTUPINFO startup_info;
-		ZeroMemory(&startup_info,sizeof(STARTUPINFO));
-		startup_info.cb=sizeof(STARTUPINFO);
-		PROCESS_INFORMATION process_info;
-		CreateProcess(
-			NULL,
-			opts,
-			NULL,
-			NULL,
-			FALSE,
-			0,
-			NULL,
-			NULL,
-			&startup_info,
-			&process_info);
-
-		unsigned long exit_code=STILL_ACTIVE;
-		unsigned res=0;
-		do {
-			res=GetExitCodeProcess(process_info.hProcess,&exit_code);
-			if (!res) {
-				return true;
-			}
-			Sleep(100);
-		}
-		while (exit_code==STILL_ACTIVE);
-		return !exit_code;
-	}
-	return true;
-}
-
-typedef IDirect3D8* (WINAPI *Direct3DCreate8Type) (UINT SDKVersion);
-static Direct3DCreate8Type	Direct3DCreate8Ptr = NULL;
-static HINSTANCE D3D8Lib = NULL;
-
-static bool Video_Card_Driver_Check()
-{
-	RegistryClass render_registry(APPLICATION_SUB_KEY_NAME_RENDER);
-	if (!render_registry.Is_Valid()) return true;
-
-	int disabled=render_registry.Get_Int( "DriverVersionCheckDisabled" );
-	if (disabled>=87) return true;
-
-	IDirect3D8* d3d=NULL;
-	D3DCAPS8 tmp_caps;
-	const D3DCAPS8* d3dcaps=NULL;
-	D3DADAPTER_IDENTIFIER8 adapter_id;
-
-	// Init D3D
-	Init_D3D_To_WW3_Conversion();
-
-	D3D8Lib = LoadLibrary("D3D8.DLL");
-
-	if (D3D8Lib != NULL) {
-		Direct3DCreate8Ptr = (Direct3DCreate8Type) GetProcAddress(D3D8Lib, "Direct3DCreate8");
-		if (Direct3DCreate8Ptr) {
-			d3d=Direct3DCreate8Ptr(D3D_SDK_VERSION);		// TODO: handle failure cases...
-			if (!d3d) {
-				FreeLibrary(D3D8Lib);
-				return true;
-			}
-		} else {
-			FreeLibrary(D3D8Lib);
-			return(true);
-		}
-	} else {
-		return(true);
-	}
-
-	// Select device. If there is already a device selected in the registry, use it.
-
-	int current_adapter_index=D3DADAPTER_DEFAULT;
-
-	//
-	//	Load the render device settings from the registry
-	//
-	char device_name[256] = { 0 };
-	render_registry.Get_String( VALUE_NAME_RENDER_DEVICE_NAME, device_name, sizeof(device_name));
-
-	int adapter_count = d3d->GetAdapterCount();
-	for (int adapter_index=0; adapter_index<adapter_count; adapter_index++) {
-		D3DADAPTER_IDENTIFIER8 id;
-		::ZeroMemory(&id, sizeof(D3DADAPTER_IDENTIFIER8));
-		HRESULT res = d3d->GetAdapterIdentifier(adapter_index,D3DENUM_NO_WHQL_LEVEL,&id);
-		// If device ok, check if it matches the currently set adapter name
-		if (res == D3D_OK) {
-			StringClass name(id.Description,true);
-			if (name==device_name) {
-				current_adapter_index=adapter_index;
-				break;
-			}
-		}
-	}
-
-	if (FAILED(d3d->GetDeviceCaps(
-		current_adapter_index,
-		D3DDEVTYPE_HAL,
-		&tmp_caps))) {
-		d3d->Release();
-		FreeLibrary(D3D8Lib);
-		return true;
-	}
-
-	::ZeroMemory(&adapter_id, sizeof(D3DADAPTER_IDENTIFIER8));
-	if (FAILED( d3d->GetAdapterIdentifier(
-		current_adapter_index,
-		D3DENUM_NO_WHQL_LEVEL,
-		&adapter_id))) {
-		d3d->Release();
-		FreeLibrary(D3D8Lib);
-		return true;
-	}
-
-	d3dcaps=&tmp_caps;
-	DX8Caps caps(d3d,*d3dcaps,WW3D_FORMAT_UNKNOWN,adapter_id);
-
-	DX8Caps::DriverVersionStatusType status=caps.Get_Driver_Version_Status();
-
-	d3d->Release();
-	FreeLibrary(D3D8Lib);
-
-	switch (status) {
-	default:
-	case DX8Caps::DRIVER_STATUS_GOOD:
-	case DX8Caps::DRIVER_STATUS_OK:
-	case DX8Caps::DRIVER_STATUS_UNKNOWN:
-		render_registry.Set_Int( "DriverVersionCheckDisabled",87 );
-		return true;
-		break;
-	case DX8Caps::DRIVER_STATUS_BAD:
-		break;
-	}
-
-	StringClass options="wwconfig.exe -driverversion";
-	char* opts=options.Peek_Buffer();
-	STARTUPINFO startup_info;
-	ZeroMemory(&startup_info,sizeof(STARTUPINFO));
-	startup_info.cb=sizeof(STARTUPINFO);
-	PROCESS_INFORMATION process_info;
-	if (!CreateProcess(
-		NULL,
-		opts,
-		NULL,
-		NULL,
-		FALSE,
-		0,
-		NULL,
-		NULL,
-		&startup_info,
-		&process_info)) {
-		return true;
-	}
-
-	unsigned long exit_code=STILL_ACTIVE;
-	unsigned res=0;
-	do {
-		res=GetExitCodeProcess(process_info.hProcess,&exit_code);
-		if (!res) {
-			return true;
-		}
-		Sleep(100);
-	}
-	while (exit_code==STILL_ACTIVE);
-	return !exit_code;
-}
-
-
 /***********************************************************************************************
  * Start_Application -- Handles WinMain execution.															  *
  *                                                                                             *
@@ -447,11 +267,6 @@ int Start_Application( HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /
 		WWMEMLOG(MEM_GAMEINIT);
 		//LPSTR	command	= lpCmdLine;
 
-		/*
-		** Set the working directory.
-		*/
-		Set_Working_Directory(hInstance);
-
 		//
 		// TEMP Dev code - check the working folder is correct!
 		//
@@ -471,10 +286,6 @@ int Start_Application( HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /
 		/*
 		** Only do these checks if this isn't an auto-restart. If we are restarting then we must have run once OK already. Right?
 		*/
-		if (AutoRestart.Get_Restart_Flag() == false && !ConsoleBox.Is_Exclusive()) {
-			if (!Video_Card_Driver_Check()) return 0;
-			if (!Graphics_Settings_Trouble_Shooting()) return 0;
-		}
 
 		//Debug_Say(("Started logging at time %s", cMiscUtil::Get_Text_Time()));
 
@@ -655,27 +466,4 @@ void On_Focus_Restore(void)
 
 void Prog_End(void)
 {
-}
-
-
-/***********************************************************************************************
- * Set_Working_Directory -- Sets current directory to be the same as the .exe                  *
- *                                                                                             *
- *                                                                                             *
- *                                                                                             *
- * INPUT:    Program instance                                                                  *
- *                                                                                             *
- * OUTPUT:   Nothing                                                                           *
- *                                                                                             *
- * WARNINGS: None                                                                              *
- *                                                                                             *
- * HISTORY:                                                                                    *
- *   11/6/2001 12:11PM ST : Created                                                            *
- *=============================================================================================*/
-void Set_Working_Directory(HINSTANCE /*instance*/)
-{
-    if (const char* path = SDL_GetBasePath()) {
-        const std::u8string utf8_path(path, path + std::strlen(path));
-        std::filesystem::current_path(std::filesystem::path(utf8_path));
-    }
 }

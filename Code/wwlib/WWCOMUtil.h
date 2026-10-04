@@ -51,10 +51,6 @@ HRESULT STDMETHODCALLTYPE Dispatch_PutProperty(IDispatch* object,
 HRESULT STDMETHODCALLTYPE Dispatch_InvokeMethod(IDispatch* object,
 		const OLECHAR* methodName, DISPPARAMS* params, VARIANT* result);
 
-//! Register COM in-process DLL server
-bool RegisterCOMServer(const char* dllName);
-
-//! Unregister COM in-process DLL server
-bool UnregisterCOMServer(const char* dllName);
+HRESULT CreateCOMObjectFromLibrary(const char* library, REFCLSID clsid, REFIID iid, void** object);
 
 #endif // __WWCOMUTIL_H__

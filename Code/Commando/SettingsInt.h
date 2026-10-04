@@ -17,36 +17,36 @@
 */
 
 //
-// Filename:     regstring.h
+// Filename:     SettingsInt.h
 // Author:       Tom Spencer-Smith
 // Date:         Dec 1998
-// Description:  
+// Description:
 //
 //-----------------------------------------------------------------------------
 #if defined(_MSV_VER)
 #pragma once
 #endif
 
-#ifndef REGSTRING_H
-#define REGSTRING_H
+#ifndef REGINT_H
+#define REGINT_H
 
 #include "bittype.h"
 
 //-----------------------------------------------------------------------------
-class cRegistryString
+class cSettingsInt
 {
 	public:
-      cRegistryString(LPCSTR registry_location, LPCSTR key_name, LPCSTR initial_value);
+      cSettingsInt(LPCSTR settings_section, LPCSTR key_name, int initial_value);
 
-      void Set(LPCSTR value);
-      LPCSTR Get(void) const {return Value;}
+      void Set(int value);
+      int Get(void) const {return Value;}
 
 	private:
 
-      char Value[200];
-      char RegistryLocation[400];
+      int Value;
+      char SettingsSection[400];
       char KeyName[100];
 };
 
 //-----------------------------------------------------------------------------
-#endif // REGSTRING_H
+#endif // REGINT_H

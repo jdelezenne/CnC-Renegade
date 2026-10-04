@@ -50,6 +50,7 @@
 #ifdef _MSC_VER
 
 #include	"always.h"
+#include "Platform/Windows/Files.h"
 #include <windows.h>
 #include	"assert.h"
 #include "cpudetect.h"
@@ -809,7 +810,7 @@ int Exception_Handler(int exception_code, EXCEPTION_POINTERS *e_info)
 		*/
 		HANDLE debug_file;
 		DWORD	actual;
-		debug_file = CreateFile("_except.txt", GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+		debug_file = Platform::OpenFile("_except.txt", GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 		if (debug_file != INVALID_HANDLE_VALUE){
 			WriteFile(debug_file, ExceptionText, strlen(ExceptionText), &actual, NULL);
 			CloseHandle (debug_file);
@@ -825,7 +826,7 @@ int Exception_Handler(int exception_code, EXCEPTION_POINTERS *e_info)
 			char filename[512];
 			if (Get_Global_Output_File_Name ("EXCEPT", filename, 512)) {
 				DebugString ("Copying DEBUG.TXT to %s\n", filename);
-				int result = CopyFile("debug.txt", filename, false);
+				int result = Platform::DuplicateFile("debug.txt", filename, false);
 				if (result == 0) {
 					DebugString ("CopyFile failed with error code %d - %s\n", GetLastError(), Last_Error_Text());
 				}
