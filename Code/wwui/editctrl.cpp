@@ -118,7 +118,7 @@ EditCtrlClass::Create_Text_Renderers (void)
 	//
 	//	Index into the text buffer
 	//
-	const WCHAR* text = display_string.Peek_Buffer();
+	const wchar_t* text = display_string.Peek_Buffer();
 
 	if (ScrollPos >= 0 && ScrollPos < display_string.Get_Length()) {
 		text += ScrollPos;
@@ -506,7 +506,7 @@ EditCtrlClass::Create_Caret_Renderer (void)
 	WideStringClass temp_copy(0, true);
 	Get_Display_Text(temp_copy);
 
-	WCHAR *text = temp_copy.Peek_Buffer();
+	wchar_t *text = temp_copy.Peek_Buffer();
 	int caretPos = Get_Caret_Pos();
 	text[caretPos] = 0;
 	text = &text[ScrollPos];
@@ -530,6 +530,7 @@ EditCtrlClass::Create_Caret_Renderer (void)
 	//	Draw the caret
 	//
 	CaretRenderer.Add_Quad(rect, StyleMgrClass::Get_Text_Color());
+	if (mIME && Has_Focus()) mIME->SetTextInputArea(static_cast<int>(ClientRect.Left), static_cast<int>(ClientRect.Top), static_cast<int>(ClientRect.Width()), static_cast<int>(ClientRect.Height()), static_cast<int>(rect.Left - ClientRect.Left));
 }
 
 
@@ -550,7 +551,7 @@ EditCtrlClass::Character_From_Pos (const Vector2 &mouse_pos)
 	//
 	//	Index into the buffer
 	//
-	const WCHAR *text		= display_text.Peek_Buffer () + ScrollPos;	
+	const wchar_t *text		= display_text.Peek_Buffer () + ScrollPos;
 	int char_index			= display_text.Get_Length ();
 
 	float x_pos				= mouse_pos.X - ClientRect.Left;
@@ -566,7 +567,7 @@ EditCtrlClass::Character_From_Pos (const Vector2 &mouse_pos)
 		//
 		//	Get the width of the character
 		//
-		WCHAR char_string[2] = { text[index], 0 };
+		wchar_t char_string[2] = { text[index], 0 };
 		float char_width = TextRenderer.Get_Text_Extents (char_string).X;
 		
 		//
@@ -608,7 +609,7 @@ EditCtrlClass::Pos_From_Character (int char_index)
 	//
 	WideStringClass temp_copy(0, true);
 	Get_Display_Text (temp_copy);
-	WCHAR *text						= temp_copy.Peek_Buffer ();
+	wchar_t *text						= temp_copy.Peek_Buffer ();
 	text[char_index]				= 0;
 	text								= &text[ScrollPos];
 	float width						= TextRenderer.Get_Text_Extents (text).X;
@@ -639,13 +640,8 @@ EditCtrlClass::On_Set_Focus (void)
 	Set_Dirty ();
 
 	if (mIME) {
-		if (IsIMEAllowed()) {
-			Observer<IME::CompositionEvent>::NotifyMe(*mIME);
-			Observer<IME::CandidateEvent>::NotifyMe(*mIME);
-			mIME->Activate();
-		} else {
-			mIME->Disable();
-		}
+		Observer<IME::CompositionEvent>::NotifyMe(*mIME);
+		mIME->Activate((Style & ES_NUMBER) != 0, (Style & ES_PASSWORD) != 0);
 	}
 
 	DialogControlClass::On_Set_Focus ();
@@ -662,24 +658,9 @@ void
 EditCtrlClass::On_Kill_Focus (DialogControlClass *focus)
 {
 	if (mIME) {
-		if (IsIMEAllowed()) {
-			mIME->Deactivate();
-			Observer<IME::CompositionEvent>::StopObserving();
-			Observer<IME::CandidateEvent>::StopObserving();
-		} else {
-			mIME->Enable();
-		}
+		mIME->Deactivate();
+		Observer<IME::CompositionEvent>::StopObserving();
 	}
-
-	WasButtonPressedOnMe	= false;
-
-	//
-	//	Remove any hilight
-	//
-	Set_Caret_Pos (0);
-	HilightStartPos	= -1;
-	HilightEndPos		= -1;
-	Set_Dirty ();
 
 	DialogControlClass::On_Kill_Focus (focus);
 	return ;
@@ -841,7 +822,7 @@ EditCtrlClass::On_Key_Down (uint32 key_id, uint32 key_data)
 }
 
 
-void EditCtrlClass::On_Unicode_Char(WCHAR unicode)
+void EditCtrlClass::On_Unicode_Char(wchar_t unicode)
 {
 	if (unicode >= 32) {
 		//	Delete the old selection
@@ -875,7 +856,7 @@ void EditCtrlClass::On_Unicode_Char(WCHAR unicode)
 }
 
 
-void EditCtrlClass::Insert_String(const WCHAR* string)
+void EditCtrlClass::Insert_String(const wchar_t* string)
 {
 	int count = wcslen(string);
 
@@ -1094,7 +1075,7 @@ EditCtrlClass::Update_Scroll_Pos (void)
 		//
 		WideStringClass temp_string(0, true);
 		Get_Display_Text(temp_string);
-		WCHAR *text = temp_string.Peek_Buffer();
+		wchar_t *text = temp_string.Peek_Buffer();
 		text[caretPos] = 0;
 
 		//
@@ -1136,7 +1117,7 @@ EditCtrlClass::Update_Scroll_Pos (void)
 int
 EditCtrlClass::Get_Int (void)
 {
-	return _wtoi (Get_Text ());
+	return static_cast<int>(std::wcstol(Get_Text(), nullptr, 10));
 }
 
 
@@ -1161,7 +1142,7 @@ EditCtrlClass::Set_Int (int value)
 //
 ////////////////////////////////////////////////////////////////
 void
-EditCtrlClass::Set_Text (const WCHAR *title)
+EditCtrlClass::Set_Text (const wchar_t *title)
 {
 	int count = wcslen(title);
 
@@ -1380,49 +1361,7 @@ void EditCtrlClass::Hide_IME_Typing_Text(void)
 *
 ******************************************************************************/
 
-void EditCtrlClass::PositionCandidateList(void)
-{
-	if (mIME) {
-		//-------------------------------------------------------------------------
-		// Position the candidate window under the edit control
-		//-------------------------------------------------------------------------
-		unsigned long start = 0;
-		unsigned long end = 0;
-		mIME->GetTargetClause(start, end);
-		int caretPos = CaretPos + start;
 
-		Vector2 pos;
-		pos.X = Pos_From_Character(caretPos);
-		pos.Y = (Rect.Bottom + 2.0f);
-		mCandidateList.Set_Window_Pos(pos);
-
-		//-------------------------------------------------------------------------
-		// Reposition the candidate list if it will go off the screen.
-		//-------------------------------------------------------------------------
-		bool reposition = false;
-		const RectClass& screen = Render2DClass::Get_Screen_Resolution();
-		const RectClass& ctrlRect = mCandidateList.Get_Window_Rect();
-
-		// If the list will go off the bottom of the screen move it above
-		// the edit control.
-		if (ctrlRect.Bottom > screen.Bottom) {
-			pos.Y = ((Rect.Top - 2.0f) - ctrlRect.Height());
-			WWASSERT((pos.Y >= 0.0f) && "CandidateCtrl off the top of the screen");
-			reposition = true;
-		}
-
-		// Do not allow the control to go off the right of the screen.
-		if (ctrlRect.Right > screen.Right) {
-			pos.X -= ((ctrlRect.Right - screen.Right) - 1);
-			WWASSERT((pos.X >= 0.0f) && "CandidateCtrl of the left of the screen");
-			reposition = true;
-		}
-
-		if (reposition) {
-			mCandidateList.Set_Window_Pos(pos);
-		}
-	}
-}
 
 
 /******************************************************************************
@@ -1503,31 +1442,3 @@ void EditCtrlClass::HandleNotification(IME::CompositionEvent& imeEvent)
 * RESULT
 *
 ******************************************************************************/
-
-void EditCtrlClass::HandleNotification(IME::CandidateEvent& imeEvent)
-{
-	switch (imeEvent.GetAction()) {
-		case IME::CANDIDATE_OPEN: {
-			#ifdef SHOW_IME_TYPING
-			Hide_IME_Typing_Text();
-			#endif
-
-			mCandidateList.Init(imeEvent.Subject());
-			PositionCandidateList();
-			Parent->Add_Control(&mCandidateList);
-			}
-			break;
-
-		case IME::CANDIDATE_CHANGE:
-			mCandidateList.Changed(imeEvent.Subject());
-			break;
-
-		case IME::CANDIDATE_CLOSE:
-			mCandidateList.Reset();
-			Parent->Remove_Control(&mCandidateList);
-			break;
-
-		default:
-			break;
-	}
-}

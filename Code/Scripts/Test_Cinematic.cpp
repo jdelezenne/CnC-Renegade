@@ -61,7 +61,7 @@ DECLARE_SCRIPT (M00_Cinematic_Attack_Command_DLS, "AttackDuration=1.0:float")
 		Commands->Send_Custom_Event( obj, obj, 1, 1, Get_Float_Parameter("AttackDuration") );
 	}
 
-	void Custom( GameObject * obj, int type, int param, GameObject * sender )
+	void Custom( GameObject * obj, int type, std::intptr_t param, GameObject * sender )
 	{
 		Commands->Action_Reset( obj, 100 );
 
@@ -199,14 +199,14 @@ public:
 	*/
 	void	Load_Control_File( const char * filename ) 
 	{
-		Commands->Debug_Message( "Loading Control File %s\n", (int)filename );
+		Commands->Debug_Message( "Loading Control File %s\n", filename );
 
 		char full_filename[80];
 		sprintf( full_filename, "DATA\\%s", filename );
 //		FILE * in = Platform::OpenStream( full_filename, "rt" );
 		int handle = Commands->Text_File_Open( filename );
 		if ( handle == 0 ) {
-			Commands->Debug_Message( "Failed to open %s\n", (int)full_filename );
+			Commands->Debug_Message( "Failed to open %s\n", full_filename );
 			return;
 		}
 
@@ -1018,7 +1018,7 @@ public:
 		Parse_Commands(obj);
 	}
 
-	void	Custom( GameObject * obj, int type, int param, GameObject * sender )
+	void	Custom( GameObject * obj, int type, std::intptr_t param, GameObject * sender )
 	{
 		if ( type == M00_CUSTOM_CINEMATIC_PRIMARY_KILLED ) {
 			if ( !PrimaryKilled ) {		// Prevent loops

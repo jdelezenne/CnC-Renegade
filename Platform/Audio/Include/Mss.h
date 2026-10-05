@@ -1,8 +1,10 @@
 #pragma once
 #include <cstdint>
-#include <windows.h>
-#include <mmsystem.h>
-#include <mmreg.h>
+#ifdef _WIN32
+#include "Platform/Windows/AudioTypes.h"
+#else
+#include "Platform/Audio/Formats.h"
+#endif
 
 #ifndef NO
 #define NO 0
@@ -11,11 +13,16 @@
 #define YES 1
 #endif
 
+#ifdef _WIN32
 using S32 = long;
+using U32 = unsigned long;
+#else
+using S32 = std::int32_t;
+using U32 = std::uint32_t;
+#endif
 using AILUserData = std::intptr_t;
 using AILFileHandle = std::uintptr_t;
 using MILES_HANDLE = std::uintptr_t;
-using U32 = unsigned long;
 using F32 = float;
 using C8 = char;
 struct MilesSample;
@@ -31,8 +38,13 @@ using HPROVIDER = U32;
 using HPROENUM = U32;
 using HTIMER = S32;
 using M3DRESULT = S32;
+#ifdef _WIN32
 #define AILCALL WINAPI
 #define AILCALLBACK WINAPI
+#else
+#define AILCALL
+#define AILCALLBACK
+#endif
 #define AIL_set_3D_object_user_data AIL_set_3D_user_data
 #define AIL_3D_object_user_data AIL_3D_user_data
 #define AIL_3D_open_listener AIL_open_3D_listener

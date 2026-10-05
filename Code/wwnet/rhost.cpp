@@ -79,7 +79,7 @@ cRemoteHost::cRemoteHost() :
 {
    //WWDEBUG_SAY(("cRemoteHost::cRemoteHost\n"));
 
-	ZeroMemory(&Address, sizeof(SOCKADDR_IN));
+	memset(&Address, 0, sizeof(Address));
 
 	if (IsFlowControlEnabled) {
       //ThresholdPriority = cNetUtil::Get_Initial_Threshold_Priority();

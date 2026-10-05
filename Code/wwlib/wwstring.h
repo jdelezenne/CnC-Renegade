@@ -43,10 +43,12 @@
 
 #include "always.h"
 #include "mutex.h"
+#ifdef _WIN32
 #include "win.h"
+#endif
+#include "Platform/Text.h"
 #include <string.h>
 #include <stdarg.h>
-#include <tchar.h>
 #include "trim.h"
 #include "wwdebug.h"
 #ifdef _UNIX

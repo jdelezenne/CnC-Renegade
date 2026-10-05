@@ -72,6 +72,7 @@
 #include "activeconversation.h"
 #include "orator.h"
 #include "gameobjobserver.h"
+#include <limits>
 #include "animcontrol.h"
 #include "playerdata.h"
 #include "building.h"
@@ -634,16 +635,16 @@ void	Select_Weapon( GameObject * obj, const char * weapon_name )
 /*
 **
 */
-void	Send_Custom_Event( GameObject * from, GameObject * to, int type, int param, float delay )
+void	Send_Custom_Event( GameObject * from, GameObject * to, int type, std::intptr_t param, float delay )
 {
 #if(0) // Denzil 4/4/00 - From not required for most messages
 	SCRIPT_PTR_CHECK( from );
 	SCRIPT_PTR_CHECK( to );  // ?? This may be okay to be null
-	SCRIPT_TRACE((	"ST>Send_Custom_Event( %d, %d %d, %d )\n", from->Get_ID(), to->Get_ID(), type, param ));
+	SCRIPT_TRACE((	"ST>Send_Custom_Event( %d, %d %d, %lld )\n", from->Get_ID(), to->Get_ID(), type, static_cast<long long>(param) ));
 #else
 	SCRIPT_PTR_CHECK( to );
-	SCRIPT_TRACE(("ST>Send_Custom_Event( %d, %d %d, %d )\n",
-		((from != NULL) ? from->Get_ID() : 0), to->Get_ID(), type, param));
+	SCRIPT_TRACE(("ST>Send_Custom_Event( %d, %d %d, %lld )\n",
+		((from != NULL) ? from->Get_ID() : 0), to->Get_ID(), type, static_cast<long long>(param)));
 #endif
 
 	WWASSERT( type < CUSTOM_EVENT_SYSTEM_FIRST );
@@ -655,7 +656,11 @@ void	Send_Custom_Event( GameObject * from, GameObject * to, int type, int param,
 				observer_list[ index ]->Custom( to, type, param, from );
 			}
 		} else {
-			to->Start_Custom_Timer( from, delay, type, param );
+            if (param < std::numeric_limits<std::int32_t>::min() || param > std::numeric_limits<std::int32_t>::max()) {
+                Debug_Say(("Delayed custom event parameter exceeds the 32-bit saved event format\n"));
+                return;
+            }
+            to->Start_Custom_Timer(from, delay, type, static_cast<std::int32_t>(param));
 		}
 	}
 }

@@ -43,7 +43,7 @@
 #define __SOUNDBUFFER_H
 
 #pragma warning (push, 3)
-#include "win.h"
+#include "bittype.h"
 #include "Mss.H"
 #pragma warning (pop)
 
@@ -170,7 +170,7 @@ class StreamSoundBufferClass : public SoundBufferClass
 		//	Protected methods
 		//////////////////////////////////////////////////////////////////////
 		virtual void			Free_Buffer (void);
-		virtual bool			Load_From_File (HANDLE hfile, unsigned long size, unsigned long offset);
+		virtual bool			Load_From_File (void* hfile, unsigned long size, unsigned long offset);
 
 		//////////////////////////////////////////////////////////////////////
 		//	Protected member data

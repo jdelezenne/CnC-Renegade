@@ -1,4 +1,3 @@
-# Game sources and feature definitions from the original DSP projects.
 set(REN_wwdebug_SOURCES
     "${PROJECT_SOURCE_DIR}/Code/wwdebug/wwdebug.cpp"
     "${PROJECT_SOURCE_DIR}/Code/wwdebug/wwmemlog.cpp"
@@ -6,7 +5,7 @@ set(REN_wwdebug_SOURCES
 )
 
 set(REN_wwlib_SOURCES
-    "${PROJECT_SOURCE_DIR}/Code/wwlib/_convert.cpp"
+    "${REN_REGEX_SOURCE}"
     "${PROJECT_SOURCE_DIR}/Code/wwlib/_mono.cpp"
     "${PROJECT_SOURCE_DIR}/Code/wwlib/argv.cpp"
     "${PROJECT_SOURCE_DIR}/Code/wwlib/b64pipe.cpp"
@@ -17,13 +16,10 @@ set(REN_wwlib_SOURCES
     "${PROJECT_SOURCE_DIR}/Code/wwlib/buff.cpp"
     "${PROJECT_SOURCE_DIR}/Code/wwlib/bufffile.cpp"
     "${PROJECT_SOURCE_DIR}/Code/wwlib/chunkio.cpp"
-    "${PROJECT_SOURCE_DIR}/Code/wwlib/convert.cpp"
     "${PROJECT_SOURCE_DIR}/Code/wwlib/cpudetect.cpp"
     "${PROJECT_SOURCE_DIR}/Code/wwlib/crc.cpp"
     "${PROJECT_SOURCE_DIR}/Code/wwlib/cstraw.cpp"
     "${PROJECT_SOURCE_DIR}/Code/wwlib/data.cpp"
-    "${PROJECT_SOURCE_DIR}/Code/wwlib/ddraw.cpp"
-    "${PROJECT_SOURCE_DIR}/Code/wwlib/dsurface.cpp"
     "${PROJECT_SOURCE_DIR}/Code/wwlib/Except.cpp"
     "${PROJECT_SOURCE_DIR}/Code/wwlib/FastAllocator.cpp"
     "${PROJECT_SOURCE_DIR}/Code/wwlib/ffactory.cpp"
@@ -33,7 +29,6 @@ set(REN_wwlib_SOURCES
     "${PROJECT_SOURCE_DIR}/Code/wwlib/ini.cpp"
     "${PROJECT_SOURCE_DIR}/Code/wwlib/int.cpp"
     "${PROJECT_SOURCE_DIR}/Code/wwlib/jshell.cpp"
-    "${PROJECT_SOURCE_DIR}/Code/wwlib/keyboard.cpp"
     "${PROJECT_SOURCE_DIR}/Code/wwlib/LaunchWeb.cpp"
     "${PROJECT_SOURCE_DIR}/Code/wwlib/lcw.cpp"
     "${PROJECT_SOURCE_DIR}/Code/wwlib/load.cpp"
@@ -44,8 +39,6 @@ set(REN_wwlib_SOURCES
     "${PROJECT_SOURCE_DIR}/Code/wwlib/mixfile.cpp"
     "${PROJECT_SOURCE_DIR}/Code/wwlib/mono.cpp"
     "${PROJECT_SOURCE_DIR}/Code/wwlib/mpmath.cpp"
-    "${PROJECT_SOURCE_DIR}/Code/wwlib/mpu.cpp"
-    "${PROJECT_SOURCE_DIR}/Platform/Windows/WindowsMessages.cpp"
     "${PROJECT_SOURCE_DIR}/Code/wwlib/multilist.cpp"
     "${PROJECT_SOURCE_DIR}/Code/wwlib/mutex.cpp"
     "${PROJECT_SOURCE_DIR}/Code/wwlib/nstrdup.cpp"
@@ -57,7 +50,6 @@ set(REN_wwlib_SOURCES
     "${PROJECT_SOURCE_DIR}/Code/wwlib/random.cpp"
     "${PROJECT_SOURCE_DIR}/Code/wwlib/rawfile.cpp"
     "${PROJECT_SOURCE_DIR}/Code/wwlib/rc4.cpp"
-    "${PROJECT_SOURCE_DIR}/Code/wwlib/rcfile.cpp"
     "${PROJECT_SOURCE_DIR}/Code/wwlib/readline.cpp"
     "${PROJECT_SOURCE_DIR}/Code/wwlib/realcrc.cpp"
     "${PROJECT_SOURCE_DIR}/Code/wwlib/refcount.cpp"
@@ -77,20 +69,36 @@ set(REN_wwlib_SOURCES
     "${PROJECT_SOURCE_DIR}/Code/wwlib/tagblock.cpp"
     "${PROJECT_SOURCE_DIR}/Code/wwlib/TARGA.CPP"
     "${PROJECT_SOURCE_DIR}/Code/wwlib/textfile.cpp"
-    "${PROJECT_SOURCE_DIR}/Code/wwlib/thread.cpp"
+    "${PROJECT_SOURCE_DIR}/Platform/SDL/Thread.cpp"
+    "${PROJECT_SOURCE_DIR}/Platform/SDL/Messages.cpp"
+    "${PROJECT_SOURCE_DIR}/Platform/SDL/GameState.cpp"
+    "${PROJECT_SOURCE_DIR}/Platform/Executable.cpp"
+    "${PROJECT_SOURCE_DIR}/Platform/Online/Provider.cpp"
     "${PROJECT_SOURCE_DIR}/Code/wwlib/trim.cpp"
     "${PROJECT_SOURCE_DIR}/Code/wwlib/vector.cpp"
-    "${PROJECT_SOURCE_DIR}/Code/wwlib/verchk.cpp"
     "${PROJECT_SOURCE_DIR}/Code/wwlib/widestring.cpp"
-    "${PROJECT_SOURCE_DIR}/Code/wwlib/win.cpp"
     "${PROJECT_SOURCE_DIR}/Code/wwlib/WWCOMUtil.cpp"
     "${PROJECT_SOURCE_DIR}/Code/wwlib/wwfile.cpp"
-    "${PROJECT_SOURCE_DIR}/Code/wwlib/wwfont.cpp"
     "${PROJECT_SOURCE_DIR}/Code/wwlib/wwstring.cpp"
     "${PROJECT_SOURCE_DIR}/Code/wwlib/xpipe.cpp"
     "${PROJECT_SOURCE_DIR}/Code/wwlib/xstraw.cpp"
     "${PROJECT_SOURCE_DIR}/Code/wwlib/xsurface.cpp"
 )
+
+if(WIN32)
+    list(APPEND REN_wwlib_SOURCES
+        "${PROJECT_SOURCE_DIR}/Platform/Windows/Thread.cpp"
+        "${PROJECT_SOURCE_DIR}/Platform/Windows/CPUClock.cpp"
+        "${PROJECT_SOURCE_DIR}/Platform/Windows/ResourceFile.cpp"
+        "${PROJECT_SOURCE_DIR}/Platform/Windows/Globals.cpp"
+        "${PROJECT_SOURCE_DIR}/Platform/Windows/WindowsMessages.cpp"
+        "${PROJECT_SOURCE_DIR}/Platform/Windows/Random.cpp"
+        "${PROJECT_SOURCE_DIR}/Platform/Windows/Executable.cpp")
+else()
+    list(APPEND REN_wwlib_SOURCES
+        "${PROJECT_SOURCE_DIR}/Platform/POSIX/Thread.cpp"
+        "${PROJECT_SOURCE_DIR}/Platform/Linux/Random.cpp")
+endif()
 
 set(REN_wwmath_SOURCES
     "${PROJECT_SOURCE_DIR}/Code/WWMath/aabox.cpp"
@@ -133,7 +141,6 @@ set(REN_wwmath_SOURCES
 set(REN_wwutil_SOURCES
     "${PROJECT_SOURCE_DIR}/Code/wwutil/mathutil.cpp"
     "${PROJECT_SOURCE_DIR}/Code/wwutil/miscutil.cpp"
-    "${PROJECT_SOURCE_DIR}/Code/wwutil/stackdump.cpp"
 )
 
 set(REN_wwbitpack_SOURCES
@@ -165,7 +172,6 @@ set(REN_wwnet_SOURCES
     "${PROJECT_SOURCE_DIR}/Code/wwnet/msgstatlist.cpp"
     "${PROJECT_SOURCE_DIR}/Code/wwnet/msgstatlistgroup.cpp"
     "${PROJECT_SOURCE_DIR}/Code/wwnet/netstats.cpp"
-    "${PROJECT_SOURCE_DIR}/Code/wwnet/netutil.cpp"
     "${PROJECT_SOURCE_DIR}/Code/wwnet/networkobject.cpp"
     "${PROJECT_SOURCE_DIR}/Code/wwnet/networkobjectfactory.cpp"
     "${PROJECT_SOURCE_DIR}/Code/wwnet/networkobjectfactorymgr.cpp"
@@ -273,7 +279,6 @@ set(REN_ww3d2_SOURCES
     "${PROJECT_SOURCE_DIR}/Code/ww3d2/texture.cpp"
     "${PROJECT_SOURCE_DIR}/Code/ww3d2/textureloader.cpp"
     "${PROJECT_SOURCE_DIR}/Code/ww3d2/texturethumbnail.cpp"
-    "${PROJECT_SOURCE_DIR}/Code/ww3d2/txt.cpp"
     "${PROJECT_SOURCE_DIR}/Code/ww3d2/vertmaterial.cpp"
     "${PROJECT_SOURCE_DIR}/Code/ww3d2/visrasterizer.cpp"
     "${PROJECT_SOURCE_DIR}/Code/ww3d2/w3d_dep.cpp"
@@ -422,9 +427,7 @@ set(REN_wwui_SOURCES
     "${PROJECT_SOURCE_DIR}/Code/wwui/editctrl.cpp"
     "${PROJECT_SOURCE_DIR}/Code/wwui/healthbarctrl.cpp"
     "${PROJECT_SOURCE_DIR}/Code/wwui/imagectrl.cpp"
-    "${PROJECT_SOURCE_DIR}/Code/wwui/IMECandidate.cpp"
-    "${PROJECT_SOURCE_DIR}/Code/wwui/IMECandidateCtrl.cpp"
-    "${PROJECT_SOURCE_DIR}/Platform/Windows/IME.cpp"
+    "${PROJECT_SOURCE_DIR}/Platform/SDL/IME.cpp"
     "${PROJECT_SOURCE_DIR}/Code/wwui/inputctrl.cpp"
     "${PROJECT_SOURCE_DIR}/Code/wwui/listctrl.cpp"
     "${PROJECT_SOURCE_DIR}/Code/wwui/listiconmgr.cpp"
@@ -448,7 +451,7 @@ set(REN_wwui_SOURCES
     "${PROJECT_SOURCE_DIR}/Code/wwui/tooltipmgr.cpp"
     "${PROJECT_SOURCE_DIR}/Code/wwui/treectrl.cpp"
     "${PROJECT_SOURCE_DIR}/Code/wwui/viewerctrl.cpp"
-    "${PROJECT_SOURCE_DIR}/Platform/Windows/UIInput.cpp"
+    "${PROJECT_SOURCE_DIR}/Platform/SDL/UIInput.cpp"
 )
 
 set(REN_combat_SOURCES
@@ -591,11 +594,10 @@ set(REN_binkmovie_SOURCES
 
 set(REN_scontrol_SOURCES
     "${PROJECT_SOURCE_DIR}/Code/SControl/servercontrol.cpp"
-    "${PROJECT_SOURCE_DIR}/Code/SControl/servercontrolsocket.cpp"
 )
 
 set(REN_scripts_SOURCES
-    "${PROJECT_SOURCE_DIR}/Code/Scripts/DLLmain.cpp"
+    "${PROJECT_SOURCE_DIR}/Code/Scripts/Exports.cpp"
     "${PROJECT_SOURCE_DIR}/Code/Scripts/DPrint.cpp"
     "${PROJECT_SOURCE_DIR}/Code/Scripts/DrMobius.cpp"
     "${PROJECT_SOURCE_DIR}/Code/Scripts/ScriptFactory.cpp"
@@ -640,10 +642,6 @@ set(REN_scripts_SOURCES
     "${PROJECT_SOURCE_DIR}/Code/Scripts/MissionDemo.cpp"
     "${PROJECT_SOURCE_DIR}/Code/Scripts/MissionX0.cpp"
     "${PROJECT_SOURCE_DIR}/Code/Scripts/scripts.cpp"
-)
-
-set(REN_bandtest_SOURCES
-    "${PROJECT_SOURCE_DIR}/Code/BandTest/BandTest.cpp"
 )
 
 set(REN_renegade_SOURCES
@@ -720,7 +718,6 @@ set(REN_renegade_SOURCES
     "${PROJECT_SOURCE_DIR}/Code/Commando/multihud.cpp"
     "${PROJECT_SOURCE_DIR}/Code/Commando/NAT.cpp"
     "${PROJECT_SOURCE_DIR}/Code/Commando/nataddr.cpp"
-    "${PROJECT_SOURCE_DIR}/Code/Commando/natsock.cpp"
     "${PROJECT_SOURCE_DIR}/Code/Commando/natter.cpp"
     "${PROJECT_SOURCE_DIR}/Code/Commando/netgraphs.cpp"
     "${PROJECT_SOURCE_DIR}/Code/Commando/nicenum.cpp"
@@ -729,13 +726,11 @@ set(REN_renegade_SOURCES
     "${PROJECT_SOURCE_DIR}/Code/Commando/sbbomanager.cpp"
     "${PROJECT_SOURCE_DIR}/Code/Commando/useroptions.cpp"
     "${PROJECT_SOURCE_DIR}/Code/Commando/vendor.cpp"
-    "${PROJECT_SOURCE_DIR}/Code/wolapi/WOLAPI_i.c"
     "${PROJECT_SOURCE_DIR}/Code/Commando/gamedata.cpp"
     "${PROJECT_SOURCE_DIR}/Code/Commando/gdcnc.cpp"
     "${PROJECT_SOURCE_DIR}/Code/Commando/gdsingleplayer.cpp"
     "${PROJECT_SOURCE_DIR}/Code/Commando/gdskirmish.cpp"
     "${PROJECT_SOURCE_DIR}/Code/Commando/lanchat.cpp"
-    "${PROJECT_SOURCE_DIR}/Code/Commando/chat.rc"
     "${PROJECT_SOURCE_DIR}/Code/Commando/dialogtests.cpp"
     "${PROJECT_SOURCE_DIR}/Code/Commando/dlgcharacteroptions.cpp"
     "${PROJECT_SOURCE_DIR}/Code/Commando/dlgcheatoptions.cpp"
@@ -875,7 +870,6 @@ set(REN_renegade_SOURCES
     "${PROJECT_SOURCE_DIR}/Code/Commando/serverfps.cpp"
     "${PROJECT_SOURCE_DIR}/Code/Commando/renegadecheatmgr.cpp"
     "${PROJECT_SOURCE_DIR}/Code/Commando/CDKeyAuth.cpp"
-    "${PROJECT_SOURCE_DIR}/Code/Commando/GameSpy_QnR.cpp"
     "${PROJECT_SOURCE_DIR}/Code/Commando/gamespyadmin.cpp"
     "${PROJECT_SOURCE_DIR}/Code/Commando/gamespyauthmgr.cpp"
     "${PROJECT_SOURCE_DIR}/Code/Commando/GameSpyBanList.cpp"
@@ -884,20 +878,44 @@ set(REN_renegade_SOURCES
     "${PROJECT_SOURCE_DIR}/Code/Commando/modpackagemgr.cpp"
 )
 
+if(REN_ENABLE_GAMESPY)
+    list(APPEND REN_renegade_SOURCES "${PROJECT_SOURCE_DIR}/Code/Commando/GameSpy_QnR.cpp")
+else()
+    list(APPEND REN_renegade_SOURCES "${PROJECT_SOURCE_DIR}/CMake/Stubs/GameSpyDisabled.cpp")
+endif()
+
+if(WIN32)
+    list(APPEND REN_wwutil_SOURCES "${PROJECT_SOURCE_DIR}/Platform/Windows/StackDump.cpp")
+    list(APPEND REN_scripts_SOURCES "${PROJECT_SOURCE_DIR}/Platform/Windows/Scripts.cpp")
+    list(APPEND REN_wwnet_SOURCES "${PROJECT_SOURCE_DIR}/Code/wwnet/netutil.cpp")
+    list(APPEND REN_scontrol_SOURCES "${PROJECT_SOURCE_DIR}/Code/SControl/servercontrolsocket.cpp")
+    set(REN_bandtest_SOURCES "${PROJECT_SOURCE_DIR}/Code/BandTest/BandTest.cpp")
+    list(APPEND REN_renegade_SOURCES
+        "${PROJECT_SOURCE_DIR}/Code/wolapi/WOLAPI_i.c"
+        "${PROJECT_SOURCE_DIR}/Code/Commando/natsock.cpp"
+        "${PROJECT_SOURCE_DIR}/Code/Commando/chat.rc")
+else()
+    list(APPEND REN_wwutil_SOURCES "${PROJECT_SOURCE_DIR}/Platform/POSIX/StackDump.cpp")
+    list(APPEND REN_wwnet_SOURCES "${PROJECT_SOURCE_DIR}/Platform/Network/NetUtil.cpp")
+    list(APPEND REN_scontrol_SOURCES "${PROJECT_SOURCE_DIR}/Platform/Network/ServerControl.cpp")
+    set(REN_bandtest_SOURCES "${PROJECT_SOURCE_DIR}/Platform/Network/Bandwidth.cpp")
+    list(APPEND REN_renegade_SOURCES "${PROJECT_SOURCE_DIR}/Platform/Network/NATSocket.cpp")
+endif()
+
 function(ren_target_settings target)
     if(target STREQUAL "wwdebug")
         target_compile_definitions(${target} PRIVATE
             "$<$<CONFIG:Release>:NDEBUG>"
-            "$<$<CONFIG:Release>:_WINDOWS>"
-            "$<$<CONFIG:Release>:WIN32_LEAN_AND_MEAN>"
-            "$<$<CONFIG:Release>:WIN32>"
+            "$<$<AND:$<BOOL:${WIN32}>,$<CONFIG:Release>>:_WINDOWS>"
+            "$<$<AND:$<BOOL:${WIN32}>,$<CONFIG:Release>>:WIN32_LEAN_AND_MEAN>"
+            "$<$<AND:$<BOOL:${WIN32}>,$<CONFIG:Release>>:WIN32>"
         )
         target_compile_definitions(${target} PRIVATE
             "$<$<CONFIG:Debug>:_DEBUG>"
             "$<$<CONFIG:Debug>:WWDEBUG>"
-            "$<$<CONFIG:Debug>:_WINDOWS>"
-            "$<$<CONFIG:Debug>:WIN32_LEAN_AND_MEAN>"
-            "$<$<CONFIG:Debug>:WIN32>"
+            "$<$<AND:$<BOOL:${WIN32}>,$<CONFIG:Debug>>:_WINDOWS>"
+            "$<$<AND:$<BOOL:${WIN32}>,$<CONFIG:Debug>>:WIN32_LEAN_AND_MEAN>"
+            "$<$<AND:$<BOOL:${WIN32}>,$<CONFIG:Debug>>:WIN32>"
         )
         target_include_directories(${target} PRIVATE
             "${PROJECT_SOURCE_DIR}/Code"
@@ -908,18 +926,18 @@ function(ren_target_settings target)
     if(target STREQUAL "wwlib")
         target_compile_definitions(${target} PRIVATE
             "$<$<CONFIG:Release>:NDEBUG>"
-            "$<$<CONFIG:Release>:_WINDOWS>"
-            "$<$<CONFIG:Release>:WIN32_LEAN_AND_MEAN>"
-            "$<$<CONFIG:Release>:WIN32>"
+            "$<$<AND:$<BOOL:${WIN32}>,$<CONFIG:Release>>:_WINDOWS>"
+            "$<$<AND:$<BOOL:${WIN32}>,$<CONFIG:Release>>:WIN32_LEAN_AND_MEAN>"
+            "$<$<AND:$<BOOL:${WIN32}>,$<CONFIG:Release>>:WIN32>"
             "$<$<CONFIG:Release>:REGEX_MALLOC>"
             "$<$<CONFIG:Release>:STDC_HEADERS>"
         )
         target_compile_definitions(${target} PRIVATE
             "$<$<CONFIG:Debug>:_DEBUG>"
             "$<$<CONFIG:Debug>:WWDEBUG>"
-            "$<$<CONFIG:Debug>:_WINDOWS>"
-            "$<$<CONFIG:Debug>:WIN32_LEAN_AND_MEAN>"
-            "$<$<CONFIG:Debug>:WIN32>"
+            "$<$<AND:$<BOOL:${WIN32}>,$<CONFIG:Debug>>:_WINDOWS>"
+            "$<$<AND:$<BOOL:${WIN32}>,$<CONFIG:Debug>>:WIN32_LEAN_AND_MEAN>"
+            "$<$<AND:$<BOOL:${WIN32}>,$<CONFIG:Debug>>:WIN32>"
             "$<$<CONFIG:Debug>:REGEX_MALLOC>"
             "$<$<CONFIG:Debug>:STDC_HEADERS>"
         )
@@ -935,15 +953,15 @@ function(ren_target_settings target)
             "$<$<CONFIG:Debug>:DIRECTX>"
             "$<$<CONFIG:Debug>:_DEBUG>"
             "$<$<CONFIG:Debug>:WWDEBUG>"
-            "$<$<CONFIG:Debug>:_WINDOWS>"
-            "$<$<CONFIG:Debug>:WIN32_LEAN_AND_MEAN>"
-            "$<$<CONFIG:Debug>:WIN32>"
+            "$<$<AND:$<BOOL:${WIN32}>,$<CONFIG:Debug>>:_WINDOWS>"
+            "$<$<AND:$<BOOL:${WIN32}>,$<CONFIG:Debug>>:WIN32_LEAN_AND_MEAN>"
+            "$<$<AND:$<BOOL:${WIN32}>,$<CONFIG:Debug>>:WIN32>"
         )
         target_compile_definitions(${target} PRIVATE
             "$<$<CONFIG:Release>:NDEBUG>"
-            "$<$<CONFIG:Release>:_WINDOWS>"
-            "$<$<CONFIG:Release>:WIN32_LEAN_AND_MEAN>"
-            "$<$<CONFIG:Release>:WIN32>"
+            "$<$<AND:$<BOOL:${WIN32}>,$<CONFIG:Release>>:_WINDOWS>"
+            "$<$<AND:$<BOOL:${WIN32}>,$<CONFIG:Release>>:WIN32_LEAN_AND_MEAN>"
+            "$<$<AND:$<BOOL:${WIN32}>,$<CONFIG:Release>>:WIN32>"
         )
         target_include_directories(${target} PRIVATE
             "${PROJECT_SOURCE_DIR}/Code"
@@ -958,18 +976,18 @@ function(ren_target_settings target)
             "$<$<CONFIG:Release>:NDEBUG>"
             "$<$<CONFIG:Release>:_MBCS>"
             "$<$<CONFIG:Release>:_LIB>"
-            "$<$<CONFIG:Release>:WIN32>"
-            "$<$<CONFIG:Release>:_WINDOWS>"
-            "$<$<CONFIG:Release>:WIN32_LEAN_AND_MEAN>"
+            "$<$<AND:$<BOOL:${WIN32}>,$<CONFIG:Release>>:WIN32>"
+            "$<$<AND:$<BOOL:${WIN32}>,$<CONFIG:Release>>:_WINDOWS>"
+            "$<$<AND:$<BOOL:${WIN32}>,$<CONFIG:Release>>:WIN32_LEAN_AND_MEAN>"
         )
         target_compile_definitions(${target} PRIVATE
             "$<$<CONFIG:Debug>:_DEBUG>"
             "$<$<CONFIG:Debug>:WWDEBUG>"
             "$<$<CONFIG:Debug>:_MBCS>"
             "$<$<CONFIG:Debug>:_LIB>"
-            "$<$<CONFIG:Debug>:WIN32>"
-            "$<$<CONFIG:Debug>:_WINDOWS>"
-            "$<$<CONFIG:Debug>:WIN32_LEAN_AND_MEAN>"
+            "$<$<AND:$<BOOL:${WIN32}>,$<CONFIG:Debug>>:WIN32>"
+            "$<$<AND:$<BOOL:${WIN32}>,$<CONFIG:Debug>>:_WINDOWS>"
+            "$<$<AND:$<BOOL:${WIN32}>,$<CONFIG:Debug>>:WIN32_LEAN_AND_MEAN>"
         )
         target_include_directories(${target} PRIVATE
             "${PROJECT_SOURCE_DIR}/Code"
@@ -982,16 +1000,16 @@ function(ren_target_settings target)
     if(target STREQUAL "wwbitpack")
         target_compile_definitions(${target} PRIVATE
             "$<$<CONFIG:Release>:NDEBUG>"
-            "$<$<CONFIG:Release>:_WINDOWS>"
-            "$<$<CONFIG:Release>:WIN32_LEAN_AND_MEAN>"
-            "$<$<CONFIG:Release>:WIN32>"
+            "$<$<AND:$<BOOL:${WIN32}>,$<CONFIG:Release>>:_WINDOWS>"
+            "$<$<AND:$<BOOL:${WIN32}>,$<CONFIG:Release>>:WIN32_LEAN_AND_MEAN>"
+            "$<$<AND:$<BOOL:${WIN32}>,$<CONFIG:Release>>:WIN32>"
         )
         target_compile_definitions(${target} PRIVATE
             "$<$<CONFIG:Debug>:_DEBUG>"
             "$<$<CONFIG:Debug>:WWDEBUG>"
-            "$<$<CONFIG:Debug>:_WINDOWS>"
-            "$<$<CONFIG:Debug>:WIN32_LEAN_AND_MEAN>"
-            "$<$<CONFIG:Debug>:WIN32>"
+            "$<$<AND:$<BOOL:${WIN32}>,$<CONFIG:Debug>>:_WINDOWS>"
+            "$<$<AND:$<BOOL:${WIN32}>,$<CONFIG:Debug>>:WIN32_LEAN_AND_MEAN>"
+            "$<$<AND:$<BOOL:${WIN32}>,$<CONFIG:Debug>>:WIN32>"
         )
         target_include_directories(${target} PRIVATE
             "${PROJECT_SOURCE_DIR}/Code"
@@ -1004,14 +1022,14 @@ function(ren_target_settings target)
     if(target STREQUAL "wwsaveload")
         target_compile_definitions(${target} PRIVATE
             "$<$<CONFIG:Release>:NDEBUG>"
-            "$<$<CONFIG:Release>:_WINDOWS>"
-            "$<$<CONFIG:Release>:WIN32>"
+            "$<$<AND:$<BOOL:${WIN32}>,$<CONFIG:Release>>:_WINDOWS>"
+            "$<$<AND:$<BOOL:${WIN32}>,$<CONFIG:Release>>:WIN32>"
         )
         target_compile_definitions(${target} PRIVATE
             "$<$<CONFIG:Debug>:_DEBUG>"
             "$<$<CONFIG:Debug>:WWDEBUG>"
-            "$<$<CONFIG:Debug>:_WINDOWS>"
-            "$<$<CONFIG:Debug>:WIN32>"
+            "$<$<AND:$<BOOL:${WIN32}>,$<CONFIG:Debug>>:_WINDOWS>"
+            "$<$<AND:$<BOOL:${WIN32}>,$<CONFIG:Debug>>:WIN32>"
         )
         target_include_directories(${target} PRIVATE
             "${PROJECT_SOURCE_DIR}/Code"
@@ -1024,17 +1042,17 @@ function(ren_target_settings target)
     if(target STREQUAL "wwnet")
         target_compile_definitions(${target} PRIVATE
             "$<$<CONFIG:Release>:NDEBUG>"
-            "$<$<CONFIG:Release>:_WINDOWS>"
-            "$<$<CONFIG:Release>:WIN32>"
-            "$<$<CONFIG:Release>:WIN32_LEAN_AND_MEAN>"
+            "$<$<AND:$<BOOL:${WIN32}>,$<CONFIG:Release>>:_WINDOWS>"
+            "$<$<AND:$<BOOL:${WIN32}>,$<CONFIG:Release>>:WIN32>"
+            "$<$<AND:$<BOOL:${WIN32}>,$<CONFIG:Release>>:WIN32_LEAN_AND_MEAN>"
         )
         target_compile_definitions(${target} PRIVATE
             "$<$<CONFIG:Debug>:STRICT>"
             "$<$<CONFIG:Debug>:_DEBUG>"
             "$<$<CONFIG:Debug>:WWDEBUG>"
-            "$<$<CONFIG:Debug>:WIN32_LEAN_AND_MEAN>"
-            "$<$<CONFIG:Debug>:_WINDOWS>"
-            "$<$<CONFIG:Debug>:WIN32>"
+            "$<$<AND:$<BOOL:${WIN32}>,$<CONFIG:Debug>>:WIN32_LEAN_AND_MEAN>"
+            "$<$<AND:$<BOOL:${WIN32}>,$<CONFIG:Debug>>:_WINDOWS>"
+            "$<$<AND:$<BOOL:${WIN32}>,$<CONFIG:Debug>>:WIN32>"
         )
         target_include_directories(${target} PRIVATE
             "${PROJECT_SOURCE_DIR}/Code"
@@ -1052,16 +1070,16 @@ function(ren_target_settings target)
     if(target STREQUAL "ww3d2")
         target_compile_definitions(${target} PRIVATE
             "$<$<CONFIG:Release>:NDEBUG>"
-            "$<$<CONFIG:Release>:_WINDOWS>"
-            "$<$<CONFIG:Release>:WIN32_LEAN_AND_MEAN>"
-            "$<$<CONFIG:Release>:WIN32>"
+            "$<$<AND:$<BOOL:${WIN32}>,$<CONFIG:Release>>:_WINDOWS>"
+            "$<$<AND:$<BOOL:${WIN32}>,$<CONFIG:Release>>:WIN32_LEAN_AND_MEAN>"
+            "$<$<AND:$<BOOL:${WIN32}>,$<CONFIG:Release>>:WIN32>"
         )
         target_compile_definitions(${target} PRIVATE
             "$<$<CONFIG:Debug>:_DEBUG>"
             "$<$<CONFIG:Debug>:WWDEBUG>"
-            "$<$<CONFIG:Debug>:_WINDOWS>"
-            "$<$<CONFIG:Debug>:WIN32_LEAN_AND_MEAN>"
-            "$<$<CONFIG:Debug>:WIN32>"
+            "$<$<AND:$<BOOL:${WIN32}>,$<CONFIG:Debug>>:_WINDOWS>"
+            "$<$<AND:$<BOOL:${WIN32}>,$<CONFIG:Debug>>:WIN32_LEAN_AND_MEAN>"
+            "$<$<AND:$<BOOL:${WIN32}>,$<CONFIG:Debug>>:WIN32>"
         )
         target_include_directories(${target} PRIVATE
             "${PROJECT_SOURCE_DIR}/Code"
@@ -1076,14 +1094,14 @@ function(ren_target_settings target)
     if(target STREQUAL "wwphys")
         target_compile_definitions(${target} PRIVATE
             "$<$<CONFIG:Release>:NDEBUG>"
-            "$<$<CONFIG:Release>:_WINDOWS>"
-            "$<$<CONFIG:Release>:WIN32>"
+            "$<$<AND:$<BOOL:${WIN32}>,$<CONFIG:Release>>:_WINDOWS>"
+            "$<$<AND:$<BOOL:${WIN32}>,$<CONFIG:Release>>:WIN32>"
         )
         target_compile_definitions(${target} PRIVATE
             "$<$<CONFIG:Debug>:_DEBUG>"
             "$<$<CONFIG:Debug>:WWDEBUG>"
-            "$<$<CONFIG:Debug>:_WINDOWS>"
-            "$<$<CONFIG:Debug>:WIN32>"
+            "$<$<AND:$<BOOL:${WIN32}>,$<CONFIG:Debug>>:_WINDOWS>"
+            "$<$<AND:$<BOOL:${WIN32}>,$<CONFIG:Debug>>:WIN32>"
         )
         target_include_directories(${target} PRIVATE
             "${PROJECT_SOURCE_DIR}/Code"
@@ -1099,20 +1117,20 @@ function(ren_target_settings target)
     endif()
     if(target STREQUAL "wwaudio")
         target_compile_definitions(${target} PRIVATE
-            "$<$<CONFIG:Release>:_WINDOWS>"
+            "$<$<AND:$<BOOL:${WIN32}>,$<CONFIG:Release>>:_WINDOWS>"
             "$<$<CONFIG:Release>:NDEBUG>"
             "$<$<CONFIG:Release>:_MBCS>"
             "$<$<CONFIG:Release>:_LIB>"
-            "$<$<CONFIG:Release>:WIN32>"
+            "$<$<AND:$<BOOL:${WIN32}>,$<CONFIG:Release>>:WIN32>"
             "$<$<CONFIG:Release>:G_CODE_BASE>"
         )
         target_compile_definitions(${target} PRIVATE
-            "$<$<CONFIG:Debug>:_WINDOWS>"
+            "$<$<AND:$<BOOL:${WIN32}>,$<CONFIG:Debug>>:_WINDOWS>"
             "$<$<CONFIG:Debug>:_DEBUG>"
             "$<$<CONFIG:Debug>:WWDEBUG>"
             "$<$<CONFIG:Debug>:_MBCS>"
             "$<$<CONFIG:Debug>:_LIB>"
-            "$<$<CONFIG:Debug>:WIN32>"
+            "$<$<AND:$<BOOL:${WIN32}>,$<CONFIG:Debug>>:WIN32>"
             "$<$<CONFIG:Debug>:G_CODE_BASE>"
         )
         target_include_directories(${target} PRIVATE
@@ -1128,17 +1146,17 @@ function(ren_target_settings target)
     if(target STREQUAL "wwtranslatedb")
         target_compile_definitions(${target} PRIVATE
             "$<$<CONFIG:Release>:NDEBUG>"
-            "$<$<CONFIG:Release>:WIN32>"
+            "$<$<AND:$<BOOL:${WIN32}>,$<CONFIG:Release>>:WIN32>"
             "$<$<CONFIG:Release>:_MBCS>"
             "$<$<CONFIG:Release>:_LIB>"
-            "$<$<CONFIG:Release>:_WINDOWS>"
+            "$<$<AND:$<BOOL:${WIN32}>,$<CONFIG:Release>>:_WINDOWS>"
         )
         target_compile_definitions(${target} PRIVATE
             "$<$<CONFIG:Debug>:_DEBUG>"
-            "$<$<CONFIG:Debug>:WIN32>"
+            "$<$<AND:$<BOOL:${WIN32}>,$<CONFIG:Debug>>:WIN32>"
             "$<$<CONFIG:Debug>:_MBCS>"
             "$<$<CONFIG:Debug>:_LIB>"
-            "$<$<CONFIG:Debug>:_WINDOWS>"
+            "$<$<AND:$<BOOL:${WIN32}>,$<CONFIG:Debug>>:_WINDOWS>"
         )
         target_include_directories(${target} PRIVATE
             "${PROJECT_SOURCE_DIR}/Code"
@@ -1152,18 +1170,18 @@ function(ren_target_settings target)
     if(target STREQUAL "wwui")
         target_compile_definitions(${target} PRIVATE
             "$<$<CONFIG:Release>:NDEBUG>"
-            "$<$<CONFIG:Release>:WIN32>"
+            "$<$<AND:$<BOOL:${WIN32}>,$<CONFIG:Release>>:WIN32>"
             "$<$<CONFIG:Release>:_MBCS>"
             "$<$<CONFIG:Release>:_LIB>"
-            "$<$<CONFIG:Release>:_WINDOWS>"
+            "$<$<AND:$<BOOL:${WIN32}>,$<CONFIG:Release>>:_WINDOWS>"
         )
         target_compile_definitions(${target} PRIVATE
             "$<$<CONFIG:Debug>:_DEBUG>"
             "$<$<CONFIG:Debug>:WWDEBUG>"
-            "$<$<CONFIG:Debug>:WIN32>"
+            "$<$<AND:$<BOOL:${WIN32}>,$<CONFIG:Debug>>:WIN32>"
             "$<$<CONFIG:Debug>:_MBCS>"
             "$<$<CONFIG:Debug>:_LIB>"
-            "$<$<CONFIG:Debug>:_WINDOWS>"
+            "$<$<AND:$<BOOL:${WIN32}>,$<CONFIG:Debug>>:_WINDOWS>"
         )
         target_include_directories(${target} PRIVATE
             "${PROJECT_SOURCE_DIR}/Code"
@@ -1180,18 +1198,18 @@ function(ren_target_settings target)
     if(target STREQUAL "combat")
         target_compile_definitions(${target} PRIVATE
             "$<$<CONFIG:Release>:NDEBUG>"
-            "$<$<CONFIG:Release>:WIN32>"
+            "$<$<AND:$<BOOL:${WIN32}>,$<CONFIG:Release>>:WIN32>"
             "$<$<CONFIG:Release>:_MBCS>"
             "$<$<CONFIG:Release>:_LIB>"
-            "$<$<CONFIG:Release>:_WINDOWS>"
+            "$<$<AND:$<BOOL:${WIN32}>,$<CONFIG:Release>>:_WINDOWS>"
         )
         target_compile_definitions(${target} PRIVATE
             "$<$<CONFIG:Debug>:_DEBUG>"
             "$<$<CONFIG:Debug>:WWDEBUG>"
-            "$<$<CONFIG:Debug>:WIN32>"
+            "$<$<AND:$<BOOL:${WIN32}>,$<CONFIG:Debug>>:WIN32>"
             "$<$<CONFIG:Debug>:_MBCS>"
             "$<$<CONFIG:Debug>:_LIB>"
-            "$<$<CONFIG:Debug>:_WINDOWS>"
+            "$<$<AND:$<BOOL:${WIN32}>,$<CONFIG:Debug>>:_WINDOWS>"
         )
         target_include_directories(${target} PRIVATE
             "${PROJECT_SOURCE_DIR}/Code"
@@ -1213,14 +1231,14 @@ function(ren_target_settings target)
     if(target STREQUAL "binkmovie")
         target_compile_definitions(${target} PRIVATE
             "$<$<CONFIG:Release>:NDEBUG>"
-            "$<$<CONFIG:Release>:_WINDOWS>"
-            "$<$<CONFIG:Release>:WIN32>"
+            "$<$<AND:$<BOOL:${WIN32}>,$<CONFIG:Release>>:_WINDOWS>"
+            "$<$<AND:$<BOOL:${WIN32}>,$<CONFIG:Release>>:WIN32>"
         )
         target_compile_definitions(${target} PRIVATE
             "$<$<CONFIG:Debug>:_DEBUG>"
             "$<$<CONFIG:Debug>:WWDEBUG>"
-            "$<$<CONFIG:Debug>:_WINDOWS>"
-            "$<$<CONFIG:Debug>:WIN32>"
+            "$<$<AND:$<BOOL:${WIN32}>,$<CONFIG:Debug>>:_WINDOWS>"
+            "$<$<AND:$<BOOL:${WIN32}>,$<CONFIG:Debug>>:WIN32>"
         )
         target_include_directories(${target} PRIVATE
             "${PROJECT_SOURCE_DIR}/Code"
@@ -1233,14 +1251,14 @@ function(ren_target_settings target)
     endif()
     if(target STREQUAL "scontrol")
         target_compile_definitions(${target} PRIVATE
-            "$<$<CONFIG:Release>:WIN32>"
+            "$<$<AND:$<BOOL:${WIN32}>,$<CONFIG:Release>>:WIN32>"
             "$<$<CONFIG:Release>:NDEBUG>"
             "$<$<CONFIG:Release>:_MBCS>"
             "$<$<CONFIG:Release>:_LIB>"
         )
         target_compile_definitions(${target} PRIVATE
             "$<$<CONFIG:Debug>:WWDEBUG>"
-            "$<$<CONFIG:Debug>:WIN32>"
+            "$<$<AND:$<BOOL:${WIN32}>,$<CONFIG:Debug>>:WIN32>"
             "$<$<CONFIG:Debug>:_DEBUG>"
             "$<$<CONFIG:Debug>:_MBCS>"
             "$<$<CONFIG:Debug>:_LIB>"
@@ -1255,15 +1273,15 @@ function(ren_target_settings target)
     if(target STREQUAL "scripts")
         target_compile_definitions(${target} PRIVATE
             "$<$<CONFIG:Release>:NDEBUG>"
-            "$<$<CONFIG:Release>:_WINDOWS>"
-            "$<$<CONFIG:Release>:WIN32>"
+            "$<$<AND:$<BOOL:${WIN32}>,$<CONFIG:Release>>:_WINDOWS>"
+            "$<$<AND:$<BOOL:${WIN32}>,$<CONFIG:Release>>:WIN32>"
             "$<$<CONFIG:Release>:BUILDING_DLL>"
         )
         target_compile_definitions(${target} PRIVATE
             "$<$<CONFIG:Debug>:_DEBUG>"
             "$<$<CONFIG:Debug>:WWDEBUG>"
-            "$<$<CONFIG:Debug>:_WINDOWS>"
-            "$<$<CONFIG:Debug>:WIN32>"
+            "$<$<AND:$<BOOL:${WIN32}>,$<CONFIG:Debug>>:_WINDOWS>"
+            "$<$<AND:$<BOOL:${WIN32}>,$<CONFIG:Debug>>:WIN32>"
             "$<$<CONFIG:Debug>:BUILDING_DLL>"
         )
         target_include_directories(${target} PRIVATE
@@ -1273,15 +1291,15 @@ function(ren_target_settings target)
     endif()
     if(target STREQUAL "bandtest")
         target_compile_definitions(${target} PRIVATE
-            "$<$<CONFIG:Release>:WIN32>"
+            "$<$<AND:$<BOOL:${WIN32}>,$<CONFIG:Release>>:WIN32>"
             "$<$<CONFIG:Release>:NDEBUG>"
-            "$<$<CONFIG:Release>:_WINDOWS>"
+            "$<$<AND:$<BOOL:${WIN32}>,$<CONFIG:Release>>:_WINDOWS>"
             "$<$<CONFIG:Release>:_MBCS>"
         )
         target_compile_definitions(${target} PRIVATE
-            "$<$<CONFIG:Debug>:WIN32>"
+            "$<$<AND:$<BOOL:${WIN32}>,$<CONFIG:Debug>>:WIN32>"
             "$<$<CONFIG:Debug>:_DEBUG>"
-            "$<$<CONFIG:Debug>:_WINDOWS>"
+            "$<$<AND:$<BOOL:${WIN32}>,$<CONFIG:Debug>>:_WINDOWS>"
             "$<$<CONFIG:Debug>:_MBCS>"
         )
         target_include_directories(${target} PRIVATE
@@ -1293,15 +1311,15 @@ function(ren_target_settings target)
         target_compile_definitions(${target} PRIVATE
             "$<$<CONFIG:Debug>:_DEBUG>"
             "$<$<CONFIG:Debug>:WWDEBUG>"
-            "$<$<CONFIG:Debug>:_WINDOWS>"
+            "$<$<AND:$<BOOL:${WIN32}>,$<CONFIG:Debug>>:_WINDOWS>"
             "$<$<CONFIG:Debug>:DIRECTX>"
-            "$<$<CONFIG:Debug>:WIN32>"
+            "$<$<AND:$<BOOL:${WIN32}>,$<CONFIG:Debug>>:WIN32>"
         )
         target_compile_definitions(${target} PRIVATE
             "$<$<CONFIG:Release>:NDEBUG>"
-            "$<$<CONFIG:Release>:_WINDOWS>"
+            "$<$<AND:$<BOOL:${WIN32}>,$<CONFIG:Release>>:_WINDOWS>"
             "$<$<CONFIG:Release>:DIRECTX>"
-            "$<$<CONFIG:Release>:WIN32>"
+            "$<$<AND:$<BOOL:${WIN32}>,$<CONFIG:Release>>:WIN32>"
         )
         target_include_directories(${target} PRIVATE
             "${PROJECT_SOURCE_DIR}/Code"

@@ -37,16 +37,12 @@
 
 #pragma warning(disable : 4711)
 
-#include <rpc.h>
-#include <rpcndr.h>
-#include <ole2.h>
+#include "Platform/Online/WOL.h"
+#include "Platform/Online/Types.h"
 #include "RefCounted.h"
 #include "RefPtr.h"
 
-namespace WOL
-{
-#include <wolapi\wolapi.h>
-}
+
 
 namespace WWOnline {
 

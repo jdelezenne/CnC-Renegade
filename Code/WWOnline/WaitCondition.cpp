@@ -43,13 +43,13 @@
 
 #include "WaitCondition.h"
 #include "WOLString.h"
-#include <WWLib\Win.h>
 
 #ifdef _MSC_VER
 #pragma warning (push,3)
 #endif
 
 #include "systimer.h"
+#include <cstdint>
 
 #ifdef _MSC_VER
 #pragma warning (pop)
@@ -119,7 +119,7 @@ WaitCondition::WaitResult WaitCondition::WaitFor(CallbackHook& hook, unsigned lo
 	{
 	WaitBeginning();
 
-	DWORD startTime = TIMEGETTIME();
+	const std::uint32_t startTime = static_cast<std::uint32_t>(TIMEGETTIME());
 
 	while (GetResult() == Waiting)
 		{
@@ -131,7 +131,7 @@ WaitCondition::WaitResult WaitCondition::WaitFor(CallbackHook& hook, unsigned lo
 			}
 
 		// Watch for timeout
-		if ((TIMEGETTIME() - startTime) > timeout)
+		if (static_cast<std::uint32_t>(TIMEGETTIME() - startTime) > timeout)
 			{
 			EndWait(TimeOut, WOLSTRING("WOL_TIMEDOUT"));
 			}

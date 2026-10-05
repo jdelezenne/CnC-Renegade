@@ -2021,7 +2021,7 @@ void cGameData::On_Game_Begin(void)
 
    WWDEBUG_SAY(("cGameData::On_Game_Begin\n"));
 
-	GetSystemTime(&GameStartTime);
+	Platform::UtcCalendarTime(GameStartTime);
 	FrameCount = 0;
 
 	GameStartTimeMs = TIMEGETTIME();

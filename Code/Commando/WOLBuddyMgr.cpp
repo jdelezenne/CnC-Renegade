@@ -46,13 +46,13 @@
 #include "WOLJoinGame.h"
 #include "WOLGameInfo.h"
 #include "consolemode.h"
-#include <WWOnline\WOLChannel.h>
-#include <WWOnline\WOLProduct.h>
-#include <WWLib\Settings.h>
+#include <WWOnline/WOLChannel.h>
+#include <WWOnline/WOLProduct.h>
+#include <wwlib/Settings.h>
 
 #include "String_IDs.h"
-#include <WWTranslateDB\TranslateDB.h>
-#include <WWDebug\WWDebug.h>
+#include <wwtranslatedb/translatedb.h>
+#include <wwdebug/wwdebug.h>
 
 using namespace WWOnline;
 

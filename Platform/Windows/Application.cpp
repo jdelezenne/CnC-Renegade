@@ -118,9 +118,7 @@ extern "C"
 //	Local functions
 //----------------------------------------------------------------------------
 static BOOL Create_Main_Window(HANDLE hInstance, int nCmdShow);
-static Uint32 NativeTextEvent = 0;
 static void Application_Event(const SDL_Event& event);
-static bool Native_Game_Message(MSG& message);
 void On_Focus_Loss(void);
 void On_Focus_Restore(void);
 void Split_Command_Line_Args(HINSTANCE instance, char *path_to_exe, char *command_line);
@@ -335,36 +333,8 @@ int Start_Application( HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /
  * HISTORY:                                                                                    *
  *   07/18/1997 GH  : Created.                                                                 *
  *=============================================================================================*/
-static bool Native_Game_Message(MSG& msg)
-{
-    if (msg.hwnd != MainWindow) return false;
-    // Put retained IME text into SDL's queue so text follows its key event.
-    if (msg.message == WM_CHAR) {
-        SDL_Event event{};
-        event.type = NativeTextEvent;
-        event.user.code = static_cast<int>(msg.wParam);
-        event.user.data1 = reinterpret_cast<void*>(msg.lParam);
-        return SDL_PushEvent(&event);
-    }
-    bool handled = false;
-    if (_TheWWUIInput && !Input::Is_Console_Enabled()) {
-        LRESULT result = 0;
-        handled = _TheWWUIInput->ProcessMessage(msg.hwnd, msg.message, msg.wParam, msg.lParam, result);
-    }
-    return handled;
-}
-
 static void Application_Event(const SDL_Event& event)
 {
-    if (event.type == NativeTextEvent) {
-        LRESULT result = 0;
-        if (!_TheWWUIInput || Input::Is_Console_Enabled() ||
-            !_TheWWUIInput->ProcessMessage(MainWindow, WM_CHAR, event.user.code,
-                reinterpret_cast<LPARAM>(event.user.data1), result)) {
-            Input::Console_Add_Key(event.user.code);
-        }
-        return;
-    }
     switch (event.type) {
     case SDL_EVENT_QUIT:
     case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
@@ -376,9 +346,23 @@ static void Application_Event(const SDL_Event& event)
     case SDL_EVENT_WINDOW_FOCUS_LOST:
         if (GameInFocus) { GameInFocus = false; On_Focus_Loss(); }
         break;
+    case SDL_EVENT_TEXT_INPUT:
+    case SDL_EVENT_TEXT_EDITING:
+        if (_TheWWUIInput && !Input::Is_Console_Enabled()) _TheWWUIInput->ProcessSDLEvent(event);
+        else if (event.type == SDL_EVENT_TEXT_INPUT && Input::Is_Console_Enabled()) {
+            const char* text = event.text.text;
+            while (text && *text) Input::Console_Add_Key(static_cast<int>(SDL_StepUTF8(&text, nullptr)));
+        }
+        break;
     case SDL_EVENT_KEY_DOWN:
     case SDL_EVENT_KEY_UP:
-        if (_TheWWUIInput && !Input::Is_Console_Enabled()) _TheWWUIInput->ProcessSDLKeyEvent(event.key);
+        if (Input::Is_Console_Enabled() && event.key.down) {
+            if (event.key.key == SDLK_RETURN || event.key.key == SDLK_KP_ENTER) Input::Console_Add_Key(13);
+            else if (event.key.key == SDLK_BACKSPACE) Input::Console_Add_Key(8);
+            else if (event.key.key == SDLK_ESCAPE) Input::Console_Add_Key(27);
+            else if (event.key.key == SDLK_TAB) Input::Console_Add_Key(9);
+        }
+        if (_TheWWUIInput && !Input::Is_Console_Enabled()) _TheWWUIInput->ProcessSDLEvent(event);
         if (event.key.down && !event.key.repeat && event.key.scancode == SDL_SCANCODE_RETURN &&
             (event.key.mod & SDL_KMOD_ALT) && WW3D::Is_Initted()) WW3D::Toggle_Windowed();
         break;
@@ -417,10 +401,7 @@ static BOOL Create_Main_Window(HANDLE hInstance, int /*nCmdShow*/)
         }
         MainWindow = static_cast<HWND>(Platform::NativeWindowHandle());
     }
-    NativeTextEvent = SDL_RegisterEvents(1);
-    if (!NativeTextEvent) { Platform::Shutdown(); return FALSE; }
     Platform::SetEventHandler(Application_Event);
-    Install_Windows_Message_Hook(Native_Game_Message);
     return TRUE;
 }
 

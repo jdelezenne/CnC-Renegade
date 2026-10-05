@@ -35,6 +35,8 @@
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 #include "render2dsentence.h"
+#include <algorithm>
+#include <stdexcept>
 #include "surfaceclass.h"
 #include "texture.h"
 #include "wwprofile.h"
@@ -279,7 +281,7 @@ Render2DSentenceClass::Set_Tabstop(float stop)
 //
 ////////////////////////////////////////////////////////////////////////////////////
 Vector2
-Render2DSentenceClass::Get_Text_Extents (const WCHAR *text)
+Render2DSentenceClass::Get_Text_Extents (const wchar_t *text)
 {
 	if (!DX8Wrapper::Is_Initted()) {
 		Vector2 temp(0,0);
@@ -289,9 +291,9 @@ Render2DSentenceClass::Get_Text_Extents (const WCHAR *text)
 	Vector2 extent (0, Font->Get_Char_Height());
 
 	while (*text) {
-		WCHAR ch = *text++;
+		wchar_t ch = *text++;
 
-		if ( ch != (WCHAR)'\n' ) {
+		if ( ch != (wchar_t)'\n' ) {
 			extent.X += Font->Get_Char_Spacing( ch );
 		}
 	}
@@ -305,8 +307,8 @@ Render2DSentenceClass::Get_Text_Extents (const WCHAR *text)
 //	Find_Row_Start
 //
 ////////////////////////////////////////////////////////////////////////////////////
-const WCHAR *
-Render2DSentenceClass::Find_Row_Start( const WCHAR * text, int row_index )
+const wchar_t *
+Render2DSentenceClass::Find_Row_Start( const wchar_t * text, int row_index )
 {
 	if (row_index == 0) {
 		return text;
@@ -316,7 +318,7 @@ Render2DSentenceClass::Find_Row_Start( const WCHAR * text, int row_index )
 		return text;
 	}
 
-	const WCHAR *retval = NULL;
+	const wchar_t *retval = NULL;
 
 	float max_x_pos	= 0;
 	float x_pos			= 0;
@@ -325,7 +327,7 @@ Render2DSentenceClass::Find_Row_Start( const WCHAR * text, int row_index )
 	int row_counter = 0;
 
 	while (*text) {
-		WCHAR ch = *text++;
+		wchar_t ch = *text++;
 
 		bool is_wrapped = false;
 
@@ -337,7 +339,7 @@ Render2DSentenceClass::Find_Row_Start( const WCHAR * text, int row_index )
 			//
 			//	Find the width of the next word
 			//
-			const WCHAR *word	= text;
+			const wchar_t *word	= text;
 			float word_width = Font->Get_Char_Spacing (ch);
 			while ((*word != 0) && ((*word > L' ') && !IS_BREAK_CHAR (*word))) {
 				word_width += Font->Get_Char_Spacing (*word++);
@@ -372,7 +374,7 @@ Render2DSentenceClass::Find_Row_Start( const WCHAR * text, int row_index )
 			}
 		}
 
-		if (ch != (WCHAR)'\n') {
+		if (ch != (wchar_t)'\n') {
 			x_pos += Font->Get_Char_Spacing (ch);
 		}
 	}
@@ -387,7 +389,7 @@ Render2DSentenceClass::Find_Row_Start( const WCHAR * text, int row_index )
 //
 ////////////////////////////////////////////////////////////////////////////////////
 Vector2
-Render2DSentenceClass::Get_Formatted_Text_Extents (const WCHAR *text, int *row_count)
+Render2DSentenceClass::Get_Formatted_Text_Extents (const wchar_t *text, int *row_count)
 {
 	if (!DX8Wrapper::Is_Initted()) {
 		Vector2 temp(0,0);
@@ -401,7 +403,7 @@ Render2DSentenceClass::Get_Formatted_Text_Extents (const WCHAR *text, int *row_c
 	int row_counter = 0;
 
 	while (*text) {
-		WCHAR ch = *text++;
+		wchar_t ch = *text++;
 
 		bool is_wrapped = false;
 
@@ -413,7 +415,7 @@ Render2DSentenceClass::Get_Formatted_Text_Extents (const WCHAR *text, int *row_c
 			//
 			//	Find the width of the next word
 			//
-			const WCHAR *word	= text;
+			const wchar_t *word	= text;
 			float word_width = Font->Get_Char_Spacing (ch);
 			while ((*word != 0) && ((*word > L' ') && !IS_BREAK_CHAR (*word))) {
 				word_width += Font->Get_Char_Spacing (*word++);
@@ -440,7 +442,7 @@ Render2DSentenceClass::Get_Formatted_Text_Extents (const WCHAR *text, int *row_c
 			row_counter ++;
 		}
 
-		if (ch != (WCHAR)'\n') {
+		if (ch != (wchar_t)'\n') {
 			x_pos += Font->Get_Char_Spacing (ch);
 		}
 	}
@@ -778,7 +780,7 @@ Render2DSentenceClass::Record_Sentence_Chunk (void)
 //
 ////////////////////////////////////////////////////////////////////////////////////
 void
-Render2DSentenceClass::Allocate_New_Surface (const WCHAR *text)
+Render2DSentenceClass::Allocate_New_Surface (const wchar_t *text)
 {
 	//
 	//	Unlock the last surface (if necessary)
@@ -871,7 +873,7 @@ Render2DSentenceClass::Allocate_New_Surface (const WCHAR *text)
 //
 ////////////////////////////////////////////////////////////////////////////////////
 void
-Render2DSentenceClass::Build_Sentence (const WCHAR *text)
+Render2DSentenceClass::Build_Sentence (const wchar_t *text)
 {
 	if (text == NULL) {
 		return ;
@@ -900,7 +902,7 @@ Render2DSentenceClass::Build_Sentence (const WCHAR *text)
 	//	Loop over all the characters in the string
 	//
 	while (text != NULL) {
-		WCHAR ch = *text++;
+		wchar_t ch = *text++;
 
 		//
 		//	Determine how much horizontal space this character requires
@@ -939,7 +941,7 @@ Render2DSentenceClass::Build_Sentence (const WCHAR *text)
 					//
 					//	Find the length of the next word
 					//
-					const WCHAR *word	= text;
+					const wchar_t *word	= text;
 					float word_width	= (ch == L' ') ? 0 : char_spacing;
 					while ((*word != 0) && ((*word > L' ') && !IS_BREAK_CHAR (*word))) {
 						word_width += Font->Get_Char_Spacing (*word++);
@@ -1027,12 +1029,7 @@ void	Render2DSentenceClass::Force_Alpha( float alpha )
 //
 ////////////////////////////////////////////////////////////////////////////////////
 FontCharsClass::FontCharsClass (void) :
-	OldGDIFont(	NULL ),
-	OldGDIBitmap( NULL ),
-	GDIFont( NULL ),
-	GDIBitmap( NULL ),
-	GDIBitmapBits ( NULL ),
-	MemDC( NULL ),
+	Font(nullptr),
 	CurrPixelOffset( 0 ),
 	PointSize( 0 ),
 	CharHeight( 0 ),
@@ -1059,7 +1056,7 @@ FontCharsClass::~FontCharsClass (void)
 	}
 	BufferList.Reset_Active();
 
-	Free_GDI_Font();
+	Free_Font();
 	Free_Character_Arrays();
 	return ;
 }
@@ -1071,7 +1068,7 @@ FontCharsClass::~FontCharsClass (void)
 //
 ////////////////////////////////////////////////////////////////////////////////////
 const FontCharsClass::CharDataStruct *
-FontCharsClass::Get_Char_Data (WCHAR ch)
+FontCharsClass::Get_Char_Data (wchar_t ch)
 {
 	const CharDataStruct *retval = NULL;
 
@@ -1086,7 +1083,7 @@ FontCharsClass::Get_Char_Data (WCHAR ch)
 	//	If the character wasn't found, then add it to our list
 	//
 	if ( retval == NULL ) {
-		retval = Store_GDI_Char( ch );
+		retval = Store_Char( ch );
 	}
 
 	WWASSERT( retval->Value == ch );
@@ -1100,7 +1097,7 @@ FontCharsClass::Get_Char_Data (WCHAR ch)
 //
 ////////////////////////////////////////////////////////////////////////////////////
 int
-FontCharsClass::Get_Char_Width (WCHAR ch)
+FontCharsClass::Get_Char_Width (wchar_t ch)
 {
 	const CharDataStruct	* data = Get_Char_Data( ch );
 	if ( data != NULL ) {
@@ -1117,7 +1114,7 @@ FontCharsClass::Get_Char_Width (WCHAR ch)
 //
 ////////////////////////////////////////////////////////////////////////////////////
 int
-FontCharsClass::Get_Char_Spacing (WCHAR ch)
+FontCharsClass::Get_Char_Spacing (wchar_t ch)
 {
 	const CharDataStruct	* data = Get_Char_Data( ch );
 	if ( data != NULL ) {
@@ -1136,7 +1133,7 @@ FontCharsClass::Get_Char_Spacing (WCHAR ch)
 //
 ////////////////////////////////////////////////////////////////////////////////////
 void
-FontCharsClass::Blit_Char (WCHAR ch, uint16 *dest_ptr, int dest_stride, int x, int y)
+FontCharsClass::Blit_Char (wchar_t ch, uint16 *dest_ptr, int dest_stride, int x, int y)
 {
 	const CharDataStruct	* data = Get_Char_Data( ch );
 	if ( data != NULL && data->Width != 0 ) {
@@ -1169,103 +1166,17 @@ FontCharsClass::Blit_Char (WCHAR ch, uint16 *dest_ptr, int dest_stride, int x, i
 //
 ////////////////////////////////////////////////////////////////////////////////////
 const FontCharsClass::CharDataStruct *
-FontCharsClass::Store_GDI_Char (WCHAR ch)
+FontCharsClass::Store_Char (wchar_t ch)
 {
-	int width	= PointSize * 2;
-	int height	= PointSize * 2;
-
-	//
-	//	Get the size of the character we just drew
-	//
-	SIZE char_size = { 0 };
-	::GetTextExtentPoint32W( MemDC, &ch, 1, &char_size );
-	int x_pos = 0;
-
-	//
-	//	HACK HACK -- With the default font that Renegade uses the
-	// W and V characters need to be moved over one pixel.
-	//
-	if ( (ch == 'W' || ch == 'V') && (GDIFontName.Compare_No_Case ("Arial MT") == 0) ) {
-		x_pos				= 1;
-		char_size.cx	+= 1;
-	}
-
-	//
-	//	Draw the character into the memory DC
-	//
-	RECT rect = { 0, 0, width, height };
-	::ExtTextOutW( MemDC, x_pos, 0, ETO_OPAQUE, &rect, &ch, 1, NULL);
-	::GdiFlush ();
-
-	//
-	//	Get a pointer to the surface that this character should use
-	//
-	Update_Current_Buffer( char_size.cx );
-	uint16 *curr_buffer = BufferList[BufferList.Count () - 1];
-	curr_buffer += CurrPixelOffset;
-
-	//
-	//	Copy the BMP contents to the buffer
-	//
-	int stride = (((width * 3) + 3) & ~3);
-	for (int row = 0; row < char_size.cy; row ++) {
-
-		//
-		//	Compute the indices into the BMP and surface
-		//
-		int index = (row * stride);
-
-		//
-		//	Loop over each column
-		//
-		for (int col = 0; col < char_size.cx; col ++) {
-
-			//
-			//	Get the pixel color at this location
-			//
-			uint8 pixel_value = GDIBitmapBits[index];
-			index += 3;
-
-			uint16 pixel_color = 0;
-			if (pixel_value != 0) {
-				pixel_color = 0x0FFF;
-			}
-
-			//
-			//	Convert the pixel intensity from 8bit to 4bit and
-			// store it in our buffer
-			//
-			uint8 alpha_value	= ((pixel_value >> 4) & 0xF);
-			*curr_buffer ++	= pixel_color | (alpha_value << 12);
-		}
-	}
-
-	//
-	//	Save information about this character in our list
-	//
-	CharDataStruct *char_data	= new CharDataStruct;
-	char_data->Value				= ch;
-	char_data->Width				= char_size.cx;
-	char_data->Buffer				= BufferList[BufferList.Count () - 1] + CurrPixelOffset;
-
-	//
-	//	Insert this character into our array
-	//
-	if ( ch < 256 ) {
-		ASCIICharArray[ch] = char_data;
-	} else {
-		UnicodeCharArray[ch - FirstUnicodeChar] = char_data;
-	}
-
-	//
-	//	Advance the character position
-	//
-	CurrPixelOffset += (char_size.cx * CharHeight);
-
-	//
-	//	Return the index of the entry we just added
-	//
-	return char_data;
+    const auto glyph = Platform::RasterizeGlyph(Font, static_cast<std::uint32_t>(ch));
+    Update_Current_Buffer(glyph.width);
+    uint16* pixels = BufferList[BufferList.Count() - 1] + CurrPixelOffset;
+    std::copy(glyph.pixels.begin(), glyph.pixels.end(), pixels);
+    CharDataStruct* data = new CharDataStruct{ch, static_cast<short>(glyph.width), pixels};
+    if (ch < 256) ASCIICharArray[ch] = data;
+    else UnicodeCharArray[ch - FirstUnicodeChar] = data;
+    CurrPixelOffset += glyph.width * CharHeight;
+    return data;
 }
 
 
@@ -1295,7 +1206,7 @@ FontCharsClass::Update_Current_Buffer (int char_width)
 	//	Do we need to create a new surface?
 	//
 	if (needs_new_buffer) {
-		uint16 *new_buffer = new uint16[CHAR_BUFFER_LEN];
+		uint16 *new_buffer = new uint16[max(CHAR_BUFFER_LEN, char_width * CharHeight)];
 		BufferList.Add( new_buffer );
 		CurrPixelOffset = 0;
 	}
@@ -1310,95 +1221,11 @@ FontCharsClass::Update_Current_Buffer (int char_width)
 //
 ////////////////////////////////////////////////////////////////////////////////////
 void
-FontCharsClass::Create_GDI_Font (const char *font_name)
+FontCharsClass::Create_Font (const char *font_name)
 {
-	HDC screen_dc = ::GetDC (NULL);
-
-	//
-	//	Calculate the height of the font in logical units
-	//
-	int font_height = -MulDiv (PointSize, 96, 72);
-
-	//
-	//	Create the Windows font
-	//
-	DWORD bold		= IsBold ? FW_BOLD : FW_NORMAL;
-	DWORD italic	= 0;
-	DWORD	charset;
-
-	// Map the current code page to a font character set.
-	switch (GetACP()) {
-
-		// Chinese.
-		case 936:
-		case 950:
-			charset = CHINESEBIG5_CHARSET;
-			break;
-
-		// Japanese.
-		case 932:
-			charset = SHIFTJIS_CHARSET;
-			break;
-
-		// Korean.
-		case 949:
-			charset = HANGUL_CHARSET;
-			break;
-
-		// Anything else.
-		default:
-			charset = DEFAULT_CHARSET;
-			break;
-	}
-
-	GDIFont = ::CreateFont (font_height, 0, 0, 0, bold, italic,
-									FALSE, FALSE, charset, OUT_DEFAULT_PRECIS,
-									CLIP_DEFAULT_PRECIS, ANTIALIASED_QUALITY,
-									VARIABLE_PITCH, font_name);
-
-	//
-	// Set-up the fields of the BITMAPINFOHEADER
-	//	Note: Top-down DIBs use negative height in Win32.
-	//
-	BITMAPINFOHEADER bitmap_info = { 0 };
-	bitmap_info.biSize				= sizeof (BITMAPINFOHEADER);
-	bitmap_info.biWidth				= PointSize * 2;
-	bitmap_info.biHeight				= -(PointSize * 2);
-	bitmap_info.biPlanes				= 1;
-	bitmap_info.biBitCount			= 24;
-	bitmap_info.biCompression		= BI_RGB;
-	bitmap_info.biSizeImage			= ((PointSize * PointSize * 4) * 3);
-	bitmap_info.biXPelsPerMeter	= 0;
-	bitmap_info.biYPelsPerMeter	= 0;
-	bitmap_info.biClrUsed			= 0;
-	bitmap_info.biClrImportant		= 0;
-
-	//
-	// Create a bitmap that we can access the bits directly of
-	//
-	GDIBitmap	= ::CreateDIBSection (	screen_dc,
-													(const BITMAPINFO *)&bitmap_info,
-													DIB_RGB_COLORS,
-													(void **)&GDIBitmapBits,
-													NULL,
-													0L);
-
-	MemDC = ::CreateCompatibleDC (NULL);
-
-	OldGDIBitmap	= (HBITMAP)::SelectObject (MemDC, GDIBitmap);
-	OldGDIFont		= (HFONT)::SelectObject (MemDC, GDIFont);
-	::SetBkColor (MemDC, RGB (0, 0, 0));
-	::SetTextColor (MemDC, RGB (255, 255, 255));
-
-	TEXTMETRIC text_metric = { 0 };
-	::GetTextMetrics (MemDC, &text_metric);
-	CharHeight = text_metric.tmHeight;
-
-	//
-	// Release our temporary screen DC
-	//
-	::ReleaseDC (NULL, screen_dc);
-	return ;
+    Font = Platform::OpenFont(font_name, PointSize, IsBold);
+    CharHeight = Platform::FontHeight(Font);
+    if (!Font) throw std::runtime_error("Unable to load game font");
 }
 
 
@@ -1408,37 +1235,10 @@ FontCharsClass::Create_GDI_Font (const char *font_name)
 //
 ////////////////////////////////////////////////////////////////////////////////////
 void
-FontCharsClass::Free_GDI_Font (void)
+FontCharsClass::Free_Font (void)
 {
-	//
-	//	Select the old font back into the DC and delete
-	// our font object
-	//
-	if ( GDIFont != NULL ) {
-		::SelectObject( MemDC, OldGDIFont );
-		::DeleteObject( GDIFont );
-		GDIFont = NULL;
-	}
-
-	//
-	//	Select the old bitmap back into the DC and delete
-	// our bitmap object
-	//
-	if ( GDIBitmap != NULL ) {
-		::SelectObject( MemDC, OldGDIBitmap );
-		::DeleteObject( GDIBitmap );
-		GDIBitmap = NULL;
-	}
-
-	//
-	//	Delete our memory DC
-	//
-	if ( MemDC != NULL ) {
-		::DeleteDC( MemDC );
-		MemDC = NULL;
-	}
-
-	return ;
+    Platform::CloseFont(Font);
+    Font = nullptr;
 }
 
 
@@ -1448,7 +1248,7 @@ FontCharsClass::Free_GDI_Font (void)
 //
 ////////////////////////////////////////////////////////////////////////////////////
 void
-FontCharsClass::Initialize_GDI_Font (const char *font_name, int point_size, bool is_bold)
+FontCharsClass::Initialize_Font (const char *font_name, int point_size, bool is_bold)
 {
 	//
 	//	Build a unique name from the font name and its size
@@ -1458,14 +1258,14 @@ FontCharsClass::Initialize_GDI_Font (const char *font_name, int point_size, bool
 	//
 	//	Remember these settings
 	//
-	GDIFontName	= font_name;
+	FontName	= font_name;
 	PointSize	= point_size;
 	IsBold		= is_bold;
 
 	//
 	//	Create the actual font object
 	//
-	Create_GDI_Font (font_name);
+	Create_Font (font_name);
 	return ;
 }
 
@@ -1483,7 +1283,7 @@ FontCharsClass::Is_Font (const char *font_name, int point_size, bool is_bold)
 	//
 	//	Check to see if both the name and height matches...
 	//
-	if (	(GDIFontName.Compare_No_Case (font_name) == 0) &&
+	if (	(FontName.Compare_No_Case (font_name) == 0) &&
 			(point_size == PointSize) &&
 			(is_bold == IsBold))
 	{
@@ -1500,7 +1300,7 @@ FontCharsClass::Is_Font (const char *font_name, int point_size, bool is_bold)
 //
 ////////////////////////////////////////////////////////////////////////////////////
 void
-FontCharsClass::Grow_Unicode_Array (WCHAR ch)
+FontCharsClass::Grow_Unicode_Array (wchar_t ch)
 {
 	//
 	//	Don't do anything if character is in the ASCII range
@@ -1516,9 +1316,9 @@ FontCharsClass::Grow_Unicode_Array (WCHAR ch)
 		return ;
 	}
 
-	uint16 first_index	= min( FirstUnicodeChar, static_cast<uint16>(ch) );
-	uint16 last_index		= max( LastUnicodeChar, static_cast<uint16>(ch) );
-	uint16 count			= (last_index - first_index) + 1;
+	uint32 first_index	= min( FirstUnicodeChar, static_cast<uint32>(ch) );
+	uint32 last_index		= max( LastUnicodeChar, static_cast<uint32>(ch) );
+	uint32 count			= (last_index - first_index) + 1;
 
 	//
 	//	Allocate enough memory to hold the new cells

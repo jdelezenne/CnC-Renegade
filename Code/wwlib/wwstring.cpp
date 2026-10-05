@@ -35,7 +35,7 @@
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 #include "wwstring.h"
-#include "win.h"
+#include "Platform/Text.h"
 #include "wwmemlog.h"
 #include "mutex.h"
 #include <stdio.h>
@@ -240,6 +240,9 @@ StringClass::Free_String (void)
 int _cdecl
 StringClass::Format_Args (const TCHAR *format, const va_list & arg_list )
 {
+	va_list arguments;
+	va_copy(arguments, const_cast<va_list&>(arg_list));
+
 	//
 	// Make a guess at the maximum length of the resulting string
 	//
@@ -250,9 +253,9 @@ StringClass::Format_Args (const TCHAR *format, const va_list & arg_list )
 	//	Format the string
 	//
 	#ifdef _UNICODE
-		retval = _vsnwprintf (temp_buffer, 512, format, arg_list);
+		retval = _vsnwprintf (temp_buffer, 512, format, arguments);
 	#else
-		retval = _vsnprintf (temp_buffer, 512, format, arg_list);
+		retval = _vsnprintf (temp_buffer, 512, format, arguments);
 	#endif
 	
 	//
@@ -260,6 +263,7 @@ StringClass::Format_Args (const TCHAR *format, const va_list & arg_list )
 	//	
 	(*this) = temp_buffer;
 
+	va_end(arguments);
 	return retval;
 }
 
@@ -317,25 +321,10 @@ StringClass::Release_Resources (void)
 ///////////////////////////////////////////////////////////////////
 bool StringClass::Copy_Wide (const WCHAR *source)
 {
-	if (source != NULL) {
-
-		int  length;
-		BOOL unmapped;
-			
-		length = WideCharToMultiByte (CP_ACP, 0 , source, -1, NULL, 0, NULL, &unmapped);
-		if (length > 0) {
-
-			// Convert.
-			WideCharToMultiByte (CP_ACP, 0, source, -1, Get_Buffer (length), length, NULL, NULL);
-
-			// Update length.
-			Store_Length (length - 1);
-		}
-
-		// Were all characters successfully mapped?
-		return (!unmapped);
-	}
-
-	// Failure.
-	return (false);
+    if (!source) return false;
+    std::string converted;
+    bool unmapped = false;
+    if (!Platform::NarrowFromWide(source, converted, unmapped)) return false;
+    *this = converted.c_str();
+    return !unmapped;
 }

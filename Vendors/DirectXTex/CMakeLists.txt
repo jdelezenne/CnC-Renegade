@@ -1,4 +1,8 @@
 include(FetchContent)
+if(NOT WIN32)
+    add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/../DirectXMath" "${CMAKE_CURRENT_BINARY_DIR}/DirectXMath")
+    add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/../DirectXHeaders" "${CMAKE_CURRENT_BINARY_DIR}/DirectXHeaders")
+endif()
 set(BUILD_TOOLS OFF)
 set(BUILD_SAMPLE OFF)
 set(BUILD_DX11 OFF)

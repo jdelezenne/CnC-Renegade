@@ -24,15 +24,14 @@
 // Description:  
 //
 //-----------------------------------------------------------------------------
-#include "Platform/Windows/Files.h"
+#include "Platform/Files.h"
+#include "Platform/Executable.h"
 #include "miscutil.h" // I WANNA BE FIRST!
 
 #include <time.h>
 
 #include "rawfile.h"
 #include "wwdebug.h"
-#include "win.h"
-#include "mmsys.h"
 #include "ffactory.h"
 
 //
@@ -40,7 +39,7 @@
 //
 
 //---------------------------------------------------------------------------
-LPCSTR cMiscUtil::Get_Text_Time(void)
+const char* cMiscUtil::Get_Text_Time(void)
 {
    //
    // Returns a pointer to an internal statically allocated buffer...
@@ -73,7 +72,7 @@ void cMiscUtil::Seconds_To_Hms(float seconds, int & h, int & m, int & s)
 }
 
 //-----------------------------------------------------------------------------
-bool cMiscUtil::Is_String_Same(LPCSTR str1, LPCSTR str2)
+bool cMiscUtil::Is_String_Same(const char* str1, const char* str2)
 {
    WWASSERT(str1 != NULL);
    WWASSERT(str2 != NULL);
@@ -82,7 +81,7 @@ bool cMiscUtil::Is_String_Same(LPCSTR str1, LPCSTR str2)
 }
 
 //-----------------------------------------------------------------------------
-bool cMiscUtil::Is_String_Different(LPCSTR str1, LPCSTR str2)
+bool cMiscUtil::Is_String_Different(const char* str1, const char* str2)
 {
    WWASSERT(str1 != NULL);
    WWASSERT(str2 != NULL);
@@ -91,7 +90,7 @@ bool cMiscUtil::Is_String_Different(LPCSTR str1, LPCSTR str2)
 }
 
 //-----------------------------------------------------------------------------
-bool cMiscUtil::File_Exists(LPCSTR filename)
+bool cMiscUtil::File_Exists(const char* filename)
 {
 #if 0
    WWASSERT(filename != NULL);
@@ -116,12 +115,11 @@ bool cMiscUtil::File_Exists(LPCSTR filename)
 }
 
 //-----------------------------------------------------------------------------
-bool cMiscUtil::File_Is_Read_Only(LPCSTR filename)
+bool cMiscUtil::File_Is_Read_Only(const char* filename)
 {
    WWASSERT(filename != NULL);
 
-	DWORD attributes = ::GetFileAttributes(filename);
-	return ((attributes != 0xFFFFFFFF) && (attributes & FILE_ATTRIBUTE_READONLY));
+	return Platform::IsReadOnlyFile(filename);
 }
 
 //-----------------------------------------------------------------------------
@@ -160,7 +158,7 @@ void cMiscUtil::Trim_Trailing_Whitespace(char * text)
 }
 
 //-----------------------------------------------------------------------------
-void cMiscUtil::Get_File_Id_String(LPCSTR filename, StringClass & str)
+void cMiscUtil::Get_File_Id_String(const char* filename, StringClass & str)
 {
 	WWASSERT(filename != NULL);
 
@@ -183,8 +181,7 @@ void cMiscUtil::Get_File_Id_String(LPCSTR filename, StringClass & str)
 	//
 	// Note... this timedatestamp is not present for all file types...
 	//
-	IMAGE_FILE_HEADER header = {0};
-	extern bool Get_Image_File_Header(LPCSTR filename, IMAGE_FILE_HEADER *file_header);
+	Platform::ExecutableFileHeader header = {0};
 	/*
 	bool success;
 	success = Get_Image_File_Header(filename, &header);
@@ -217,11 +214,11 @@ void cMiscUtil::Get_File_Id_String(LPCSTR filename, StringClass & str)
 }
 
 //-----------------------------------------------------------------------------
-void cMiscUtil::Remove_File(LPCSTR filename)
+void cMiscUtil::Remove_File(const char* filename)
 {
    WWASSERT(filename != NULL);
 
-	Platform::RemoveFile(filename);
+	Platform::RemoveRawFile(filename);
 }
 
 

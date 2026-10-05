@@ -1,0 +1,8 @@
+set(platform_files_source "${CMAKE_CURRENT_LIST_DIR}/POSIX/Files.cpp")
+if(WIN32)
+    set(platform_files_source "${CMAKE_CURRENT_LIST_DIR}/Windows/Files.cpp")
+endif()
+add_library(ren_files STATIC "${platform_files_source}" "${CMAKE_CURRENT_LIST_DIR}/SDL/Paths.cpp")
+target_include_directories(ren_files PUBLIC "${CMAKE_CURRENT_LIST_DIR}/..")
+target_compile_features(ren_files PUBLIC cxx_std_23)
+target_link_libraries(ren_files PUBLIC SDL3::SDL3-static)

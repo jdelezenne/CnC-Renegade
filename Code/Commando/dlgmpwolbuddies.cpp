@@ -44,12 +44,12 @@
 #include "ww3d.h"
 #include "translatedb.h"
 #include "string_ids.h"
-#include <WWUI\ListCtrl.h>
-#include <WWUI\ComboBoxCtrl.h>
-#include <WWUI\DialogMgr.h>
-#include <WWUI\shortcutbarctrl.h>
-#include <WWOnline\WOLUser.h>
-#include <WWOnline\WOLSquad.h>
+#include <wwui/listctrl.h>
+#include <wwui/comboboxctrl.h>
+#include <wwui/dialogmgr.h>
+#include <wwui/shortcutbarctrl.h>
+#include <WWOnline/WOLUser.h>
+#include <WWOnline/WOLSquad.h>
 
 
 ////////////////////////////////////////////////////////////////

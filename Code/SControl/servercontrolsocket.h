@@ -42,7 +42,7 @@
 #include	"assert.h"
 #include	"vector.h"
 
-#include	<winsock.h>
+#include "Platform/Network/Transport.h"
 
 #ifndef DebugString
 #include	"wwdebug.h"
@@ -59,12 +59,16 @@
 #define fw_assert assert
 #endif //WWASSERT
 
+#ifdef _WIN32
 #ifdef errno
 #undef errno
 #endif	//errno
 
 #define errno (WSAGetLastError())
 #define LAST_ERROR errno
+#else
+#define LAST_ERROR Platform::SocketLastError()
+#endif
 
 #ifndef TIMER_SECOND
 #define TIMER_SECOND 1000

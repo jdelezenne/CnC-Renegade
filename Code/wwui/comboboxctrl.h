@@ -76,8 +76,8 @@ public:
 	//
 	//	From DialogControlClass
 	//
-	const WCHAR *	Get_Text (void) const;
-	void				Set_Text (const WCHAR *title);
+	const wchar_t *	Get_Text (void) const;
+	void				Set_Text (const wchar_t *title);
 	void				Set_Window_Pos (const Vector2 &pos);
 	void				Render (void);
 
@@ -86,10 +86,10 @@ public:
 	//
 	//	Content control
 	//
-	int				Add_String (const WCHAR* string)		{ return DropDownCtrl.Add_String (string); }
+	int				Add_String (const wchar_t* string)		{ return DropDownCtrl.Add_String (string); }
 	void				Delete_String (int index);
-	int				Find_String (const WCHAR* string)		{ return DropDownCtrl.Find_String (string); }
-	int				Select_String (const WCHAR* string);
+	int				Find_String (const wchar_t* string)		{ return DropDownCtrl.Find_String (string); }
+	int				Select_String (const wchar_t* string);
 	void				Set_Item_Data (int index, uintptr_t data)				{ DropDownCtrl.Set_Item_Data (index, data); Set_Dirty();}
 	uintptr_t			Get_Item_Data (int index)								{ return DropDownCtrl.Get_Item_Data (index); }
 	void				Reset_Content (void)										{ DropDownCtrl.Reset_Content (); }

@@ -22,7 +22,7 @@ The game build requires:
 
 Use Visual Studio 2026 with Desktop development with C++ and ATL, CMake 4.2
 or newer, and LLVM 23 or newer for clang-cl builds. The configure presets are
-`windows-msvc-x64`, `windows-msvc-x86`, and `windows-clangcl`. Each provides
+`windows-msvc-x64`, `windows-msvc-x86`, and `windows-clang`. Each provides
 Debug and Release build presets. MSVC uses the Visual Studio generator;
 clang-cl uses Ninja Multi-Config and the MSVC runtime and Windows SDK.
 
@@ -38,9 +38,9 @@ For clang-cl from a terminal, use an x64 Visual Studio developer shell with
 LLVM 23 and Ninja on PATH:
 
 ```bat
-cmake --preset windows-clangcl
-cmake --build --preset windows-clangcl-debug
-cmake --build --preset windows-clangcl-release
+cmake --preset windows-clang
+cmake --build --preset windows-clang-debug
+cmake --build --preset windows-clang-release
 ```
 
 Build trees are isolated under `Build/Windows-MSVC-x64`,
@@ -110,11 +110,6 @@ and LAN remain supported.
 ### Free Dedicated Server
 It’s possible to build the Windows version of the FDS (Free Dedicated Server) for Command & Conquer Renegade from the source code in this repository, just uncomment `#define FREEDEDICATEDSERVER` in [Code/Combat/specialbuilds.h](Code/Combat/specialbuilds.h) and perform a “Rebuild All” action on the Release config.
 
-
-### Graphics configuration utility
-
-`Code/Tools/WWConfig` retains the graphics/audio configuration utility sources.
-It is not part of the current CMake build.
 
 ## Contributing
 

@@ -35,6 +35,7 @@
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 #include "input.h"
+#include "Platform/UI/Input.h"
 #include "slist.h"
 #include "assets.h"
 #include "ini.h"
@@ -979,6 +980,9 @@ void	Input::Update( void )
 
 	return ;
 }
+
+void Input::Console_Enable() { ConsoleMode = true; Flush_Queue(); Platform::SetConsoleTextInput(true); }
+void Input::Console_Disable() { ConsoleMode = false; Platform::SetConsoleTextInput(false); }
 
 int	Input::Console_Get_Key()
 {

@@ -41,15 +41,13 @@
 #ifndef __WOLSERVER_H__
 #define __WOLSERVER_H__
 
+#include "Platform/Online/WOL.h"
 #include "RefCounted.h"
 #include "RefPtr.h"
 #include "WOLString.h"
-#include <WWLib\WWString.h>
+#include <wwlib/wwstring.h>
 
-namespace WOL
-{
-#include <WOLAPI\wolapi.h>
-}
+
 
 namespace WWOnline {
 

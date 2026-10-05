@@ -35,15 +35,13 @@
 #ifndef __WOLSQUAD_H__
 #define __WOLSQUAD_H__
 
+#include "Platform/Online/WOL.h"
 #include "RefCounted.h"
 #include "RefPtr.h"
-#include <WWLib\WideString.h>
+#include <wwlib/widestring.h>
 #include "WOLLadder.h"
 
-namespace WOL
-{
-#include <wolapi\wolapi.h>
-}
+
 
 #if defined(_MSC_VER)
 #pragma warning(push, 3)

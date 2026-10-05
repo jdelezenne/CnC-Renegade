@@ -49,7 +49,7 @@
 #include "bittype.h"
 #include "widestring.h"
 #include "controladvisesink.h"
-#include "win.h"
+#include "Platform/Callbacks.h"
 #include "notify.h"
 
 ////////////////////////////////////////////////////////////////
@@ -75,7 +75,7 @@ class DialogTransitionClass;
 ////////////////////////////////////////////////////////////////
 //	Typedefs
 ////////////////////////////////////////////////////////////////
-typedef bool (CALLBACK *DEFAULT_DLG_CMD_HANDLER) (DialogBaseClass *dialog, int ctrl_id, int mesage_id, DWORD param);
+typedef bool (REN_CALLBACK *DEFAULT_DLG_CMD_HANDLER) (DialogBaseClass *dialog, int ctrl_id, int mesage_id, DWORD param);
 
 
 class DialogEvent :
@@ -187,8 +187,8 @@ public:
 	//
 	//	Control text access
 	//
-	const WCHAR *			Get_Dlg_Item_Text (int id) const;
-	void						Set_Dlg_Item_Text (int id, const WCHAR *text);
+	const wchar_t *			Get_Dlg_Item_Text (int id) const;
+	void						Set_Dlg_Item_Text (int id, const wchar_t *text);
 
 	int						Get_Dlg_Item_Int (int id) const;
 	void						Set_Dlg_Item_Int (int id, int value);
@@ -212,7 +212,7 @@ public:
 	//	Title access
 	//
 	void						Get_Title (WideStringClass *title)	{ *title = Title; }
-	void						Set_Title (const WCHAR *title)		{ Title = title; }
+	void						Set_Title (const wchar_t *title)		{ Title = title; }
 
 	//
 	//	Activation access
@@ -257,7 +257,7 @@ protected:
 	virtual void			On_Destroy (void)					{}
 	virtual void			On_Activate (bool onoff);
 	virtual bool			On_Key_Down (uint32 key_id, uint32 key_data);
-	virtual void			On_Unicode_Char(uint16 unicode);
+	virtual void			On_Unicode_Char(wchar_t unicode);
 	virtual void			On_Mouse_Wheel (int direction);
 	virtual bool			On_Key_Up (uint32 key_id);
 	virtual void			On_Frame_Update (void);

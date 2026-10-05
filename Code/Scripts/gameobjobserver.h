@@ -37,6 +37,8 @@
 #ifndef	GAMEOBJOBSERVER_H
 #define	GAMEOBJOBSERVER_H
 
+#include <cstdint>
+
 #ifndef	ALWAYS_H
 	#include "always.h"
 #endif
@@ -110,7 +112,7 @@ public:
 	virtual	void	Destroyed( GameObject * obj )											= 0;
 	virtual	void	Killed( GameObject * obj, GameObject * killer )					= 0;
 	virtual	void	Damaged( GameObject * obj, GameObject * damager, float amount )	= 0;
-	virtual	void	Custom( GameObject * obj, int type, int param, GameObject * sender )	= 0;
+	virtual	void	Custom( GameObject * obj, int type, std::intptr_t param, GameObject * sender )	= 0;
 	virtual	void	Sound_Heard( GameObject * obj, const CombatSound & sound )	= 0;
 	virtual	void	Enemy_Seen( GameObject * obj, GameObject * enemy )				= 0;
 	virtual	void	Action_Complete( GameObject * obj, int action_id, ActionCompleteReason complete_reason )	= 0;

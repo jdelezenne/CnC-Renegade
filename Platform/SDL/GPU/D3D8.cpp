@@ -2,6 +2,7 @@
 #include "Platform/Platform.h"
 #include <SDL3/SDL.h>
 #include <d3d8.h>
+#include "Platform/Graphics/Types.h"
 #include <algorithm>
 #include <array>
 #include <atomic>
@@ -158,7 +159,7 @@ struct Context {
     SDL_GPUShader *VS=nullptr, *PS=nullptr, *PresentVS=nullptr, *PresentPS=nullptr;
     bool Spirv = false;
     bool Claimed = false;
-    std::array<PALETTEENTRY,256> Palette{};
+    std::array<Platform::GraphicsPaletteEntry,256> Palette{};
     unsigned PaletteVersion = 1;
     std::vector<std::weak_ptr<Image>> ManagedImages;
 
@@ -265,6 +266,7 @@ struct PrivateData {
     HRESULT Free(REFGUID guid) { return Values.erase(Key(guid)) ? D3D_OK : D3DERR_NOTFOUND; }
 };
 template<class T> const GUID& InterfaceId();
+bool EqualGuid(REFGUID left, REFGUID right) { return std::memcmp(&left, &right, sizeof(GUID)) == 0; }
 template<> const GUID& InterfaceId<IDirect3D8>() { return IID_IDirect3D8; }
 template<> const GUID& InterfaceId<IDirect3DDevice8>() { return IID_IDirect3DDevice8; }
 template<> const GUID& InterfaceId<IDirect3DTexture8>() { return IID_IDirect3DTexture8; }
@@ -280,9 +282,9 @@ template<class T> struct Object : T {
     {
         if (!result) return E_POINTER;
         *result=nullptr;
-        bool supported=IsEqualGUID(iid,IID_IUnknown) || IsEqualGUID(iid,InterfaceId<T>());
-        if constexpr(std::is_base_of_v<IDirect3DResource8,T>) supported=supported || IsEqualGUID(iid,IID_IDirect3DResource8)!=0;
-        if constexpr(std::is_base_of_v<IDirect3DBaseTexture8,T>) supported=supported || IsEqualGUID(iid,IID_IDirect3DBaseTexture8)!=0;
+        bool supported=EqualGuid(iid,IID_IUnknown) || EqualGuid(iid,InterfaceId<T>());
+        if constexpr(std::is_base_of_v<IDirect3DResource8,T>) supported=supported || EqualGuid(iid,IID_IDirect3DResource8);
+        if constexpr(std::is_base_of_v<IDirect3DBaseTexture8,T>) supported=supported || EqualGuid(iid,IID_IDirect3DBaseTexture8);
         if (!supported) return E_NOINTERFACE;
         *result=static_cast<T*>(this); AddRef(); return S_OK;
     }
@@ -707,7 +709,7 @@ struct Device final : Object<IDirect3DDevice8> {
     SDL_GPUSampler* PresentSampler=nullptr;
     std::map<std::vector<DWORD>,SDL_GPUGraphicsPipeline*> Pipelines;
     std::map<std::array<DWORD,10>,SDL_GPUSampler*> Samplers;
-    std::map<UINT,std::array<PALETTEENTRY,256>> Palettes;
+    std::map<UINT,std::array<Platform::GraphicsPaletteEntry,256>> Palettes;
     UINT Palette=0;
     Device(std::shared_ptr<Context> ctx,IDirect3D8* parent,D3DDEVICE_CREATION_PARAMETERS creation);
     ~Device() override;
@@ -730,7 +732,7 @@ struct Device final : Object<IDirect3DDevice8> {
     BOOL STDMETHODCALLTYPE ShowCursor(BOOL show) override {BOOL old=SDL_CursorVisible();if(show)SDL_ShowCursor();else SDL_HideCursor();return old;}
     HRESULT STDMETHODCALLTYPE CreateAdditionalSwapChain(D3DPRESENT_PARAMETERS*,IDirect3DSwapChain8**) override;
     HRESULT STDMETHODCALLTYPE Reset(D3DPRESENT_PARAMETERS*) override;
-    HRESULT STDMETHODCALLTYPE Present(const RECT*,const RECT*,HWND,const RGNDATA*) override;
+    HRESULT STDMETHODCALLTYPE Present(const RECT*,const RECT*,Platform::GraphicsWindowHandle,const RGNDATA*) override;
     HRESULT STDMETHODCALLTYPE GetBackBuffer(UINT index,D3DBACKBUFFER_TYPE type,IDirect3DSurface8** output) override {if(index || type!=D3DBACKBUFFER_TYPE_MONO)return D3DERR_INVALIDCALL;return Return<IDirect3DSurface8>(Backbuffer,output);}
     HRESULT STDMETHODCALLTYPE GetRasterStatus(D3DRASTER_STATUS*) override {return Unsupported("GetRasterStatus");}
     void STDMETHODCALLTYPE SetGammaRamp(DWORD,const D3DGAMMARAMP* ramp) override {if(ramp){Gamma=*ramp;GammaDirty=true;}}
@@ -781,8 +783,8 @@ struct Device final : Object<IDirect3DDevice8> {
     HRESULT STDMETHODCALLTYPE SetTextureStageState(DWORD stage,D3DTEXTURESTAGESTATETYPE state,DWORD value) override {if(stage>=8 || static_cast<unsigned>(state)>=33)return D3DERR_INVALIDCALL;Stages[stage][state]=value;return D3D_OK;}
     HRESULT STDMETHODCALLTYPE ValidateDevice(DWORD* passes) override {if(!passes)return D3DERR_INVALIDCALL;*passes=1;return D3D_OK;}
     HRESULT STDMETHODCALLTYPE GetInfo(DWORD,void*,DWORD) override {return Unsupported("GetInfo");}
-    HRESULT STDMETHODCALLTYPE SetPaletteEntries(UINT number,const PALETTEENTRY* entries) override {if(!entries)return D3DERR_INVALIDCALL;std::memcpy(Palettes[number].data(),entries,sizeof(PALETTEENTRY)*256);if(number==Palette){Ctx->Palette=Palettes[number];++Ctx->PaletteVersion;}return D3D_OK;}
-    HRESULT STDMETHODCALLTYPE GetPaletteEntries(UINT number,PALETTEENTRY* entries) override {if(!entries || !Palettes.contains(number))return D3DERR_INVALIDCALL;std::memcpy(entries,Palettes[number].data(),sizeof(PALETTEENTRY)*256);return D3D_OK;}
+    HRESULT STDMETHODCALLTYPE SetPaletteEntries(UINT number,const Platform::GraphicsPaletteEntry* entries) override {if(!entries)return D3DERR_INVALIDCALL;std::memcpy(Palettes[number].data(),entries,sizeof(Platform::GraphicsPaletteEntry)*256);if(number==Palette){Ctx->Palette=Palettes[number];++Ctx->PaletteVersion;}return D3D_OK;}
+    HRESULT STDMETHODCALLTYPE GetPaletteEntries(UINT number,Platform::GraphicsPaletteEntry* entries) override {if(!entries || !Palettes.contains(number))return D3DERR_INVALIDCALL;std::memcpy(entries,Palettes[number].data(),sizeof(Platform::GraphicsPaletteEntry)*256);return D3D_OK;}
     HRESULT STDMETHODCALLTYPE SetCurrentTexturePalette(UINT number) override {if(!Palettes.contains(number))return D3DERR_INVALIDCALL;Palette=number;Ctx->Palette=Palettes[number];++Ctx->PaletteVersion;return D3D_OK;}
     HRESULT STDMETHODCALLTYPE GetCurrentTexturePalette(UINT* output) override {if(!output)return D3DERR_INVALIDCALL;*output=Palette;return D3D_OK;}
     HRESULT STDMETHODCALLTYPE DrawPrimitive(D3DPRIMITIVETYPE type,UINT start,UINT count) override {if(!Vertices)return D3DERR_INVALIDCALL;return Draw(type,Vertices->Data,Stride,nullptr,start,count,0);}
@@ -1024,7 +1026,7 @@ SDL_GPUSampler* Device::Sampler(unsigned stage)
     info.mag_filter=key[1]==D3DTEXF_POINT?SDL_GPU_FILTER_NEAREST:SDL_GPU_FILTER_LINEAR;
     info.mipmap_mode=key[2]==D3DTEXF_LINEAR?SDL_GPU_SAMPLERMIPMAPMODE_LINEAR:SDL_GPU_SAMPLERMIPMAPMODE_NEAREST;
     info.address_mode_u=Address(key[3]);info.address_mode_v=Address(key[4]);info.address_mode_w=Address(key[5]);
-    info.enable_anisotropy=key[0]==D3DTEXF_ANISOTROPIC || key[1]==D3DTEXF_ANISOTROPIC;info.max_anisotropy=static_cast<float>(std::clamp(key[6],1ul,16ul));
+    info.enable_anisotropy=key[0]==D3DTEXF_ANISOTROPIC || key[1]==D3DTEXF_ANISOTROPIC;info.max_anisotropy=static_cast<float>(std::clamp<DWORD>(key[6],1,16));
     info.min_lod=static_cast<float>(std::max(key[7],key[8]));info.max_lod=key[2]==D3DTEXF_NONE?info.min_lod:static_cast<float>(key[9]-1);
     info.min_lod=std::min(info.min_lod,static_cast<float>(key[9]-1));info.max_lod=std::max(info.max_lod,info.min_lod);
     auto* sampler=SDL_CreateGPUSampler(Ctx->GPU,&info);if(sampler)Samplers.emplace(key,sampler);return sampler;
@@ -1139,7 +1141,7 @@ HRESULT Device::ResourceManagerDiscardBytes(DWORD bytes)
     }
     return D3D_OK;
 }
-HRESULT Device::Present(const RECT* source,const RECT* destination,HWND overrideWindow,const RGNDATA* dirty)
+HRESULT Device::Present(const RECT* source,const RECT* destination,Platform::GraphicsWindowHandle overrideWindow,const RGNDATA* dirty)
 {
     if(source || destination || overrideWindow || dirty)return Unsupported("Present regions");
     Ctx->EndPass();if(!Ctx->Upload(*Backbuffer->Data) || !UploadGamma() || !Ctx->Command())return Failure("Prepare presentation");
@@ -1166,7 +1168,7 @@ struct SwapChain final : Object<IDirect3DSwapChain8> {
     Surface* Backbuffer;
     SwapChain(std::shared_ptr<Context> ctx,Surface* surface):Ctx(std::move(ctx)),Backbuffer(surface) {Backbuffer->AddRef();}
     ~SwapChain() override {Backbuffer->Release();}
-    HRESULT STDMETHODCALLTYPE Present(const RECT*,const RECT*,HWND,const RGNDATA*) override {return Unsupported("Additional swapchain presentation");}
+    HRESULT STDMETHODCALLTYPE Present(const RECT*,const RECT*,Platform::GraphicsWindowHandle,const RGNDATA*) override {return Unsupported("Additional swapchain presentation");}
     HRESULT STDMETHODCALLTYPE GetBackBuffer(UINT index,D3DBACKBUFFER_TYPE type,IDirect3DSurface8** output) override {if(index || type!=D3DBACKBUFFER_TYPE_MONO)return D3DERR_INVALIDCALL;return Return<IDirect3DSurface8>(Backbuffer,output);}
 };
 HRESULT Device::CreateAdditionalSwapChain(D3DPRESENT_PARAMETERS* parameters,IDirect3DSwapChain8** output)
@@ -1237,7 +1239,7 @@ struct Factory final : Object<IDirect3D8> {
         return D3D_OK;
     }
     HMONITOR STDMETHODCALLTYPE GetAdapterMonitor(UINT) override {return nullptr;}
-    HRESULT STDMETHODCALLTYPE CreateDevice(UINT adapter,D3DDEVTYPE type,HWND focus,DWORD behavior,D3DPRESENT_PARAMETERS* parameters,IDirect3DDevice8** output) override
+    HRESULT STDMETHODCALLTYPE CreateDevice(UINT adapter,D3DDEVTYPE type,Platform::GraphicsWindowHandle focus,DWORD behavior,D3DPRESENT_PARAMETERS* parameters,IDirect3DDevice8** output) override
     {
         if(adapter || type!=D3DDEVTYPE_HAL || !parameters || !output || Ctx->Owner)return D3DERR_INVALIDCALL;*output=nullptr;
         Ctx->Window=Platform::GetWindow();if(!Ctx->Window)return Failure("Get SDL window");

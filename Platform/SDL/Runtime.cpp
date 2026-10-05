@@ -1,4 +1,5 @@
 #include "Platform/Platform.h"
+#include "Platform/UI/Input.h"
 #include <SDL3/SDL.h>
 
 namespace {
@@ -12,6 +13,7 @@ bool Pumping = false;
 bool Platform::Initialize()
 {
     if (Initialized) return true;
+    SDL_SetHint(SDL_HINT_IME_IMPLEMENTED_UI, "composition");
     Initialized = SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_JOYSTICK);
     if (Initialized) SDL_DisableScreenSaver();
     return Initialized;
@@ -19,6 +21,8 @@ bool Platform::Initialize()
 
 void Platform::Shutdown()
 {
+    SetUITextInput(false);
+    SetConsoleTextInput(false);
     InputEvents = ApplicationEvents = nullptr;
     if (Window) SDL_DestroyWindow(Window);
     Window = nullptr;

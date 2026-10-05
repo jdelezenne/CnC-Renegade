@@ -36,6 +36,9 @@
 ****************************************************************************/
 
 #ifndef _DPRINT_H_
+#ifndef _WIN32
+#include "Platform/POSIX/CRT.h"
+#endif
 #define _DPRINT_H_
 
 #ifdef __cplusplus

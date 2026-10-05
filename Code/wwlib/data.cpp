@@ -38,7 +38,8 @@
  *   Fetch_String -- Fetches a string resource.                                                *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 #include	"always.h"
-#include <new.h>
+#include <new>
+#include <cstring>
 #include	"data.h"
 
 
@@ -200,7 +201,7 @@ typedef struct SRecord {
  *=============================================================================================*/
 char const * Fetch_String(int id)
 {
-#ifdef _UNIX
+#ifndef _WIN32
 	return("");
 #else
 	static SRecord _buffers[64];
@@ -258,9 +259,9 @@ char const * Fetch_String(int id)
 }
 
 
-void const * Fetch_Resource(LPCSTR resname, LPCSTR restype)
+void const * Fetch_Resource(const char* resname, const char* restype)
 {
-#ifdef _UNIX
+#ifndef _WIN32
 	return(NULL);
 #else
 	/*

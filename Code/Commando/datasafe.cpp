@@ -40,7 +40,8 @@
 #include "vector.h"
 
 #include <malloc.h>
-#include <windows.h>
+#include "Platform/Threads.h"
+#include "Platform/Synchronization.h"
 #include "systimer.h"
 #include <stdio.h>
 
@@ -91,9 +92,9 @@ int GenericDataSafeClass::TypeListCount = 0;
 DataSafeHandleClass GenericDataSafeClass::SentinelTwo = 0;
 int GenericDataSafeClass::CRCErrors = 0;
 #ifdef THREAD_SAFE_DATA_SAFE
-HANDLE GenericDataSafeClass::SafeMutex;
+void* GenericDataSafeClass::SafeMutex;
 #else //THREAD_SAFE_DATA_SAFE
-unsigned int GenericDataSafeClass::PreferredThread = GetCurrentThreadId();
+unsigned int GenericDataSafeClass::PreferredThread = Platform::CurrentThreadId();
 #endif //THREAD_SAFE_DATA_SAFE
 
 #ifdef WWDEBUG
@@ -158,9 +159,9 @@ GenericDataSafeClass::GenericDataSafeClass(void)
 	if (TypeListCount == 0) {
 
 #ifdef THREAD_SAFE_DATA_SAFE
-		SafeMutex = CreateMutex(NULL, false, NULL);
+		SafeMutex = Platform::CreateMutexHandle(nullptr);
 #else
-		PreferredThread = GetCurrentThreadId();
+		PreferredThread = Platform::CurrentThreadId();
 #endif //THREAD_SAFE_DATA_SAFE
 
 #ifdef FIXED_KEY
@@ -290,7 +291,7 @@ void GenericDataSafeClass::Shutdown(void)
 		NumLists = 0;
 
 #ifdef THREAD_SAFE_DATA_SAFE
-		CloseHandle(SafeMutex);
+		Platform::DestroyMutex(SafeMutex);
 #endif //THREAD_SAFE_DATA_SAFE
 	}
 }
@@ -1262,10 +1263,10 @@ void GenericDataSafeClass::Say_Security_Fault(void)
  *=============================================================================================*/
 inline void GenericDataSafeClass::Lock(void)
 {
-	int deadlock = WaitForSingleObject(GenericDataSafeClass::SafeMutex, 10 * 1000);
-	if (deadlock == WAIT_TIMEOUT) {
+	const bool locked = Platform::LockMutex(GenericDataSafeClass::SafeMutex, 10 * 1000);
+	if (!locked) {
 		WWDEBUG_SAY(("ERROR: Data Safe: Timeout waiting for data safe mutex\n"));
-		ds_assert(deadlock != WAIT_TIMEOUT);
+		ds_assert(locked);
 	}
 }
 
@@ -1286,7 +1287,7 @@ inline void GenericDataSafeClass::Lock(void)
  *=============================================================================================*/
 inline void GenericDataSafeClass::Unlock(void)
 {
-	ReleaseMutex(GenericDataSafeClass::SafeMutex);
+	Platform::UnlockMutex(GenericDataSafeClass::SafeMutex);
 }
 
 #endif //THREAD_SAFE_DATA_SAFE

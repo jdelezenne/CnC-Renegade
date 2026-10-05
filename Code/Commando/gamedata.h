@@ -41,6 +41,7 @@
 #pragma once
 #endif
 
+#include "Platform/Calendar.h"
 #include "teammanager.h"
 #include "bittype.h"
 #include "boolean.h"
@@ -49,7 +50,7 @@
 #include "widestring.h"
 #include "radar.h"
 #include "DlgMPTeamSelect.h"
-#include <WWLib\Signaler.h>
+#include <wwlib/Signaler.h>
 
 const int		MAX_PASSWORD_SIZE			= 16;				//including NULL
 const int		MAX_MAPNAME_SIZE			= 28;				//including NULL
@@ -234,7 +235,7 @@ class	cGameData :
 		float				Get_Maximum_World_Distance(void) {return MaximumWorldDistance;}
 		void				Set_Maximum_World_Distance(float distance);
 		unsigned long	Get_Frame_Count(void) const {return FrameCount;}
-		LPSYSTEMTIME	Get_Game_Start_Time(void) {return &GameStartTime;}
+		Platform::CalendarTime*	Get_Game_Start_Time(void) {return &GameStartTime;}
 		int				Get_Duration_Seconds(void);
 		void				Set_Min_Qualifying_Time_Minutes(int minutes);
 		int				Get_Min_Qualifying_Time_Minutes(void)			{return MinQualifyingTimeMinutes;}
@@ -379,7 +380,7 @@ class	cGameData :
 		int					mWinnerID;
 		WinTypeEnum			WinType;
 
-		SYSTEMTIME			GameStartTime;
+		Platform::CalendarTime	GameStartTime;
 		DWORD					GameStartTimeMs;
 		unsigned long		FrameCount;
 		WideStringClass	MvpName;

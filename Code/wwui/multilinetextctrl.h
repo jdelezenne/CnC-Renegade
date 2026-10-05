@@ -70,7 +70,7 @@ public:
 	//	Inherited
 	//
 	void				Render (void);
-	void				Set_Text (const WCHAR *title);
+	void				Set_Text (const wchar_t *title);
 
 	//
 	//	Advise-sink callbacks

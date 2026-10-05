@@ -42,8 +42,9 @@
 #include "wwmemlog.h"
 #include "wwdebug.h"
 #include "vector.h"
-#include "fastallocator.h"
-#include <windows.h>
+#include "FastAllocator.h"
+#include "Platform/Synchronization.h"
+#include "Platform/Threads.h"
 
 #define USE_FAST_ALLOCATOR
 
@@ -70,9 +71,6 @@
 ** Enable one of the following #defines to specify which thread-sychronization
 ** method to use.
 */
-#define MEMLOG_USE_MUTEX					0
-#define MEMLOG_USE_CRITICALSECTION		1
-#define MEMLOG_USE_FASTCRITICALSECTION	0
 
 
 static unsigned AllocateCount;
@@ -230,120 +228,30 @@ private:
 /**
 ** Static Variables
 ** _TheMemLog - object which encapsulates all logging. will be allocated on first use
-** _MemLogMutex - handle to the mutex used to arbtirate access to the logging data structures
-** _MemLogLockCounter - count of the active mutex locks.
 */
 static MemLogClass *				_TheMemLog = NULL;
 static bool							_MemLogAllocated = false;
 
-#if MEMLOG_USE_MUTEX
-static void *						_MemLogMutex = NULL;
-static int							_MemLogLockCounter = 0;
-#endif
-
-#if MEMLOG_USE_CRITICALSECTION
-static bool							_MemLogCriticalSectionAllocated = false;
-static char							_MemLogCriticalSectionHandle[sizeof(CRITICAL_SECTION)];
-#endif
-
-#if MEMLOG_USE_FASTCRITICALSECTION
-volatile unsigned					_MemLogSemaphore = 0;
-#endif
-
-/*
-** Use this code to get access to the mutex...
-*/
-WWINLINE void * Get_Mem_Log_Mutex(void)
+WWINLINE void* Get_Mem_Log_Mutex(void)
 {
-#if MEMLOG_USE_MUTEX
-
-	if (_MemLogMutex == NULL) {
-		_MemLogMutex=CreateMutex(NULL,false,NULL);
-		WWASSERT(_MemLogMutex);
-	}
-	return _MemLogMutex;
-
-#endif
-
-#if MEMLOG_USE_CRITICALSECTION
-
-	if (_MemLogCriticalSectionAllocated == false) {
-		InitializeCriticalSection((CRITICAL_SECTION*)_MemLogCriticalSectionHandle);
-		_MemLogCriticalSectionAllocated = true;
-	}
-	return _MemLogCriticalSectionHandle;
-
-#endif
+    return Platform::MemoryLogCriticalSection();
 }
 
 WWINLINE void Lock_Mem_Log_Mutex(void)
 {
-#if MEMLOG_USE_MUTEX
-
-	void * mutex = Get_Mem_Log_Mutex();
-#ifdef WWDEBUG
-	int res =
-#endif
-		WaitForSingleObject(mutex,INFINITE);
-	WWASSERT(res==WAIT_OBJECT_0);
-	_MemLogLockCounter++;
-#endif
-
-#if MEMLOG_USE_CRITICALSECTION
-
-	Get_Mem_Log_Mutex();
-	EnterCriticalSection((CRITICAL_SECTION*)_MemLogCriticalSectionHandle);
-
-#endif
-
-#if MEMLOG_USE_FASTCRITICALSECTION
-
-	volatile unsigned& nFlag=_MemLogSemaphore;
-
-	#define ts_lock _emit 0xF0
-	assert(((unsigned)&nFlag % 4) == 0);
-
-	__asm mov ebx, [nFlag]
-	__asm ts_lock
-	__asm bts dword ptr [ebx], 0
-	__asm jc The_Bit_Was_Previously_Set_So_Try_Again
-	return;
-
-	The_Bit_Was_Previously_Set_So_Try_Again:
-	ThreadClass::Switch_Thread();
-	__asm mov ebx, [nFlag]
-	__asm ts_lock
-	__asm bts dword ptr [ebx], 0
-	__asm jc  The_Bit_Was_Previously_Set_So_Try_Again
-
-#endif
+    Platform::LockCriticalSection(Get_Mem_Log_Mutex());
 }
 
 WWINLINE void Unlock_Mem_Log_Mutex(void)
 {
-#if MEMLOG_USE_MUTEX
-
-	void * mutex = Get_Mem_Log_Mutex();
-	_MemLogLockCounter--;
-#ifdef WWDEBUG
-	int res=
-#endif
-		ReleaseMutex(mutex);
-	WWASSERT(res);
-
-#endif
-#if MEMLOG_USE_CRITICALSECTION
-
-	Get_Mem_Log_Mutex();
-	LeaveCriticalSection((CRITICAL_SECTION*)_MemLogCriticalSectionHandle);
-
-#endif
-
-#if MEMLOG_USE_FASTCRITICALSECTION
-	_MemLogSemaphore = 0;
-#endif
+    Platform::UnlockCriticalSection(Get_Mem_Log_Mutex());
 }
 
+/***************************************************************************************************
+**
+** ActiveCategoryStackClass Implementation
+**
+***************************************************************************************************/
 class MemLogMutexLockClass
 {
 public:
@@ -351,13 +259,6 @@ public:
 	~MemLogMutexLockClass(void) { Unlock_Mem_Log_Mutex(); }
 };
 
-
-
-/***************************************************************************************************
-**
-** ActiveCategoryStackClass Implementation
-**
-***************************************************************************************************/
 ActiveCategoryStackClass &
 ActiveCategoryStackClass::operator = (const ActiveCategoryStackClass & that)
 {
@@ -377,7 +278,7 @@ ActiveCategoryStackClass::operator = (const ActiveCategoryStackClass & that)
 ***************************************************************************************************/
 ActiveCategoryStackClass & ActiveCategoryClass::Get_Active_Stack(void)
 {
-	int current_thread = ::GetCurrentThreadId();
+	int current_thread = Platform::CurrentThreadId();
 
 	/*
 	** If we already have an allocated category stack for the current thread,
@@ -631,7 +532,7 @@ void * WWMemoryLogClass::Allocate_Memory(size_t size)
 	return ALLOC_MEMORY(size);
 #else
 
-	__declspec( thread ) static bool reentrancy_test = false;
+	static thread_local bool reentrancy_test = false;
 	MemLogMutexLockClass lock;
 
 	if (reentrancy_test) {

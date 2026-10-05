@@ -91,7 +91,7 @@
 #include	"ini.h"
 #include	"readline.h"
 #include	"trim.h"
-#include	"win.h"
+#include "Platform/Debug.h"
 #include	"xpipe.h"
 #include	"xstraw.h"
 #include	<stdio.h>
@@ -1642,9 +1642,9 @@ bool INIClass::Put_String(char const * section, char const * entry, char const *
       if (strcmp(entryptr->Entry, entry)) {
          DuplicateCRCError("INIClass::Put_String", section, entry);
       } else {
-   		OutputDebugString("INIClass::Put_String - Duplicate Entry \"");
-	   	OutputDebugString(entry);
-		   OutputDebugString("\"\n");
+	Platform::DebuggerOutput("INIClass::Put_String - Duplicate Entry \"");
+	Platform::DebuggerOutput(entry);
+	Platform::DebuggerOutput("\"\n");
       }
    	secptr->EntryIndex.Remove_Index(entryptr->Index_ID());
 	   delete entryptr;
@@ -2349,16 +2349,14 @@ int INIClass::CRC(const char *string)
 void INIClass::DuplicateCRCError(const char *message, const char *section, const char *entry)
 {
 	char buffer[512];
-	_snprintf(buffer, sizeof(buffer), "%s - Duplicate Entry \"%s\" in section \"%s\" (%s)\n", message,
+	std::snprintf(buffer, sizeof(buffer), "%s - Duplicate Entry \"%s\" in section \"%s\" (%s)\n", message,
 		entry, section, Filename);
 
-	OutputDebugString(buffer);
+	Platform::DebuggerOutput(buffer);
 	assert(0);
 
 #ifdef NDEBUG
-#ifdef _WINDOWS
-	MessageBox(0, buffer, "Duplicate CRC in INI file.", MB_ICONSTOP | MB_OK);
-#endif
+	Platform::ShowErrorDialog("Duplicate CRC in INI file.", buffer);
 #endif
 }
 

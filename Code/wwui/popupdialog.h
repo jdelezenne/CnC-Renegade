@@ -84,7 +84,7 @@ public:
 	//
 	virtual void				Render (void);
 
-	virtual void Set_Title(const WCHAR* title);
+	virtual void Set_Title(const wchar_t* title);
 
 protected:
 

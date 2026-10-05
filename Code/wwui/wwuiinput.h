@@ -46,7 +46,7 @@ struct SDL_KeyboardEvent;
 #include "vector3.h"
 #include "refcount.h"
 #include "bittype.h"
-#include "win.h"
+#include "Platform/UI/Constants.h"
 #include "IMEManager.h"
 
 ////////////////////////////////////////////////////////////////
@@ -59,8 +59,7 @@ struct SDL_KeyboardEvent;
 ////////////////////////////////////////////////////////////////
 class WWUIInputClass :
 	public RefCountClass,
-	protected Observer<IME::UnicodeChar>,
-	protected Observer<IME::IMEEvent>
+	protected Observer<IME::UnicodeChar>
 {
 public:
 
@@ -100,15 +99,14 @@ public:
 	virtual void				Exit_Menu_Mode (void)	{};
 
 	bool ProcessSDLKeyEvent(const SDL_KeyboardEvent& event);
-	bool ProcessMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, LRESULT& result);
+	bool ProcessSDLEvent(const SDL_Event& event);
 
-	void InitIME(HWND hwnd);
+	void InitIME();
 
 	IME::IMEManager* GetIME(void) const;
 		
 	protected:
 		void HandleNotification(IME::UnicodeChar& unicode);
-		void HandleNotification(IME::IMEEvent&);
 
 	private:
 		IME::IMEManager* mIMEManager;

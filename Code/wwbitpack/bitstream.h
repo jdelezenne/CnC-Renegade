@@ -120,14 +120,18 @@ class BitStreamClass : public cBitPacker
 		void		Add(BYTE val,int type = NO_ENCODER)							{ Internal_Add(val,type); }
 		void		Add(USHORT val,int type = NO_ENCODER)						{ Internal_Add(val,type); }
 		void		Add(UINT val,int type = NO_ENCODER)							{ Internal_Add(val,type); }
+#ifdef _WIN32
 		void		Add(ULONG val,int type = NO_ENCODER)						{ Internal_Add(val,type); }
+#endif
 		void		Add(char val,int type = NO_ENCODER)							{ Internal_Add(val,type); }
 		void		Add(int val,int type = NO_ENCODER)							{ Internal_Add(val,type); }
 		void		Add(float val,int type = NO_ENCODER)						{ Internal_Add(val,type); }
 
 		BYTE		Get(BYTE & set_val,int type = NO_ENCODER)					{ return Internal_Get(set_val,type); }
 		USHORT	Get(USHORT & set_val,int type = NO_ENCODER)				{ return Internal_Get(set_val,type); }
+#ifdef _WIN32
 		ULONG		Get(ULONG & set_val,int type = NO_ENCODER)				{ return Internal_Get(set_val,type); }
+#endif
 		UINT		Get(UINT & set_val,int type = NO_ENCODER)					{ return Internal_Get(set_val,type); }
 		char		Get(char & set_val,int type = NO_ENCODER)					{ return Internal_Get(set_val,type); }
 		int		Get(int & set_val,int type = NO_ENCODER)					{ return Internal_Get(set_val,type); }

@@ -43,16 +43,16 @@
 #include "DlgWebPage.h"
 #include "WOLLoginProfile.h"
 #include "WOLLogonMgr.h"
-#include <WWOnline\WOLServer.h>
-#include <WWOnline\WOLLoginInfo.h>
-#include <WWOnline\PingProfile.h>
-#include <WWUI\ComboBoxCtrl.h>
-#include <WWUI\ShortcutBarCtrl.h>
+#include <WWOnline/WOLServer.h>
+#include <WWOnline/WOLLoginInfo.h>
+#include <WWOnline/PingProfile.h>
+#include <wwui/comboboxctrl.h>
+#include <wwui/shortcutbarctrl.h>
 #include "bandwidthcheck.h"
 
 #include "Resource.h"
 #include "String_ids.h"
-#include <WWTranslateDB\TranslateDB.h>
+#include <wwtranslatedb/translatedb.h>
 
 using namespace WWOnline;
 

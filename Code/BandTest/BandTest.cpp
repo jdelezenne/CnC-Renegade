@@ -56,7 +56,7 @@
 #include "BandTest.h"
 #include "Settings.h"
 
-#include "..\combat\specialbuilds.h"
+#include "../Combat/specialbuilds.h"
 
 // warning C4711: function 'xxx' selected for automatic inline expansion
 #pragma warning(disable:4711)

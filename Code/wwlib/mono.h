@@ -40,7 +40,9 @@
 #ifndef MONO_H
 #define MONO_H
 
+#ifdef _WIN32
 #include	"win.h"
+#endif
 
 class MonoClass {
 	public:
@@ -87,7 +89,7 @@ class MonoClass {
 		/*
 		**	Handle of the mono page.
 		*/
-		HANDLE Handle;
+		void* Handle;
 
 		/*
 		**	If this is true, then monochrome output is allowed. It defaults to false

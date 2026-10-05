@@ -157,11 +157,6 @@ void SynchronizedTextureLoadTaskListClass::Push_Back(TextureLoadTaskClass *task)
 
 TextureLoadTaskClass *SynchronizedTextureLoadTaskListClass::Pop_Front(void)
 {
-	// this duplicates code inside base class, but saves us an unnecessary lock.
-	if (Is_Empty()) {
-		return 0;
-	}
-
 	FastCriticalSectionClass::LockClass lock(CriticalSection);
 	return TextureLoadTaskListClass::Pop_Front();
 
@@ -169,11 +164,6 @@ TextureLoadTaskClass *SynchronizedTextureLoadTaskListClass::Pop_Front(void)
 
 TextureLoadTaskClass *SynchronizedTextureLoadTaskListClass::Pop_Back(void)
 {
-	// this duplicates code inside base class, but saves us an unnecessary lock.
-	if (Is_Empty()) {
-		return 0;
-	}
-
 	FastCriticalSectionClass::LockClass lock(CriticalSection);
 	return TextureLoadTaskListClass::Pop_Back();
 }
@@ -210,6 +200,8 @@ public:
 #else
 	LoaderThreadClass(const char *thread_name = "Texture loader thread") : ThreadClass(thread_name) {}
 #endif
+
+	~LoaderThreadClass() { Stop(); }
 
 	void Thread_Function();
 } _TextureLoadThread;
@@ -297,15 +289,15 @@ void TextureLoader::Init()
 
 	ThumbnailManagerClass::Init();
 
+	_TextureLoadThread.Set_Priority(-1);
 	_TextureLoadThread.Execute();
-	_TextureLoadThread.Set_Priority(-4);
 }
 
 
 void TextureLoader::Deinit()
 {
-	FastCriticalSectionClass::LockClass lock(_BackgroundCriticalSection);
 	_TextureLoadThread.Stop();
+	FastCriticalSectionClass::LockClass lock(_BackgroundCriticalSection);
 
 	ThumbnailManagerClass::Deinit();
 	TextureLoadTaskClass::Delete_Free_Pool();

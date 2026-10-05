@@ -40,7 +40,6 @@
 #include "saveloadids.h"
 #include "simpledefinitionfactory.h"
 #include "persistfactory.h"
-#include "win.h"
 #include "wwhack.h"
 #include "systimer.h"
 

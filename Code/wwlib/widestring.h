@@ -45,7 +45,10 @@
 #include <stdarg.h>
 #include "always.h"
 #include "wwdebug.h"
+#ifdef _WIN32
 #include "win.h"
+#endif
+#include "Platform/Text.h"
 #include "wwstring.h"
 #include "trim.h"
 #include <wchar.h>

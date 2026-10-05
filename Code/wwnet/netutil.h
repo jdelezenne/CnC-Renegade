@@ -31,8 +31,7 @@
 #ifndef NETUTIL_H
 #define NETUTIL_H
 
-#include "win.h"
-#include <winsock.h>
+#include "Platform/Network/Sockets.h"
 
 #include "bittype.h"
 

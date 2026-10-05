@@ -1,11 +1,16 @@
-#include <d3dx8.h>
-#include <DirectXTex.h>
 #include <algorithm>
 #include <bit>
 #include <cstdio>
 #include <cstring>
 #include <filesystem>
 #include <vector>
+#include <d3dx8.h>
+#include "Platform/Graphics/Types.h"
+#include "Platform/Graphics/TextureImages.h"
+#include <DirectXTex.h>
+#ifdef _WIN32
+#include "Platform/Windows/GraphicsErrors.h"
+#endif
 
 namespace {
 DXGI_FORMAT Format(D3DFORMAT format)
@@ -39,7 +44,7 @@ DirectX::TEX_FILTER_FLAGS Filter(DWORD filter)
     }
     return static_cast<DirectX::TEX_FILTER_FLAGS>(mode | DirectX::TEX_FILTER_FORCE_NON_WIC | DirectX::TEX_FILTER_SEPARATE_ALPHA);
 }
-HRESULT Read(IDirect3DSurface8* surface, const RECT* rect, const PALETTEENTRY* palette, DirectX::ScratchImage& image)
+HRESULT Read(IDirect3DSurface8* surface, const RECT* rect, const Platform::GraphicsPaletteEntry* palette, DirectX::ScratchImage& image)
 {
     D3DSURFACE_DESC desc{};
     HRESULT result = surface->GetDesc(&desc);
@@ -167,8 +172,10 @@ extern "C" D3DXVECTOR4* WINAPI D3DXVec3Transform(D3DXVECTOR4* output, const D3DX
 extern "C" HRESULT WINAPI D3DXGetErrorStringA(HRESULT error, char* output, UINT length)
 {
     if (!output || !length) return E_INVALIDARG;
-    if (!FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM|FORMAT_MESSAGE_IGNORE_INSERTS, nullptr, error, 0, output, length, nullptr))
-        std::snprintf(output, length, "Direct3D error 0x%08lx", static_cast<unsigned long>(error));
+#ifdef _WIN32
+    if (Platform::FormatGraphicsError(error, output, length)) return S_OK;
+#endif
+    std::snprintf(output, length, "Direct3D error 0x%08x", static_cast<std::uint32_t>(error));
     return S_OK;
 }
 extern "C" HRESULT WINAPI D3DXCreateTexture(IDirect3DDevice8* device, UINT width, UINT height, UINT levels, DWORD usage, D3DFORMAT format, D3DPOOL pool, IDirect3DTexture8** output)
@@ -180,14 +187,14 @@ extern "C" HRESULT WINAPI D3DXCreateTexture(IDirect3DDevice8* device, UINT width
     if (levels == D3DX_DEFAULT) levels = 0;
     return device->CreateTexture(width, height, levels, usage, format, pool, output);
 }
-extern "C" HRESULT WINAPI D3DXLoadSurfaceFromSurface(IDirect3DSurface8* destination, const PALETTEENTRY*, const RECT* destinationRect, IDirect3DSurface8* source, const PALETTEENTRY* sourcePalette, const RECT* sourceRect, DWORD filter, D3DCOLOR key)
+extern "C" HRESULT WINAPI D3DXLoadSurfaceFromSurface(IDirect3DSurface8* destination, const Platform::GraphicsPaletteEntry*, const RECT* destinationRect, IDirect3DSurface8* source, const Platform::GraphicsPaletteEntry* sourcePalette, const RECT* sourceRect, DWORD filter, D3DCOLOR key)
 {
     if (!source || !destination) return D3DERR_INVALIDCALL;
     DirectX::ScratchImage pixels;
     HRESULT result = Read(source, sourceRect, sourcePalette, pixels);
     return FAILED(result) ? result : Write(destination, destinationRect, *pixels.GetImage(0, 0, 0), filter, key);
 }
-extern "C" HRESULT WINAPI D3DXFilterTexture(IDirect3DBaseTexture8* base, const PALETTEENTRY* palette, UINT sourceLevel, DWORD filter)
+extern "C" HRESULT WINAPI D3DXFilterTexture(IDirect3DBaseTexture8* base, const Platform::GraphicsPaletteEntry* palette, UINT sourceLevel, DWORD filter)
 {
     if (!base || base->GetType() != D3DRTYPE_TEXTURE || sourceLevel >= base->GetLevelCount()) return D3DERR_INVALIDCALL;
     auto* texture = static_cast<IDirect3DTexture8*>(base);
@@ -201,16 +208,13 @@ extern "C" HRESULT WINAPI D3DXFilterTexture(IDirect3DBaseTexture8* base, const P
     }
     return S_OK;
 }
-extern "C" HRESULT WINAPI D3DXCreateTextureFromFileExA(IDirect3DDevice8* device, const char* filename, UINT width, UINT height, UINT levels, DWORD usage, D3DFORMAT format, D3DPOOL pool, DWORD filter, DWORD mipFilter, D3DCOLOR key, D3DXIMAGE_INFO* info, PALETTEENTRY*, IDirect3DTexture8** output)
+extern "C" HRESULT WINAPI D3DXCreateTextureFromFileExA(IDirect3DDevice8* device, const char* filename, UINT width, UINT height, UINT levels, DWORD usage, D3DFORMAT format, D3DPOOL pool, DWORD filter, DWORD mipFilter, D3DCOLOR key, D3DXIMAGE_INFO* info, Platform::GraphicsPaletteEntry*, IDirect3DTexture8** output)
 {
     if (!device || !filename || !output) return D3DERR_INVALIDCALL;
     *output = nullptr;
     DirectX::ScratchImage image; DirectX::TexMetadata metadata;
-    std::filesystem::path path(filename);
-    HRESULT result = DirectX::LoadFromDDSFile(path.c_str(), DirectX::DDS_FLAGS_NONE, &metadata, image);
-    D3DXIMAGE_FILEFORMAT fileFormat = D3DXIFF_DDS;
-    if (FAILED(result)) { result = DirectX::LoadFromTGAFile(path.c_str(), DirectX::TGA_FLAGS_NONE, &metadata, image); fileFormat = D3DXIFF_TGA; }
-    if (FAILED(result)) { result = DirectX::LoadFromWICFile(path.c_str(), DirectX::WIC_FLAGS_NONE, &metadata, image); fileFormat = D3DXIFF_BMP; }
+    std::uint32_t fileFormat = D3DXIFF_DDS;
+    HRESULT result = Platform::LoadTextureImage(filename, image, metadata, fileFormat);
     if (FAILED(result)) return result;
     if (!width || width == D3DX_DEFAULT) width = static_cast<UINT>(metadata.width);
     if (!height || height == D3DX_DEFAULT) height = static_cast<UINT>(metadata.height);
@@ -222,7 +226,7 @@ extern "C" HRESULT WINAPI D3DXCreateTextureFromFileExA(IDirect3DDevice8* device,
     if (surface) surface->Release();
     if (SUCCEEDED(result)) result = D3DXFilterTexture(*output, nullptr, 0, mipFilter);
     if (FAILED(result)) { (*output)->Release(); *output = nullptr; return result; }
-    if (info) *info = {static_cast<UINT>(metadata.width), static_cast<UINT>(metadata.height), static_cast<UINT>(metadata.depth), static_cast<UINT>(metadata.mipLevels), format, D3DRTYPE_TEXTURE, fileFormat};
+    if (info) *info = {static_cast<UINT>(metadata.width), static_cast<UINT>(metadata.height), static_cast<UINT>(metadata.depth), static_cast<UINT>(metadata.mipLevels), format, D3DRTYPE_TEXTURE, static_cast<D3DXIMAGE_FILEFORMAT>(fileFormat)};
     return S_OK;
 }
 

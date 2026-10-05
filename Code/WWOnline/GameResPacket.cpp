@@ -32,10 +32,11 @@
 *
 ******************************************************************************/
 
+#include <algorithm>
 #include "GameResPacket.h"
 #include <assert.h>
 #include <string.h>
-#include <winsock.h>
+#include "Platform/Network/ByteOrder.h"
 
 namespace WWOnline {
 
@@ -95,13 +96,16 @@ void GameResPacket::Add_Field(GameResField *field)
 GameResPacket::GameResPacket(unsigned char* curbuf)
 	{
 	// Pull the size and packet ID out of the linear packet stream.
-	mSize = ntohl(*(unsigned long*)curbuf);
+	memcpy(&mSize, curbuf, sizeof(mSize));
+	mSize = ntohl(mSize);
 	curbuf += sizeof(mSize);
 
-	mID = ntohs(*(unsigned short*)curbuf);
+	memcpy(&mID, curbuf, sizeof(mID));
+	mID = ntohs(mID);
 	curbuf += sizeof(mID);
 	
-	mReserved = ntohs(*(unsigned short*)curbuf);
+	memcpy(&mReserved, curbuf, sizeof(mReserved));
+	mReserved = ntohs(mReserved);
 	curbuf += sizeof(mReserved);
 
 	mHead = NULL;
@@ -123,7 +127,7 @@ GameResPacket::GameResPacket(unsigned char* curbuf)
 
 		// Copy the data into the buffer
 		unsigned short size = ntohs(field->mSize);
-		field->mData = new unsigned char[size];
+		field->mData = new char[size];
 		memcpy(field->mData, curbuf, size);
 		curbuf += size;
 		remaining_size -= size;
@@ -180,13 +184,16 @@ unsigned char* GameResPacket::Create_Comms_Packet(unsigned long& size, char* sig
 	unsigned char* curbuf = bufferStart;
 
 	// write the size into the packet header
-	*(unsigned long*)curbuf = htonl(size);
-	curbuf += sizeof(unsigned long);
+	const std::uint32_t networkSize = htonl(static_cast<std::uint32_t>(size));
+	memcpy(curbuf, &networkSize, sizeof(networkSize));
+	curbuf += sizeof(networkSize);
 
-	*(unsigned short*)curbuf = htons(mID);
+	const std::uint16_t networkID = htons(mID);
+	memcpy(curbuf, &networkID, sizeof(networkID));
 	curbuf += sizeof(unsigned short);
 
-	*(unsigned short*)curbuf = htons(mReserved);
+	const std::uint16_t networkReserved = htons(mReserved);
+	memcpy(curbuf, &networkReserved, sizeof(networkReserved));
 	curbuf += sizeof(unsigned short);
 
 	// Ok now that the actual header information has been written we need to write out
@@ -387,7 +394,7 @@ bool GameResPacket::Get_Field(char *id, long &data)
 
 	if (field)
 		{
-		data = *((long *)field->mData);
+		data = *((std::int32_t *)field->mData);
 		}
 
 	return((field) ? true : false);
@@ -443,7 +450,7 @@ bool GameResPacket::Get_Field(char *id, unsigned long &data)
 
 	if (field)
 		{
-		data = *((unsigned long *)field->mData);
+		data = *((std::uint32_t *)field->mData);
 		}
 
 	return((field) ? true : false);
@@ -471,7 +478,7 @@ bool GameResPacket::Get_Field(char *id, void *data, int &length)
 
 	if (field)
 		{
-		memcpy(data, field->mData, min((int)field->mSize, length));
+		memcpy(data, field->mData, (std::min)((int)field->mSize, length));
 		length = (int) field->mSize;
 		}
 

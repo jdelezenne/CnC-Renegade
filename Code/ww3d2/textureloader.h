@@ -141,8 +141,10 @@ class SynchronizedTextureLoadTaskListClass : public TextureLoadTaskListClass
 		TextureLoadTaskClass *			Pop_Back		(void);
 		void									Remove		(TextureLoadTaskClass *task);
 
+		bool Is_Empty() const { FastCriticalSectionClass::LockClass lock(CriticalSection); return TextureLoadTaskListClass::Is_Empty(); }
+
 	private:
-		FastCriticalSectionClass		CriticalSection;
+		mutable FastCriticalSectionClass		CriticalSection;
 };
 
 

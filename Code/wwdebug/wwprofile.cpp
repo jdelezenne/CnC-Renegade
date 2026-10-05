@@ -51,10 +51,10 @@
 
 
 #include "wwprofile.h"
-#include <intrin.h>
-#include "fastallocator.h"
+#include "Platform/Processor.h"
+#include "FastAllocator.h"
 #include "wwdebug.h"
-#include <windows.h>
+#include "Platform/Threads.h"
 //#include "systimer.h"
 #include "systimer.h"
 #include "rawfile.h"
@@ -83,9 +83,9 @@ unsigned WWProfile_Get_System_Time()
  * HISTORY:                                                                                    *
  *   9/24/2000  gth : Created.                                                                 *
  *=============================================================================================*/
-inline void WWProfile_Get_Ticks(_int64 * ticks)
+inline void WWProfile_Get_Ticks(std::int64_t * ticks)
 {
-    *ticks = __rdtsc();
+    *ticks = Platform::ProcessorTicks();
 }
 
 
@@ -274,7 +274,7 @@ bool	WWProfileHierachyNodeClass::Return( void )
 {
 	if (--RecursionCounter == 0) {
 		if ( TotalCalls != 0 ) {
-			__int64 time;
+			std::int64_t time;
 			WWProfile_Get_Ticks(&time);
 			time-=StartTime;
 
@@ -294,7 +294,7 @@ WWProfileHierachyNodeClass		WWProfileManager::Root( "Root", NULL );
 WWProfileHierachyNodeClass	*	WWProfileManager::CurrentNode = &WWProfileManager::Root;
 WWProfileHierachyNodeClass	*	WWProfileManager::CurrentRootNode = &WWProfileManager::Root;
 int									WWProfileManager::FrameCounter = 0;
-__int64								WWProfileManager::ResetTime = 0;
+std::int64_t								WWProfileManager::ResetTime = 0;
 
 static unsigned int				ThreadID = static_cast<unsigned int>(-1);
 
@@ -319,7 +319,7 @@ static unsigned int				ThreadID = static_cast<unsigned int>(-1);
  *=============================================================================================*/
 void	WWProfileManager::Start_Profile( const char * name )
 {
-	if (::GetCurrentThreadId() != ThreadID) {
+	if (Platform::CurrentThreadId() != ThreadID) {
 		return;
 	}
 
@@ -333,7 +333,7 @@ void	WWProfileManager::Start_Profile( const char * name )
 
 void	WWProfileManager::Start_Root_Profile( const char * name )
 {
-	if (::GetCurrentThreadId() != ThreadID) {
+	if (Platform::CurrentThreadId() != ThreadID) {
 		return;
 	}
 
@@ -359,7 +359,7 @@ void	WWProfileManager::Start_Root_Profile( const char * name )
  *=============================================================================================*/
 void	WWProfileManager::Stop_Profile( void )
 {
-	if (::GetCurrentThreadId() != ThreadID) {
+	if (Platform::CurrentThreadId() != ThreadID) {
 		return;
 	}
 
@@ -372,7 +372,7 @@ void	WWProfileManager::Stop_Profile( void )
 
 void	WWProfileManager::Stop_Root_Profile( void )
 {
-	if (::GetCurrentThreadId() != ThreadID) {
+	if (Platform::CurrentThreadId() != ThreadID) {
 		return;
 	}
 
@@ -401,7 +401,7 @@ void	WWProfileManager::Stop_Root_Profile( void )
  *=============================================================================================*/
 void	WWProfileManager::Reset( void )
 {  
-	ThreadID = ::GetCurrentThreadId();
+	ThreadID = Platform::CurrentThreadId();
 
 	Root.Reset();
 	FrameCounter = 0;
@@ -452,7 +452,7 @@ void WWProfileManager::Increment_Frame_Counter( void )
  *=============================================================================================*/
 float WWProfileManager::Get_Time_Since_Reset( void )
 {
-	__int64 time;
+	std::int64_t time;
 	WWProfile_Get_Ticks(&time);
 	time -= ResetTime;
 
@@ -693,7 +693,7 @@ WWTimeItClass::WWTimeItClass( const char * name )
 
 WWTimeItClass::~WWTimeItClass( void )
 {
-	__int64 End;
+	std::int64_t End;
 	WWProfile_Get_Ticks( &End );
 	End -= Time;
 #ifdef WWDEBUG
@@ -715,7 +715,7 @@ WWMeasureItClass::WWMeasureItClass( float * p_result )
 
 WWMeasureItClass::~WWMeasureItClass( void )
 {
-	__int64 End;
+	std::int64_t End;
 	WWProfile_Get_Ticks( &End );
 	End -= Time;
 	WWASSERT(PResult != NULL);

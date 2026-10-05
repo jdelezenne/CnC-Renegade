@@ -36,7 +36,6 @@
 
 #include	"always.h"
 #include	"stimer.h"
-#include	"win.h"
 
 #ifdef _MSC_VER
 #pragma warning (push,3)

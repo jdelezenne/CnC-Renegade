@@ -313,7 +313,7 @@ WWINLINE long WWMath::Float_To_Long(float f)
 #else 
 WWINLINE long WWMath::Float_To_Long(float f)
 {
-	return (long) f;
+	return (long) nearbyintf(f);
 }
 #endif
 
@@ -325,7 +325,7 @@ WWINLINE long WWMath::Float_To_Long(double f)
 	__asm fistp dword ptr [retval]
 	return retval;
 #else 
-	return (long) f;
+	return (long) nearbyint(f);
 #endif
 }
 

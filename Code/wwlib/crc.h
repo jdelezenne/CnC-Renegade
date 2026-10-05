@@ -41,6 +41,8 @@
 #define CRC_H
 
 #include	<stdlib.h>
+#include <bit>
+#include <cstdint>
 #ifdef _UNIX
 	#include "osdep.h"
 #endif
@@ -80,16 +82,16 @@ class CRCEngine {
 
 		long Value(void) const {
 			if (Buffer_Needs_Data()) {
-				return(_lrotl(CRC, 1) + StagingBuffer.Composite);
+				return(static_cast<std::int32_t>(std::rotl(CRC, 1) + StagingBuffer.Composite));
 			}
-			return(CRC);
+			return(static_cast<std::int32_t>(CRC));
 		};
 
 		/*
 		**	Current accumulator of the CRC value. This value doesn't take into
 		**	consideration any pending data in the staging buffer.
 		*/
-		long CRC;
+		std::uint32_t CRC;
 
 		/*
 		**	This is the sub index into the staging buffer used to keep track of
@@ -103,8 +105,8 @@ class CRCEngine {
 		**	in preparation for additional data.
 		*/
 		union {
-			long Composite;
-			char Buffer[sizeof(long)];
+			std::uint32_t Composite;
+			char Buffer[sizeof(std::uint32_t)];
 		} StagingBuffer;
 };
 
@@ -119,7 +121,7 @@ class CRCEngine {
 class CRC {
 
 	// CRC for poly 0x04C11DB7
-	static unsigned long _Table[256];
+	static std::uint32_t _Table[256];
 
 public:
 

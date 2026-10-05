@@ -35,10 +35,11 @@
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 #include "multilinetextctrl.h"
+#include "Platform/UI/Input.h"
 #include "assetmgr.h"
 #include "stylemgr.h"
 #include "dialogbase.h"
-#include <winuser.h>
+#include "Platform/UI/Constants.h"
 
 
 //////////////////////////////////////////////////////////////////////
@@ -53,7 +54,6 @@ MultiLineTextCtrlClass::MultiLineTextCtrlClass (void)	:
 	RowCount (0),
 	RowsPerPage (0)
 {
-	UINT scrolllines;
 
 	//
 	//	Configure the renderers
@@ -70,8 +70,7 @@ MultiLineTextCtrlClass::MultiLineTextCtrlClass (void)	:
 	ScrollBarCtrl.Set_Is_Embedded (true);
 
 	// Calculate the no. of lines to scroll for each mouse wheel increment.
-	SystemParametersInfo (SPI_GETWHEELSCROLLLINES, 0, &scrolllines, 0);
-	MouseWheelIncrement = ((float) scrolllines) / ((float) WHEEL_DELTA);
+	MouseWheelIncrement = Platform::MouseWheelScrollLines() / 120.0F;
 
 	return ;
 }
@@ -144,8 +143,8 @@ MultiLineTextCtrlClass::Create_Text_Renderer (void)
 			if (src_end == NULL) {						\
 				dest = src_start;							\
 			} else {											\
-				uint32 bytes	= static_cast<uint32>((src_end - src_start) * sizeof(WCHAR));	\
-				uint32 len		= bytes / sizeof (WCHAR);						\
+				uint32 bytes	= static_cast<uint32>((src_end - src_start) * sizeof(wchar_t));	\
+				uint32 len		= bytes / sizeof (wchar_t);						\
 				::memcpy (dest.Get_Buffer (len + 1), src_start, bytes);	\
 				dest.Peek_Buffer ()[len] = 0;										\
 			}
@@ -154,8 +153,8 @@ MultiLineTextCtrlClass::Create_Text_Renderer (void)
 	//
 	//	Determine where to start drawing the text from
 	//
-	const WCHAR *text_start = TextRenderer.Find_Row_Start (Title, ScrollPos);
-	const WCHAR *text_end	= TextRenderer.Find_Row_Start (Title, ScrollPos+RowsPerPage);
+	const wchar_t *text_start = TextRenderer.Find_Row_Start (Title, ScrollPos);
+	const wchar_t *text_end	= TextRenderer.Find_Row_Start (Title, ScrollPos+RowsPerPage);
 	if (text_start != NULL) {
 
 		//
@@ -169,8 +168,8 @@ MultiLineTextCtrlClass::Create_Text_Renderer (void)
 			//
 			//	Render each line separately
 			//
-			const WCHAR *line_start = text_start;
-			const WCHAR *line_end	= TextRenderer.Find_Row_Start (Title, ScrollPos + 1);			
+			const wchar_t *line_start = text_start;
+			const wchar_t *line_end	= TextRenderer.Find_Row_Start (Title, ScrollPos + 1);
 			for (int index = 0; index < RowsPerPage; index ++) {
 
 				//
@@ -475,7 +474,7 @@ MultiLineTextCtrlClass::Set_Scroll_Pos (int new_position)
 //
 ////////////////////////////////////////////////////////////////
 void
-MultiLineTextCtrlClass::Set_Text (const WCHAR *title)
+MultiLineTextCtrlClass::Set_Text (const wchar_t *title)
 {
 	DialogControlClass::Set_Text (title);
 

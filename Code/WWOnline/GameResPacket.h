@@ -39,6 +39,7 @@
 
 #pragma warning(disable : 4711)
 
+#include <cstdint>
 #include "GameResField.h"
 
 namespace WWOnline {
@@ -89,7 +90,7 @@ class GameResPacket {
 		unsigned char* Create_Comms_Packet(unsigned long& size, char* sig_name, unsigned long& sig_offset);
 
 	private:
-		unsigned long mSize;
+		std::uint32_t mSize;
 		unsigned short mID;
 		unsigned short mReserved;
 

@@ -34,14 +34,17 @@
  * Functions:                                                                                  * 
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#include "Platform/Windows/Files.h"
+#include "Platform/Files.h"
+#include "Platform/Paths.h"
+#include <filesystem>
+#include <algorithm>
+#include <cstdint>
 #include "mixfile.h"
 #include "wwdebug.h"
 #include "ffactory.h"
 #include "wwfile.h"
 #include "realcrc.h"
 #include "rawfile.h"
-#include "win.h"
 #include "bittype.h"
 
 /*
@@ -50,14 +53,14 @@
 typedef struct
 {
 	char	signature[4];
-	long	header_offset;
-	long	names_offset;
+	std::int32_t	header_offset;
+	std::int32_t	names_offset;
 
 } MIXFILE_HEADER;
 
 typedef struct
 {
-	long	file_count;
+	std::int32_t	file_count;
 
 } MIXFILE_DATA_HEADER;
 
@@ -312,11 +315,8 @@ MixFileFactoryClass::Flush_Changes (void)
 	//
 	//	Get the path of the mix file
 	//
-	char drive[_MAX_DRIVE] = { 0 };
-	char dir[_MAX_DIR] = { 0 };
-	::_splitpath (MixFilename, drive, dir, NULL, NULL);
-	StringClass path	= drive;
-	path					+= dir;
+	StringClass path = std::filesystem::path(Platform::WritePath(MixFilename)).parent_path().string().c_str();
+	path += static_cast<char>(std::filesystem::path::preferred_separator);
 
 	//
 	//	Try to find a temp filename
@@ -364,8 +364,8 @@ MixFileFactoryClass::Flush_Changes (void)
 	//
 	//	Delete the old mix file and rename the new one
 	//
-	Platform::RemoveFile(MixFilename);
-	Platform::RenameFile(full_path, MixFilename);
+	Platform::RemoveRawFile(MixFilename);
+	Platform::RenameRawFile(full_path, MixFilename);
 
 	//
 	//	Reset the lists
@@ -392,7 +392,7 @@ MixFileFactoryClass::Get_Temp_Filename (const char *path, StringClass &full_path
 	//
 	for (int index = 0; index < 20; index ++) {
 		full_path.Format ("%s%.2d.dat", (const char *)temp_path, index + 1);
-		if (GetFileAttributes (full_path) == 0xFFFFFFFF) {
+		if (!std::filesystem::exists(Platform::WritePath(full_path))) {
 			retval = true;
 			break;
 		}
@@ -415,11 +415,11 @@ MixFileCreator::MixFileCreator( const char * filename )
 	if ( MixFile != NULL ) {
 		MixFile->Open( FileClass::WRITE );
 		MixFile->Write( "MIX1", 4 );
-		long	header_offset = 0;
+		std::int32_t	header_offset = 0;
 		MixFile->Write( &header_offset, sizeof( header_offset ) );
-		long	names_offset = 0;
+		std::int32_t	names_offset = 0;
 		MixFile->Write( &names_offset, sizeof( names_offset ) );
-		long	unused = 0;
+		std::int32_t	unused = 0;
 		MixFile->Write( &unused, sizeof( unused ) );
 	}
 }
@@ -594,33 +594,26 @@ void	MixFileCreator::Add_File( const char * filename, FileClass *file )
 /*
 **
 */
-void	Add_Files( const char * dir, MixFileCreator & mix )
+void Add_Files(const char* dir, MixFileCreator& mix)
 {
-	BOOL bcontinue = TRUE;
-	HANDLE hfile_find;
-	WIN32_FIND_DATA find_info = {0};
-	StringClass path;
-	path.Format( "data\\makemix\\%s*.*", dir );
-	WWDEBUG_SAY(( "Adding files from %s\n", path.Peek_Buffer() ));
-
-	for (hfile_find = ::FindFirstFile( path, &find_info);
-		 (hfile_find != INVALID_HANDLE_VALUE) && bcontinue;
-		  bcontinue = ::FindNextFile(hfile_find, &find_info)) {
-		if ( find_info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY ) {
-			if ( find_info.cFileName[0] != '.' ) {
-				StringClass	path;
-				path.Format( "%s%s\\", dir, find_info.cFileName );
-				Add_Files( path, mix );
-			}
-		} else {
-			StringClass name;
-			name.Format( "%s%s", dir, find_info.cFileName );
-			StringClass	source;
-			source.Format( "makemix\\%s", name.Peek_Buffer() );
-			mix.Add_File( source, name );
-//			WWDEBUG_SAY(( "Adding file from %s %s\n", source, name ));
-		}
-	}
+    const auto root = std::filesystem::path("data") / "makemix" / dir;
+    std::error_code error;
+    for (std::filesystem::directory_iterator entries(root, error), end; !error && entries != end; entries.increment(error)) {
+        const auto& entry = *entries;
+        const auto filename = entry.path().filename().string();
+        if (entry.is_directory(error)) {
+            if (!filename.empty() && filename.front() != '.') {
+                const auto child = (std::filesystem::path(dir) / filename).string() + static_cast<char>(std::filesystem::path::preferred_separator);
+                Add_Files(child.c_str(), mix);
+            }
+        } else if (!error) {
+            const auto name = (std::filesystem::path(dir) / filename).string();
+            const auto source = (std::filesystem::path("makemix") / name).string();
+            auto archive_name = name;
+            std::replace(archive_name.begin(), archive_name.end(), '/', '\\');
+            mix.Add_File(source.c_str(), archive_name.c_str());
+        }
+    }
 }
 
 void	Setup_Mix_File( void )

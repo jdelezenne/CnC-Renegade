@@ -28,7 +28,7 @@ INCLUDES
 #else
 #include <windows.h>
 #endif
-#include <WWLib\WideString.h>
+#include <wwlib/widestring.h>
 #include "trim.h"
 
 /********

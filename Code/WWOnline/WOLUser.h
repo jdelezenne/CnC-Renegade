@@ -38,19 +38,20 @@
 // Disable warning about exception handling not being enabled.
 #pragma warning(disable : 4530)
 
-#include <atlbase.h>
+#include "Platform/Online/WOL.h"
+#include "Platform/Online/Pointer.h"
 #include "RefCounted.h"
 #include "RefPtr.h"
-#include <WWLib\Notify.h>
-#include <WWLib\WideString.h>
+#include <wwlib/Notify.h>
+#include <wwlib/widestring.h>
 #include "WOLChannel.h"
 #include "WOLSquad.h"
 #include "WOLLadder.h"
 
 namespace WOL
 {
-#include <wolapi\wolapi.h>
-#include <wolapi\chatdefs.h>
+
+#include <wolapi/chatdefs.h>
 }
 
 #if defined(_MSC_VER)

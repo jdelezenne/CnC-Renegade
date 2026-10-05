@@ -118,7 +118,7 @@ DECLARE_SCRIPT(MPR_A01_CivLeader_PMP, "Follower_ID:int")
 		}
 	}
 
-	void Custom(GameObject* obj, int event, int param, GameObject* host)
+	void Custom(GameObject* obj, int event, std::intptr_t param, GameObject* host)
 	{
 		if (event == MPR_CUSTOM_I_AM_DEAD_DEL)
 		{
@@ -202,7 +202,7 @@ DECLARE_SCRIPT(MPR_A01_CivFollower_PMP, "Host_ID:int, Host_distance=1.5:float")
 		Host_ID = Get_Int_Parameter("Host_ID");
 	}	
 
-	void Custom(GameObject* obj, int event, int param, GameObject* host)
+	void Custom(GameObject* obj, int event, std::intptr_t param, GameObject* host)
 	{
 		if (event == MPR_CUSTOM_ESCORT_ATTACKED_DEL)
 		{
@@ -474,7 +474,7 @@ MPR_A01_GET_TO_CHINOOK
 
 DECLARE_SCRIPT(MPR_A01_Get_To_Chinook_PMP,"")
 {
-	void Custom(GameObject* obj, int event, int param, GameObject* host)
+	void Custom(GameObject* obj, int event, std::intptr_t param, GameObject* host)
 	{
 		if (event == MPR_CUSTOM_EVAC_CALL_DEL)
 		{
@@ -680,7 +680,7 @@ DECLARE_SCRIPT(MPR_A03_Bridge_Exploding_DEL, "AnimationName=:string")
 		Commands->Set_Animation_Frame(game_obj, animName, 0);
 	}
 
-	void Custom(GameObject* game_obj, int type, int, GameObject*)
+	void Custom(GameObject* game_obj, int type, std::intptr_t, GameObject*)
 	{
 		//	Is this the request to trigger the explosion?
 		// If so, then kick off the animation
@@ -1086,7 +1086,7 @@ DECLARE_SCRIPT(MPR_ApacheController, "")
 		mCanShoot = false;
 	}
 
-	void Custom(GameObject* apache, int event, int param, GameObject*)
+	void Custom(GameObject* apache, int event, std::intptr_t param, GameObject*)
 	{
 		if (event == MPR_CUSTOM_APACHE_GOTO_POSITION_DEL)
 		{
@@ -1265,7 +1265,7 @@ DECLARE_SCRIPT(MPR_A01_Orca_Strike_On_Turret_RAD, "Target_Number:int, AnimationN
 		n_attack_number = 1;
 	}
 
-	void Custom(GameObject* p_obj, int n_type, int n_param, GameObject* p_sender)
+	void Custom(GameObject* p_obj, int n_type, std::intptr_t n_param, GameObject* p_sender)
 	{
 		if (n_type == MPR_A01_CUSTOM_ORCA_TURRETSTRIKE_RAD)
 		{
@@ -1659,7 +1659,7 @@ DECLARE_SCRIPT(MPR_A04_Obelisk_Weapon_RAD, "ObeliskWeaponID:int, NodLightTankID:
 		}
 	}
 
-	void Custom(GameObject* p_obj, int n_type, int n_param, GameObject* p_sender)
+	void Custom(GameObject* p_obj, int n_type, std::intptr_t n_param, GameObject* p_sender)
 	{
 		if (n_type == MPR_A04_CUSTOM_OBELISK_FIRING_RAD)
 		{
@@ -1787,7 +1787,7 @@ DECLARE_SCRIPT(MPR_A05_Tank_Controller_RAD, "My_Number:int, MammothTank:int")
 		}
 	}
 
-	void Custom(GameObject* p_obj, int n_type, int n_param, GameObject* p_sender)
+	void Custom(GameObject* p_obj, int n_type, std::intptr_t n_param, GameObject* p_sender)
 	{
 		if (n_type == MPR_A05_CUSTOM_TEMPLE_ZONE_ENTERED_RAD)
 		{
@@ -2320,7 +2320,7 @@ DECLARE_SCRIPT(MPR_A02_Drill_Instructor_JDG, "")
 		}
 	}
 	
-	void Custom (GameObject* obj, int Type, int Param, GameObject* Sender)
+	void Custom (GameObject* obj, int Type, std::intptr_t Param, GameObject* Sender)
 	{
 		if ((Param == MPR_A02_PARAM_CADETS_GOTO_INNATE_JDG) && (Type == MPR_A02_CUSTOM_DRILL_INSTRUCTOR_JDG))
 		{
@@ -3115,7 +3115,7 @@ DECLARE_SCRIPT(MPR_A02_Drill_Cadet_1_JDG, "")
 		}
 	}
 
-	void Custom (GameObject* obj, int Type, int Param, GameObject* Sender)
+	void Custom (GameObject* obj, int Type, std::intptr_t Param, GameObject* Sender)
 	{
 		if ((Param == MPR_A02_PARAM_CADETS_GOTO_INNATE_JDG) && (Type == MPR_A02_CUSTOM_CADET_1_JDG))
 		{
@@ -3298,7 +3298,7 @@ DECLARE_SCRIPT(MPR_A02_Drill_Cadet_2_JDG, "")
 		}
 	}
 
-	void Custom (GameObject* obj, int Type, int Param, GameObject* Sender)
+	void Custom (GameObject* obj, int Type, std::intptr_t Param, GameObject* Sender)
 	{
 		if ((Param == MPR_A02_PARAM_CADETS_GOTO_INNATE_JDG) && (Type == MPR_A02_CUSTOM_CADET_2_JDG))
 		{
@@ -3480,7 +3480,7 @@ DECLARE_SCRIPT(MPR_A02_Drill_Cadet_3_JDG, "")
 		}
 	}
 
-	void Custom (GameObject* obj, int Type, int Param, GameObject* Sender)
+	void Custom (GameObject* obj, int Type, std::intptr_t Param, GameObject* Sender)
 	{
 		if ((Param == MPR_A02_PARAM_CADETS_GOTO_INNATE_JDG) && (Type == MPR_A02_CUSTOM_CADET_3_JDG))
 		{
@@ -4232,7 +4232,7 @@ DECLARE_SCRIPT(MPR_A02_DriveBy_Harvester_JDG, "")
 		Commands->Set_Health(obj, 400.0f);
 	}
 
-	void Custom (GameObject* obj, int Type, int Param, GameObject* Sender)
+	void Custom (GameObject* obj, int Type, std::intptr_t Param, GameObject* Sender)
 	{
 		if ((Type == MPR_A02_CUSTOM_DRIVEBY_HARVESTER_JDG) && (Param == MPR_A00_PARAM_HAVOC_IN_ENTER_ZONE_JDG))
 		{

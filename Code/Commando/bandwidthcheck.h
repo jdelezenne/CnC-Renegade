@@ -42,10 +42,10 @@
 #ifndef _BANDWIDTHCHECK_H
 #define _BANDWIDTHCHECK_H
 
-#include <WWOnline\WaitCondition.h>
-#include <wwlib\except.h>
+#include <WWOnline/WaitCondition.h>
+#include <wwlib/Except.h>
 #include <windows.h>
-#include <BandTest\BandTest.h>
+#include <BandTest/BandTest.h>
 
 
 namespace WWOnline {
@@ -101,6 +101,7 @@ class BandwidthCheckerClass
 		static class BandwidthCheckerThreadClass : public ThreadClass {
 			public:
 				BandwidthCheckerThreadClass(const char *thread_name = "Bandwidth checker thread") : ThreadClass(thread_name, &Exception_Handler) {}
+				~BandwidthCheckerThreadClass() { Stop(); }
 				void Thread_Function(void) {BandwidthCheckerClass::Check();};
 		} Thread;
 		friend BandwidthCheckerThreadClass;

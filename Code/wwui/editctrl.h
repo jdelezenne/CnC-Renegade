@@ -46,7 +46,6 @@
 #include "render2dsentence.h"
 #include "bittype.h"
 #include "IMEManager.h"
-#include "IMECandidateCtrl.h"
 #include "ToolTip.h"
 
 ////////////////////////////////////////////////////////////////
@@ -56,8 +55,7 @@
 ////////////////////////////////////////////////////////////////
 class EditCtrlClass :
 	public DialogControlClass,
-	public Observer<IME::CompositionEvent>,
-	public Observer<IME::CandidateEvent>
+	public Observer<IME::CompositionEvent>
 {
 public:
 
@@ -80,7 +78,7 @@ public:
 	//	From DialogControlClass
 	//
 	void					Render (void);
-	virtual void		Set_Text (const WCHAR *title);
+	virtual void		Set_Text (const wchar_t *title);
 
 	int					Get_Text_Length (void) const;
 
@@ -126,8 +124,8 @@ protected:
 	int					Character_From_Pos (const Vector2 &mouse_pos);
 	float					Pos_From_Character (int char_index);
 
-	void					On_Unicode_Char (WCHAR unicode);
-	void					Insert_String (const WCHAR *string);
+	void					On_Unicode_Char (wchar_t unicode);
+	void					Insert_String (const wchar_t *string);
 
 	void					Update_Hilight (int new_pos, int anchor_pos);
 	int					Find_Word_Start (int pos, int increment);
@@ -138,12 +136,10 @@ protected:
 	void Set_IME_Typing_Text_Pos(void);
 	void Show_IME_Typing_Text(const wchar_t* text);
 	void Hide_IME_Typing_Text(void);
-	void PositionCandidateList(void);
 
 	void					Get_Display_Text (WideStringClass &text);
 
 	void					HandleNotification(IME::CompositionEvent&);
-	void					HandleNotification(IME::CandidateEvent&);
 
 	////////////////////////////////////////////////////////////////
 	//	Protected member data
@@ -174,7 +170,6 @@ protected:
 	ToolTipClass mIMETypingTip;
 #endif
 
-	IMECandidateCtrl mCandidateList;
 };
 
 #endif //__EDIT_CTRL_H

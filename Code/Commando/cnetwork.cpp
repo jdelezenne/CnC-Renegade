@@ -89,7 +89,7 @@
 #include "dlgmpconnectionrefused.h"
 
 #include "Resource.h"
-#include <WWUI\DialogMgr.h>
+#include <wwui/dialogmgr.h>
 #include "ffactory.h"
 #include "realcrc.h"
 

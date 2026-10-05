@@ -26,7 +26,6 @@
 //------------------------------------------------------------------------------------
 #include "wwpacket.h"
 
-#include "win.h"
 #include "systimer.h"
 #include "crc.h"
 #include "quat.h"

@@ -121,7 +121,7 @@ enum {
 ** Script Commands List
 */
 
-#define SCRIPT_COMMANDS_VERSION 174
+#define SCRIPT_COMMANDS_VERSION 175
 
 typedef struct ScriptCommands {
 	unsigned int Size;
@@ -178,7 +178,7 @@ typedef struct ScriptCommands {
 	void	( * Select_Weapon )( GameObject * obj, const char * weapon_name );
 
 	// Custom Script
-	void	(*Send_Custom_Event_Function)(GameObject * from, GameObject * to, int type, int param, float delay);
+	void	(*Send_Custom_Event_Function)(GameObject * from, GameObject * to, int type, std::intptr_t param, float delay);
 	void	( * Send_Damaged_Event )( GameObject * object, GameObject * damager );
 
 	// Random Numbers
@@ -463,10 +463,9 @@ typedef struct ScriptCommands {
 	void	(* Set_Screen_Fade_Color) ( float r, float g, float b, float seconds );
 	void	(* Set_Screen_Fade_Opacity) ( float opacity, float seconds );
 
-	// Inline defaults preserve the original function-pointer table layout.
 	void Modify_Action(GameObject * obj, int action_id, const ActionParamsStruct & params, bool modify_move = true, bool modify_attack = true) { return Modify_Action_Function(obj, action_id, params, modify_move, modify_attack); }
 	void Trigger_Weapon(GameObject * obj, bool trigger, const Vector3 & target, bool primary = true) { return Trigger_Weapon_Function(obj, trigger, target, primary); }
-	void Send_Custom_Event(GameObject * from, GameObject * to, int type = 0, int param = 0, float delay = 0) { return Send_Custom_Event_Function(from, to, type, param, delay); }
+	void Send_Custom_Event(GameObject * from, GameObject * to, int type = 0, std::intptr_t param = 0, float delay = 0) { return Send_Custom_Event_Function(from, to, type, param, delay); }
 	void Set_Animation(GameObject * obj, const char * anim_name, bool looping, const char * sub_obj_name = NULL, float start_frame = 0.0F, float end_frame = -1.0F, bool is_blended = false) { return Set_Animation_Function(obj, anim_name, looping, sub_obj_name, start_frame, end_frame, is_blended); }
 	void Stop_Sound(int sound_id, bool destroy_sound = true) { return Stop_Sound_Function(sound_id, destroy_sound); }
 	GameObject * Find_Closest_Soldier(const Vector3 & pos, float min_dist, float max_dist, bool only_human = true) { return Find_Closest_Soldier_Function(pos, min_dist, max_dist, only_human); }

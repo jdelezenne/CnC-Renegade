@@ -31,8 +31,8 @@
 #ifndef LANCHAT_H
 #define LANCHAT_H
 
-#include "win.h"
-#include <winsock.h>
+#include "Platform/Network/Sockets.h"
+#include "bittype.h"
 
 #include "chatshre.h"
 

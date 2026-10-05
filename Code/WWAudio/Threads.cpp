@@ -174,8 +174,13 @@ WWAudioThreadsClass::Add_Delayed_Release_Object
 void
 WWAudioThreadsClass::Flush_Delayed_Release_Objects (void)
 {
-	CriticalSectionClass::LockClass lock(m_ListMutex);
-	m_IsFlushing = true;
+	DELAYED_RELEASE_INFO *release_list = NULL;
+	{
+		CriticalSectionClass::LockClass lock(m_ListMutex);
+		m_IsFlushing = true;
+		release_list = m_ReleaseListHead;
+		m_ReleaseListHead = NULL;
+	}
 
 	//
 	//	Loop through all the objects in our delay list, and
@@ -183,7 +188,7 @@ WWAudioThreadsClass::Flush_Delayed_Release_Objects (void)
 	//
 	DELAYED_RELEASE_INFO *info = NULL;
 	DELAYED_RELEASE_INFO *next = NULL;
-	for (info = m_ReleaseListHead; info != NULL; info = next) {
+	for (info = release_list; info != NULL; info = next) {
 		next = info->next;
 
 		//
@@ -193,7 +198,6 @@ WWAudioThreadsClass::Flush_Delayed_Release_Objects (void)
 		SAFE_DELETE (info);
 	}
 
-	m_ReleaseListHead = NULL;
 	return ;
 }
 
@@ -214,6 +218,8 @@ WWAudioThreadsClass::Delayed_Release_Thread_Proc (LPVOID /*param*/)
 	//
 	while (::WaitForSingleObject (m_hDelayedReleaseEvent, timeout) == WAIT_TIMEOUT) {
 
+		DELAYED_RELEASE_INFO *release_list = NULL;
+		DELAYED_RELEASE_INFO **release_tail = &release_list;
 		{
 			CriticalSectionClass::LockClass lock(m_ListMutex);
 
@@ -252,10 +258,18 @@ WWAudioThreadsClass::Delayed_Release_Thread_Proc (LPVOID /*param*/)
 					//
 					//	Free the object
 					//
-					REF_PTR_RELEASE (curr->object);
-					SAFE_DELETE (curr);
+					curr->next = NULL;
+					*release_tail = curr;
+					release_tail = &curr->next;
 				}
 			}
+		}
+
+		while (release_list != NULL) {
+			DELAYED_RELEASE_INFO *info = release_list;
+			release_list = info->next;
+			REF_PTR_RELEASE (info->object);
+			SAFE_DELETE (info);
 		}
 
 		//

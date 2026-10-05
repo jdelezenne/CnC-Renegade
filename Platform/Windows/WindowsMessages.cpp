@@ -121,10 +121,6 @@ void Install_Windows_Message_Hook(bool (*game_handler)(MSG&))
     SDL_SetWindowsMessageHook(Native_Message_Hook, nullptr);
 }
 
-void Windows_Message_Handler(void)
-{
-    Platform::PumpEvents();
-}
 
 /***********************************************************************************************
  * Add_Modeless_Dialog -- Adds a modeless dialog box to the message handler.                   *

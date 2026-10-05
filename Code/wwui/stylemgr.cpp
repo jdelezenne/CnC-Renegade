@@ -46,6 +46,7 @@
 #include "ini.h"
 #include "ffactory.h"
 #include "wwaudio.h"
+#include "Platform/Fonts.h"
 
 
 ////////////////////////////////////////////////////////////////
@@ -226,7 +227,7 @@ StyleMgrClass::Initialize_From_INI (const char *filename)
 			//
 			//	Install the font into windows
 			//
-			::AddFontResource (filename);
+			Platform::RegisterFontFile(filename);
 			FontFileList.Add (filename);
 		}
 
@@ -317,9 +318,8 @@ StyleMgrClass::Shutdown (void)
 	//
 	//	Unregister this font with windows
 	//
-	for (index = 0; index < FontFileList.Count (); index ++) {
-		::RemoveFontResource (FontFileList[index]);
-	}
+	Platform::ClearFontFiles();
+	FontFileList.Reset_Active();
 
 	//
 	//	Free the backdrop texture
@@ -383,7 +383,7 @@ StyleMgrClass::Assign_Font (Render2DSentenceClass *renderer, FONT_STYLE style)
 /*void
 StyleMgrClass::Render_Text
 (
-	const WCHAR *			text,
+	const wchar_t *			text,
 	Render2DTextClass *	renderer,
 	int						x_pos,
 	int						y_pos,
@@ -438,7 +438,7 @@ StyleMgrClass::Render_Text
 void
 StyleMgrClass::Render_Title_Text
 (
-	const WCHAR *				text,
+	const wchar_t *				text,
 	Render2DSentenceClass *	renderer,
 	const RectClass &			rect
 )
@@ -493,7 +493,7 @@ StyleMgrClass::Render_Title_Text
 void
 StyleMgrClass::Render_Text
 (
-	const WCHAR *				text,
+	const wchar_t *				text,
 	Render2DSentenceClass *	renderer,
 	const RectClass &			rect,	
 	bool							do_shadow,
@@ -526,7 +526,7 @@ StyleMgrClass::Render_Text
 void
 StyleMgrClass::Render_Text
 (
-	const WCHAR *				text,
+	const wchar_t *				text,
 	Render2DSentenceClass *	renderer,
 	uint32						text_color,
 	uint32						shadow_color,
@@ -605,7 +605,7 @@ StyleMgrClass::Render_Text
 /*void
 StyleMgrClass::Render_Text
 (
-	const WCHAR *			text,
+	const wchar_t *			text,
 	Render2DTextClass *	renderer,
 	uint32					text_color,
 	uint32					shadow_color,
@@ -676,7 +676,7 @@ StyleMgrClass::Render_Text
 /*void
 StyleMgrClass::Render_Text
 (
-	const WCHAR *				text,
+	const wchar_t *				text,
 	Render2DSentenceClass *	renderer,
 	uint32						text_color,
 	uint32						shadow_color,
@@ -750,7 +750,7 @@ StyleMgrClass::Render_Text
 void
 StyleMgrClass::Render_Wrapped_Text
 (
-	const WCHAR *				text,
+	const wchar_t *				text,
 	Render2DSentenceClass *	renderer,
 	const RectClass &			rect,
 	bool							do_shadow,
@@ -784,7 +784,7 @@ StyleMgrClass::Render_Wrapped_Text
 void
 StyleMgrClass::Render_Wrapped_Text_Ex
 (
-	const WCHAR *				text,
+	const wchar_t *				text,
 	Render2DSentenceClass *	renderer,
 	const RectClass &			rect,
 	bool							do_shadow,
@@ -821,7 +821,7 @@ StyleMgrClass::Render_Wrapped_Text_Ex
 void
 StyleMgrClass::Render_Wrapped_Text_Ex
 (
-	const WCHAR *				text,
+	const wchar_t *				text,
 	Render2DSentenceClass *	renderer,
 	uint32						text_color,
 	uint32						shadow_color, 
@@ -859,8 +859,8 @@ StyleMgrClass::Render_Wrapped_Text_Ex
 			if (src_end == NULL) {						\
 				dest = src_start;							\
 			} else {											\
-				uint32 bytes	= static_cast<uint32>((src_end - src_start) * sizeof(WCHAR));	\
-				uint32 len		= bytes / sizeof (WCHAR);						\
+				uint32 bytes	= static_cast<uint32>((src_end - src_start) * sizeof(wchar_t));	\
+				uint32 len		= bytes / sizeof (wchar_t);						\
 				::memcpy (dest.Get_Buffer (len + 1), src_start, bytes);	\
 				dest.Peek_Buffer ()[len] = 0;										\
 			}
@@ -868,13 +868,13 @@ StyleMgrClass::Render_Wrapped_Text_Ex
 	//
 	//	Loop over all the lines of text and check for wrapping...
 	//
-	const WCHAR *line_start = renderer->Find_Row_Start (text, 0);
+	const wchar_t *line_start = renderer->Find_Row_Start (text, 0);
 	while (line_start != NULL) {
 
 		//
 		//	Lookup the start of the next line...
 		//
-		const WCHAR *line_end = renderer->Find_Row_Start (line_start, 1);
+		const wchar_t *line_end = renderer->Find_Row_Start (line_start, 1);
 		
 		//
 		//	Copy this line of text into the control
@@ -908,7 +908,7 @@ StyleMgrClass::Render_Wrapped_Text_Ex
 void
 StyleMgrClass::Render_Wrapped_Text
 (
-	const WCHAR *				text,
+	const wchar_t *				text,
 	Render2DSentenceClass *	renderer,
 	uint32						text_color,
 	uint32						shadow_color, 
@@ -1003,7 +1003,7 @@ StyleMgrClass::Render_Hilight (Render2DClass *renderer, const RectClass &rect)
 void
 StyleMgrClass::Render_Glow
 (
-	const WCHAR *				text,
+	const wchar_t *				text,
 	Render2DSentenceClass *	renderer,
 	const RectClass &			rect,
 	int							radius_x,

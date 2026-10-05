@@ -423,7 +423,7 @@ HarvesterClass::Custom
 (
 	GameObject *	game_obj,
 	int				type,
-	int				param,
+	std::intptr_t				param,
 	GameObject *	sender
 )
 {

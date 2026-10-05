@@ -34,16 +34,16 @@
 ******************************************************************************/
 
 #include "Platform/Paths.h"
-#include "Platform/Windows/Files.h"
+#include <filesystem>
 #include "WWCOMUtil.h"
-#include <WWLib\Always.h>
+#include <wwlib/always.h>
 #include "WOLDownload.h"
 #include "WOLProduct.h"
 #include "WOLErrorUtil.h"
 #include "WOLString.h"
-#include <WOLAPI\DownloadDefs.h>
-#include <WWLib\WWString.h>
-#include <WWDebug\WWDebug.h>
+#include <wolapi/downloaddefs.h>
+#include <wwlib/wwstring.h>
+#include <wwdebug/wwdebug.h>
 
 namespace WWOnline {
 
@@ -151,7 +151,7 @@ bool Download::CreateDownloadObject(void)
 	WWDEBUG_SAY(("WOL: Creating IID_IDownload object\n"));
 
 	WOL::IDownload* downloadObject = NULL;
-	HRESULT hr = CreateCOMObjectFromLibrary("OnlineServices.dll", WOL::CLSID_Download,
+	HRESULT hr = Platform::CreateOnlineProvider( WOL::CLSID_Download,
 			WOL::IID_IDownload, (void **)&downloadObject);
 
 	if (FAILED(hr))
@@ -160,7 +160,7 @@ bool Download::CreateDownloadObject(void)
 		return false;
 		}
 
-	mDownloadObject = downloadObject;
+	mDownloadObject.Attach(downloadObject);
 
 	// Register this download as an event sink for download events
 	hr = AtlAdvise(mDownloadObject, this, WOL::IID_IDownloadEvent, &mDownloadCookie);
@@ -257,12 +257,13 @@ bool Download::Start(void)
 	// Attempt to create the target path for the download file.
 	StringClass userPath(Platform::WritePath(GetLocalPath()).c_str());
 	const char* localPath = userPath;
-	int dirCreated = Platform::MakeDirectory(localPath, NULL);
+	std::error_code directoryError;
+	std::filesystem::create_directories(localPath, directoryError);
 
-	if (!dirCreated && (ERROR_ALREADY_EXISTS != GetLastError()))
+	if (directoryError || !std::filesystem::is_directory(localPath, directoryError))
 		{
 		WWDEBUG_SAY(("WOLERROR: Failed to create download directory '%s'\n", localPath));
-		Print_Win32Error(GetLastError());
+		WWDEBUG_SAY(("WOLERROR: %s\n", directoryError.message().c_str()));
 		SetError(DOWNLOADEVENT_LOCALFILEOPENFAILED, GetOnErrorText(DOWNLOADEVENT_LOCALFILEOPENFAILED));
 		return false;
 		}
@@ -272,7 +273,7 @@ bool Download::Start(void)
 	const char* filename = GetFilename();
 
 	StringClass localFile(true);
-	localFile.Format("%s\\%s", localPath, filename);
+	localFile = (std::filesystem::path(localPath) / filename).string().c_str();
 
 	StringClass downloadFile(true);
 	downloadFile.Format("%s\\%s", downloadPath, filename);

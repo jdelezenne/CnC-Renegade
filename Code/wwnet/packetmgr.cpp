@@ -35,6 +35,7 @@
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 #include "packetmgr.h"
+#include "Platform/Network/Transport.h"
 #include <bit>
 
 #include <always.h>
@@ -907,20 +908,20 @@ WWPROFILE("PMgr Flush");
 			memcpy(crc_and_buffer + sizeof(crc), (const char*)SendBuffers[i].PacketBuffer, SendBuffers[i].PacketSendLength);
 
 			Register_Packet_Out(&SendBuffers[i].IPAddress[0], SendBuffers[i].Port, SendBuffers[i].PacketSendLength + UDP_HEADER_SIZE + sizeof(crc), 0);
-			int result = sendto(socket, crc_and_buffer, SendBuffers[i].PacketSendLength + sizeof(crc), 0, (LPSOCKADDR) &addr, sizeof(SOCKADDR_IN));
+			int result = Platform::SocketSendTo(socket, crc_and_buffer, SendBuffers[i].PacketSendLength + sizeof(crc), 0, (LPSOCKADDR) &addr, sizeof(SOCKADDR_IN));
 
 #else //WRAPPER_CRC
 
 			Register_Packet_Out(&SendBuffers[i].IPAddress[0], SendBuffers[i].Port, SendBuffers[i].PacketSendLength + UDP_HEADER_SIZE, 0);
-			int result = sendto(socket, (const char*)SendBuffers[i].PacketBuffer, SendBuffers[i].PacketSendLength, 0, (LPSOCKADDR) &addr, sizeof(SOCKADDR_IN));
+			int result = Platform::SocketSendTo(socket, (const char*)SendBuffers[i].PacketBuffer, SendBuffers[i].PacketSendLength, 0, (LPSOCKADDR) &addr, sizeof(SOCKADDR_IN));
 
 #endif //WRAPPER_CRC
 
 
 			if (result == SOCKET_ERROR){
-				if (WSAGetLastError() != WSAEWOULDBLOCK) {
+				if (Platform::SocketLastError() != Platform::SocketWouldBlockError()) {
 					int error_code = 0;
-					error_code = WSAGetLastError();// avoid release build compiler warning
+					error_code = Platform::SocketLastError();// avoid release build compiler warning
 					WWDEBUG_SAY(("PacketManagerClass - sendto returned error code %d - %s\n", error_code, cNetUtil::Winsock_Error_Text(error_code)));
 					Clear_Socket_Error(socket);
 				} else {
@@ -929,7 +930,7 @@ WWPROFILE("PMgr Flush");
 					** No more room for outgoing packets. Unfortunately, this means we lose the lot.
 					*/
 					WWDEBUG_SAY(("PacketManagerClass - sendto returned WSAEWOULDBLOCK\n"));
-					Sleep(0);
+					Platform::Sleep(0);
 					ErrorState = STATE_WS_BUFFERS_FULL;
 				}
 			}
@@ -1111,7 +1112,7 @@ void PacketManagerClass::Clear_Socket_Error(SOCKET socket)
 	assert(socket != INVALID_SOCKET);
 
 	if (socket != INVALID_SOCKET) {
-		getsockopt (socket, SOL_SOCKET, SO_ERROR, (char*)&error_code, &length);
+		Platform::SocketGetOption(socket, SOL_SOCKET, SO_ERROR, (char*)&error_code, &length);
 		WWDEBUG_SAY(("Per socket error is %d - %s\n", error_code, cNetUtil::Winsock_Error_Text(error_code)));
 	}
 }
@@ -1148,10 +1149,10 @@ WWPROFILE("Pmgr Get");
 		memset(&addr, 0, sizeof(addr));
 		pm_assert(packet_buffer_size >= PACKET_MANAGER_MTU);
 		int bytes;
-		int result = ioctlsocket(socket, FIONREAD, (unsigned long *)&bytes);
+		int result = Platform::SocketPendingBytes(socket, bytes);
 		if (result == 0 && bytes != 0) {
 
-			bytes = recvfrom(socket, (char*)packet_buffer, packet_buffer_size, 0, (LPSOCKADDR) &addr, &address_size);
+			bytes = Platform::SocketReceiveFrom(socket, (char*)packet_buffer, packet_buffer_size, 0, (LPSOCKADDR) &addr, &address_size);
 			if (bytes > 0) {
 #ifndef WRAPPER_CRC
 				Register_Packet_In((unsigned char*) &addr.sin_addr.s_addr, addr.sin_port, bytes + UDP_HEADER_SIZE, 0);
@@ -1191,19 +1192,19 @@ WWPROFILE("Pmgr Get");
 				}
 #endif //WRAPPER_CRC
 			} else {
-				if (bytes == SOCKET_ERROR && WSAGetLastError() != WSAEWOULDBLOCK) {
+				if (bytes == SOCKET_ERROR && Platform::SocketLastError() != Platform::SocketWouldBlockError()) {
 					int error_code = 0;
-					error_code = WSAGetLastError();// avoid release build compiler warning
+					error_code = Platform::SocketLastError();// avoid release build compiler warning
 					WWDEBUG_SAY(("PacketManagerClass - recvfrom failed with error %d - %s\n", error_code, cNetUtil::Winsock_Error_Text(error_code)));
 					Clear_Socket_Error(socket);
-					if (error_code == WSAECONNRESET) {
+					if (error_code == Platform::SocketConnectionResetError()) {
 						WWDEBUG_SAY(("PacketManagerClass - WSAECONNRESET from address %s\n", Addr_As_String(&addr)));
 						memcpy(ip_address, &addr.sin_addr.s_addr, 4);
 						port = addr.sin_port;
 						return(-1);
 					}
 				} else {
-					WWDEBUG_SAY(("PacketManagerClass - recvfrom failed with error WSAEWOULDBLOCK\n", WSAGetLastError()));
+					WWDEBUG_SAY(("PacketManagerClass - recvfrom failed with error WSAEWOULDBLOCK\n", Platform::SocketLastError()));
 				}
 			}
 		}

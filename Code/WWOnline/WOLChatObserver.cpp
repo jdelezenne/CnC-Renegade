@@ -36,7 +36,7 @@
 
 #pragma warning (disable : 4530)
 
-#include <atlbase.h>
+#include "Platform/Online/Pointer.h"
 #include "WOLChatObserver.h"
 #include "WOLSession.h"
 #include "WOLProduct.h"
@@ -50,15 +50,15 @@
 #include "WOLGameOptions.h"
 #include "WOLGame.h"
 #include "WOLErrorUtil.h"
-#include <wwlib\Settings.h>
-#include <commando\_globals.h>
+#include <wwlib/Settings.h>
+#include <Commando/_globals.h>
 #include "systimer.h"
 #include "specialbuilds.h"
 #include "simplevec.h"
-#include "..\commando\cnetwork.h"
+#include "../Commando/cnetwork.h"
 namespace WOL
 {
-#include <WOLAPI\chatdefs.h>
+#include <wolapi/chatdefs.h>
 }
 
 namespace WWOnline {
@@ -180,8 +180,7 @@ STDMETHODIMP ChatObserver::QueryInterface(const IID& iid, void** ppv)
 
 ULONG STDMETHODCALLTYPE ChatObserver::AddRef(void)
 	{
-	InterlockedIncrement((LPLONG)&mRefCount);
-	return mRefCount;
+	return mRefCount.fetch_add(1, std::memory_order_relaxed) + 1;
 	}
 
 
@@ -203,15 +202,15 @@ ULONG STDMETHODCALLTYPE ChatObserver::AddRef(void)
 
 ULONG STDMETHODCALLTYPE ChatObserver::Release(void)
 	{
-	InterlockedDecrement((LPLONG)&mRefCount);
+	const auto remaining = mRefCount.fetch_sub(1, std::memory_order_acq_rel) - 1;
 
-	if (mRefCount == 0)
+	if (remaining == 0)
 		{
 		delete this;
 		return 0;
 		}
 
-	return mRefCount;
+	return remaining;
 	}
 
 
@@ -914,7 +913,7 @@ STDMETHODIMP ChatObserver::OnChannelJoin(HRESULT result, WOL::Channel* inChannel
 	WWASSERT(inUser != NULL && "OnChannelJoin parameter error");
 
   	struct in_addr addr;
-	addr.S_un.S_addr = inUser->ipaddr;
+	addr.s_addr = inUser->ipaddr;
 
 	WWDEBUG_SAY(("WOL: User '%s' @ %s joining channel '%s'\n", (char*)inUser->name, inet_ntoa(addr), (char*)inChannel->name));
 
@@ -2637,7 +2636,7 @@ void ChatObserver::ProcessSquadRequest(const RefPtr<SquadData>& squad)
 
 			if (iswdigit(firstChar))
 				{
-				unsigned int pendingID = _wtoi(pending);
+				unsigned int pendingID = static_cast<std::int32_t>(std::wcstol(pending, nullptr, 10));
 
 				if (squad->GetID() == pendingID)
 					{

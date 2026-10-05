@@ -35,6 +35,7 @@
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 #include "treectrl.h"
+#include "Platform/UI/Text.h"
 #include "assetmgr.h"
 #include "refcount.h"
 #include "font3d.h"
@@ -662,17 +663,10 @@ TreeCtrlClass::Alphabetic_Sort_Callback
 	//
 	//	Sort by name
 	//
-	const WCHAR *name1 = item1->Get_Name ();
-	const WCHAR *name2 = item2->Get_Name ();
-	int result = ::CompareStringW (LOCALE_USER_DEFAULT, NORM_IGNORECASE, name1, -1, name2, -1);
+	const wchar_t *name1 = item1->Get_Name ();
+	const wchar_t *name2 = item2->Get_Name ();
+	int retval = Platform::CompareUIStrings(name1, name2);
 
-	int retval = 0;
-	if (result == CSTR_LESS_THAN) {
-		retval = -1;
-	} else if (result == CSTR_GREATER_THAN) {
-		retval = 1;
-	}
-	
 	return retval;
 }
 
@@ -1040,7 +1034,7 @@ TreeCtrlClass::Ensure_Visible (TreeItemClass *item_to_find)
 TreeItemClass *
 TreeCtrlClass::Insert_Item
 (
-	const WCHAR *		name,
+	const wchar_t *		name,
 	const char *		icon_name,
 	const char *		selected_icon_name,
 	TreeItemClass *	parent
@@ -1514,7 +1508,7 @@ TreeItemClass::Expand (bool onoff)
 //
 ////////////////////////////////////////////////////////////////
 void
-TreeItemClass::Set_Name (const WCHAR *name)
+TreeItemClass::Set_Name (const wchar_t *name)
 {
 	Name = name;
 	TreeCtrl->Set_Dirty ();

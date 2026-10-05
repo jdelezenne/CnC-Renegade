@@ -84,7 +84,6 @@
 
 #include	"always.h"
 #include	"mpmath.h"
-#include	"win.h"
 #include	<assert.h>
 #include	<ctype.h>
 #include	<limits.h>

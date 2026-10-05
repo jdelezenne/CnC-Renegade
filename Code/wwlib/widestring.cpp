@@ -37,7 +37,6 @@
 #pragma warning(disable : 4514)
 
 #include "widestring.h"
-#include "win.h"
 #include <stdio.h>
 
 
@@ -250,6 +249,9 @@ WideStringClass::Format_Args (const WCHAR *format, const va_list & arg_list )
 		return 0;
 	}
 
+	va_list arguments;
+	va_copy(arguments, const_cast<va_list&>(arg_list));
+
 	//
 	// Make a guess at the maximum length of the resulting string
 	//
@@ -258,13 +260,14 @@ WideStringClass::Format_Args (const WCHAR *format, const va_list & arg_list )
 	//
 	//	Format the string
 	//
-	int retval = _vsnwprintf (temp_buffer, 512, format, arg_list);
+	int retval = _vsnwprintf (temp_buffer, 512, format, arguments);
 	
 	//
 	//	Copy the string into our buffer
 	//	
 	(*this) = temp_buffer;
 
+	va_end(arguments);
 	return retval;
 }
 
@@ -320,26 +323,11 @@ WideStringClass::Release_Resources (void)
 ///////////////////////////////////////////////////////////////////
 bool WideStringClass::Convert_From (const char *text)
 {
-	if (text != NULL) {
-		
-		int length;
-
-		length = MultiByteToWideChar (CP_ACP, 0, text, -1, NULL, 0);
-		if (length > 0) {
-
-			Uninitialised_Grow (length);
-			Store_Length (length - 1);
-
-			// Convert.
-			MultiByteToWideChar (CP_ACP, 0, text, -1, m_Buffer, length);
-
-			// Success.
-			return (true);
-		}
-   }
-
-	// Failure.
-	return (false);
+    if (!text) return false;
+    std::wstring converted;
+    if (!Platform::WideFromNarrow(text, converted)) return false;
+    *this = converted.c_str();
+    return true;
 }
 
 ///////////////////////////////////////////////////////////////////

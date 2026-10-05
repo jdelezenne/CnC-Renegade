@@ -42,7 +42,6 @@
 
 #include "WOLProduct.h"
 #include "Settings.h"
-#include <WWLib\win.h>
 
 namespace WWOnline {
 

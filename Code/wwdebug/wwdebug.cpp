@@ -43,7 +43,7 @@
 
 
 #include "wwdebug.h"
-#include <windows.h>
+#include "Platform/Debug.h"
 //#include "win.h" can use this if allowed to see wwlib
 #include <stdlib.h>
 #include <stdarg.h>
@@ -51,7 +51,6 @@
 #include <assert.h>
 #include <string.h>
 #include <signal.h>
-#include "except.h"
 
 
 static PrintFunc			_CurMessageHandler = NULL;
@@ -65,21 +64,12 @@ static ProfileFunc		_CurProfileStopHandler = NULL;
 
 void Convert_System_Error_To_String(int id, char* buffer, int buf_len)
 {
-#ifndef _UNIX
-	FormatMessage(
-		FORMAT_MESSAGE_FROM_SYSTEM,
-		NULL,
-		id,
-		0,
-		buffer,
-		buf_len,
-		NULL);
-#endif
+	Platform::FormatSystemError(id, buffer, buf_len);
 }
 
 int Get_Last_System_Error()
 {
-	return GetLastError();
+	return Platform::LastSystemError();
 }
 
 /***********************************************************************************************
@@ -298,24 +288,10 @@ void WWDebug_Assert_Fail(const char * expr,const char * file, int line)
 		/*
 		// If the exception handler is try to quit the game then don't show an assert.
 		*/
-		if (Is_Trying_To_Exit()) {
-			ExitProcess(0);
-		}
-
       char assertbuf[4096];
 		sprintf(assertbuf, "Assert failed\n\n. File %s Line %d", file, line);
+		Platform::HandleAssertion(assertbuf);
 
-      int code = MessageBoxA(NULL, assertbuf, "WWDebug_Assert_Fail", MB_ABORTRETRYIGNORE|MB_ICONHAND|MB_SETFOREGROUND|MB_TASKMODAL);
-
-      if (code == IDABORT) {
-      	raise(SIGABRT);
-      	_exit(3);
-      }
-
-		if (code == IDRETRY) {
-			__debugbreak();
-      	return;
-		}
    }
 }
 #endif
@@ -456,62 +432,6 @@ void WWDebug_Profile_Stop( const char * title)
  *=============================================================================================*/
 void WWDebug_DBWin32_Message_Handler( const char * str )
 {
-
-    HANDLE heventDBWIN;  /* DBWIN32 synchronization object */
-    HANDLE heventData;   /* data passing synch object */
-    HANDLE hSharedFile;  /* memory mapped file shared data */
-    LPSTR lpszSharedMem;
-
-    /* make sure DBWIN is open and waiting */
-    heventDBWIN = OpenEvent(EVENT_MODIFY_STATE, FALSE, "DBWIN_BUFFER_READY");
-    if ( !heventDBWIN )
-    {
-        //MessageBox(NULL, "DBWIN_BUFFER_READY nonexistent", NULL, MB_OK);
-        return;
-    }
-
-    /* get a handle to the data synch object */
-    heventData = OpenEvent(EVENT_MODIFY_STATE, FALSE, "DBWIN_DATA_READY");
-    if ( !heventData )
-    {
-        // MessageBox(NULL, "DBWIN_DATA_READY nonexistent", NULL, MB_OK);
-        CloseHandle(heventDBWIN);
-        return;
-    }
-
-    hSharedFile = CreateFileMapping((HANDLE)-1, NULL, PAGE_READWRITE, 0, 4096, "DBWIN_BUFFER");
-    if (!hSharedFile)
-    {
-        //MessageBox(NULL, "DebugTrace: Unable to create file mapping object DBWIN_BUFFER", "Error", MB_OK);
-        CloseHandle(heventDBWIN);
-        CloseHandle(heventData);
-        return;
-    }
-
-    lpszSharedMem = (LPSTR)MapViewOfFile(hSharedFile, FILE_MAP_WRITE, 0, 0, 512);
-    if (!lpszSharedMem)
-    {
-        //MessageBox(NULL, "DebugTrace: Unable to map shared memory", "Error", MB_OK);
-        CloseHandle(heventDBWIN);
-        CloseHandle(heventData);
-        return;
-    }
-
-    /* wait for buffer event */
-    WaitForSingleObject(heventDBWIN, INFINITE);
-
-    /* write it to the shared memory */
-    *((LPDWORD)lpszSharedMem) = 0;
-    wsprintf(lpszSharedMem + sizeof(DWORD), "%s", str);
-
-    /* signal data ready event */
-    SetEvent(heventData);
-
-    /* clean up handles */
-    CloseHandle(hSharedFile);
-    CloseHandle(heventData);
-    CloseHandle(heventDBWIN);
-
-    return;
+	Platform::DebugOutput(str);
 }
 #endif // WWDEBUG

@@ -18,128 +18,53 @@
 
 #include "mutex.h"
 #include "wwdebug.h"
-#include <windows.h>
+#include "Platform/Synchronization.h"
 
-
-// ----------------------------------------------------------------------------
-
-MutexClass::MutexClass(const char* name) : handle(NULL), locked(false)
-{
-	#ifdef _UNIX
-		//assert(0);
-	#else
-		handle=CreateMutex(NULL,false,name);
-		WWASSERT(handle);
-	#endif
-}
+MutexClass::MutexClass(const char* name) : handle(Platform::CreateMutexHandle(name)), locked(0) {}
 
 MutexClass::~MutexClass()
 {
-	#ifdef _UNIX
-		//assert(0);
-	#else
-		WWASSERT(!locked); // Can't delete locked mutex!
-		CloseHandle(handle);
-	#endif
+    WWASSERT(!locked);
+    Platform::DestroyMutex(handle);
 }
 
 bool MutexClass::Lock(int time)
 {
-	#ifdef _UNIX
-		//assert(0);
-		return true;
-	#else
-		int res = WaitForSingleObject(handle,time==WAIT_INFINITE ? INFINITE : time);
-		if (res!=WAIT_OBJECT_0) return false;
-		locked++;
-		return true;
-	#endif
+    if (!Platform::LockMutex(handle, time)) return false;
+    ++locked;
+    return true;
 }
 
 void MutexClass::Unlock()
 {
-	#ifdef _UNIX
-		//assert(0);
-	#else
-		WWASSERT(locked);
-		locked--;
-		int res=ReleaseMutex(handle);
-		WWASSERT(res);
-	#endif
+    WWASSERT(locked);
+    --locked;
+    Platform::UnlockMutex(handle);
 }
 
-// ----------------------------------------------------------------------------
+MutexClass::LockClass::LockClass(MutexClass& mutex_, int time) : mutex(mutex_), failed(!mutex.Lock(time)) {}
+MutexClass::LockClass::~LockClass() { if (!failed) mutex.Unlock(); }
 
-MutexClass::LockClass::LockClass(MutexClass& mutex_,int time) : mutex(mutex_)
-{
-	failed=!mutex.Lock(time);
-}
-
-MutexClass::LockClass::~LockClass()
-{
-	if (!failed) mutex.Unlock();
-}
-
-
-
-
-
-
-
-// ----------------------------------------------------------------------------
-
-CriticalSectionClass::CriticalSectionClass() : handle(NULL), locked(false)
-{
-	#ifdef _UNIX
-		//assert(0);
-	#else
-		handle=new char[sizeof(CRITICAL_SECTION)];
-		InitializeCriticalSection((CRITICAL_SECTION*)handle);
-	#endif
-}
+CriticalSectionClass::CriticalSectionClass() : handle(Platform::CreateCriticalSection()), locked(0) {}
 
 CriticalSectionClass::~CriticalSectionClass()
 {
-	#ifdef _UNIX
-		//assert(0);
-	#else
-		WWASSERT(!locked); // Can't delete locked mutex!
-		DeleteCriticalSection((CRITICAL_SECTION*)handle);
-		delete[] handle;
-	#endif
+    WWASSERT(!locked);
+    Platform::DestroyCriticalSection(handle);
 }
 
 void CriticalSectionClass::Lock()
 {
-	#ifdef _UNIX
-		//assert(0);
-	#else
-		EnterCriticalSection((CRITICAL_SECTION*)handle);
-		locked++;
-	#endif
+    Platform::LockCriticalSection(handle);
+    ++locked;
 }
 
 void CriticalSectionClass::Unlock()
 {
-	#ifdef _UNIX
-		//assert(0);
-	#else
-		WWASSERT(locked);
-		locked--;
-		LeaveCriticalSection((CRITICAL_SECTION*)handle);
-	#endif
+    WWASSERT(locked);
+    --locked;
+    Platform::UnlockCriticalSection(handle);
 }
 
-// ----------------------------------------------------------------------------
-
-CriticalSectionClass::LockClass::LockClass(CriticalSectionClass& critical_section) : CriticalSection(critical_section)
-{
-	CriticalSection.Lock();
-}
-
-CriticalSectionClass::LockClass::~LockClass()
-{
-	CriticalSection.Unlock();
-}
-
-
+CriticalSectionClass::LockClass::LockClass(CriticalSectionClass& section) : CriticalSection(section) { CriticalSection.Lock(); }
+CriticalSectionClass::LockClass::~LockClass() { CriticalSection.Unlock(); }

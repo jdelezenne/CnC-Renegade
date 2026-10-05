@@ -36,6 +36,7 @@
 
 
 #include "dialogmgr.h"
+#include "Platform/GameState.h"
 #include "dialogbase.h"
 #include "childdialog.h"
 #include "dx8wrapper.h"
@@ -667,6 +668,7 @@ DialogMgrClass::Internal_Set_Active_Dialog (DialogBaseClass *dialog)
 bool
 DialogMgrClass::On_Key_Down (uint32 key_id, uint32 key_data)
 {
+	if (key_id < 256) KeyboardState[key_id] |= 0x80;
 	if (Transition != NULL) {
 		return false;
 	}
@@ -674,7 +676,7 @@ DialogMgrClass::On_Key_Down (uint32 key_id, uint32 key_data)
 	//
 	//	Update the keyboard state
 	//
-	::GetKeyboardState (KeyboardState);
+
 
 	//
 	//	Notify the active dialog (if any)
@@ -695,6 +697,7 @@ DialogMgrClass::On_Key_Down (uint32 key_id, uint32 key_data)
 bool
 DialogMgrClass::On_Key_Up (uint32 key_id)
 {
+	if (key_id < 256) KeyboardState[key_id] &= 0x7f;
 	if (Transition != NULL) {
 		return false;
 	}
@@ -702,7 +705,7 @@ DialogMgrClass::On_Key_Up (uint32 key_id)
 	//
 	//	Update the keyboard state
 	//
-	::GetKeyboardState (KeyboardState);
+
 
 	//
 	//	Notify the active dialog (if any)
@@ -721,7 +724,7 @@ DialogMgrClass::On_Key_Up (uint32 key_id)
 //
 ////////////////////////////////////////////////////////////////
 void
-DialogMgrClass::On_Unicode_Char (uint16 unicode)
+DialogMgrClass::On_Unicode_Char (wchar_t unicode)
 {
 	if (Transition != NULL) {
 		return ;
@@ -730,7 +733,7 @@ DialogMgrClass::On_Unicode_Char (uint16 unicode)
 	//
 	//	Update the keyboard state
 	//
-	::GetKeyboardState (KeyboardState);
+
 
 	//
 	//	Notify the active dialog (if any)

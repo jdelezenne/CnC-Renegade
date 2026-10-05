@@ -35,14 +35,13 @@
 #ifndef __WOLCHATOBSERVER_H__
 #define __WOLCHATOBSERVER_H__
 
-#include <objbase.h>
+#include "Platform/Online/WOL.h"
+#include "Platform/Online/Types.h"
+#include <atomic>
 #include "RefPtr.h"
 #include "WOLUser.h"
 
-namespace WOL 
-{
-#include <WOLAPI\wolapi.h>
-}
+
 
 namespace WWOnline {
 
@@ -176,7 +175,7 @@ class ChatObserver :
 
 
 	private:
-		ULONG mRefCount;
+		std::atomic<ULONG> mRefCount;
 		Session* mOuter;
 	};
 

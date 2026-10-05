@@ -37,9 +37,8 @@
 
 #ifdef _DEBUG
 
-#include "Platform/Windows/Files.h"
+#include "Platform/Debug.h"
 #include "dprint.h"
-#include <windows.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <assert.h>
@@ -88,7 +87,7 @@ void __cdecl DebugPrint(const char* string, ...)
 		else
 			{
 			// Send string to debugger
-			OutputDebugString(_buffer);
+			Platform::DebuggerOutput(_buffer);
 			}
 
 #if 0

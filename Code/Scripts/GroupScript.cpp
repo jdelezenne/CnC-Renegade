@@ -136,7 +136,7 @@ DECLARE_SCRIPT(MXX_Group_Member_DEL, "GroupName:string")
 
 
 	#ifdef _DEBUG
-	void Custom(GameObject* owner, int event, int data, GameObject* sender)
+	void Custom(GameObject* owner, int event, std::intptr_t data, GameObject* sender)
 		{
 		if (SCMD_GROUP_EVENT == event)
 			{

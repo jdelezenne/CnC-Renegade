@@ -44,11 +44,9 @@
 #define WWPROFILE_H
 
 #include "wwstring.h"
+#include <cstdint>
 
-#ifdef _UNIX
-typedef signed long long __int64;
-typedef signed long long _int64;
-#endif
+
 
 // enable profiling by default in debug mode.
 #ifdef WWDEBUG
@@ -94,7 +92,7 @@ protected:
 	const char *					Name;
 	int								TotalCalls;
 	float								TotalTime;
-	__int64							StartTime;
+	std::int64_t							StartTime;
 	int								RecursionCounter;
 
 	WWProfileHierachyNodeClass *	Parent;
@@ -190,7 +188,7 @@ private:
 	static	WWProfileHierachyNodeClass *	CurrentNode;
 	static	WWProfileHierachyNodeClass *	CurrentRootNode;
 	static	int									FrameCounter;
-	static	__int64								ResetTime;
+	static	std::int64_t								ResetTime;
 
 	friend	class		WWProfileInOrderIterator;
 };
@@ -234,7 +232,7 @@ public:
 	~WWTimeItClass( void );
 private:
 	const char * Name;
-	__int64	Time;
+	std::int64_t	Time;
 };
 
 #ifdef ENABLE_WWPROFILE
@@ -256,7 +254,7 @@ public:
 	~WWMeasureItClass( void );
 
 private:
-	__int64	Time;
+	std::int64_t	Time;
 	float *  PResult;
 };
 

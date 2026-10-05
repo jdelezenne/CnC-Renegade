@@ -38,6 +38,9 @@
 #include <stdarg.h>
 #include <memory.h>
 #include "wwfile.h"
+#ifndef _WIN32
+#include "Platform/POSIX/CRT.h"
+#endif
 
 #pragma warning(disable : 4514)
 

@@ -36,15 +36,13 @@
 #ifndef __WOLDOWNLOAD_H__
 #define __WOLDOWNLOAD_H__
 
-#include <atlbase.h>
+#include "Platform/Online/WOL.h"
+#include "Platform/Online/Pointer.h"
 #include "RefCounted.h"
 #include "RefPtr.h"
 #include "WaitCondition.h"
 
-namespace WOL 
-{
-#include <WOLAPI\wolapi.h>
-}
+
 
 namespace WWOnline {
 

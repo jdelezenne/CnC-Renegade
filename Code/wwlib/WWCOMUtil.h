@@ -37,6 +37,8 @@
 #ifndef __WWCOMUTIL_H__
 #define __WWCOMUTIL_H__
 
+#include "Platform/Online/Provider.h"
+#ifdef _WIN32
 #include <oaidl.h>
 
 //! Invoke PropertyGet on IDispatch interface.
@@ -51,6 +53,6 @@ HRESULT STDMETHODCALLTYPE Dispatch_PutProperty(IDispatch* object,
 HRESULT STDMETHODCALLTYPE Dispatch_InvokeMethod(IDispatch* object,
 		const OLECHAR* methodName, DISPPARAMS* params, VARIANT* result);
 
-HRESULT CreateCOMObjectFromLibrary(const char* library, REFCLSID clsid, REFIID iid, void** object);
+#endif
 
 #endif // __WWCOMUTIL_H__

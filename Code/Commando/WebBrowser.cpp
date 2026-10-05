@@ -37,10 +37,10 @@
 #include "always.h"
 
 #include "WebBrowser.h"
-#include <WWLib\WWCOMUtil.h>
-#include <WW3D2\WW3D.h>
-#include <WWOnline\WOLLoginInfo.h>
-#include <WWDebug\WWDebug.h>
+#include <wwlib/WWCOMUtil.h>
+#include <ww3d2/ww3d.h>
+#include <WWOnline/WOLLoginInfo.h>
+#include <wwdebug/wwdebug.h>
 #include "win.h"
 #include "_globals.h"
 #include "Settings.h"
@@ -256,13 +256,13 @@ bool WebBrowser::FinalizeCreate(HWND window)
 			// Create the embedded browser component.
 			WWDEBUG_SAY(("WebBrowser: Creating WOLBrowser component\n"));
 
-			HRESULT hr = CreateCOMObjectFromLibrary("OnlineBrowser.dll", CLSID_WOLBrowser,
+			HRESULT hr = Platform::CreateOnlineProvider( CLSID_WOLBrowser,
 					IID_IWOLBrowser, (void**)&mWOLBrowser);
 
 			if (FAILED(hr))
 				{
 				WWDEBUG_SAY(("WebBrowser: Failed to create WOLBrowser component\n"));
-				return false;
+				return true;
 				}
 
 			// If the display resolution is greater than 800 x 600 then set the

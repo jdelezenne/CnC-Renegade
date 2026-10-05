@@ -43,10 +43,10 @@
 #include "gameinitmgr.h"
 #include "WOLJoinGame.h"
 #include "String_IDs.h"
-#include <WWTranslateDB\TranslateDB.h>
-#include <WWOnline\WaitCondition.h>
-#include <WWUI\ListCtrl.h>
-#include <WWDebug\WWDebug.h>
+#include <wwtranslatedb/translatedb.h>
+#include <WWOnline/WaitCondition.h>
+#include <wwui/listctrl.h>
+#include <wwdebug/wwdebug.h>
 
 
 #ifdef _MSC_VER

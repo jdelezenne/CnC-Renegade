@@ -31,8 +31,7 @@
 #ifndef FROMADDRESS_H
 #define FROMADDRESS_H
 
-#include "win.h"
-#include <winsock.h>
+#include "Platform/Network/Sockets.h"
 
 //
 // This trivial class exists solely to speed compile times.

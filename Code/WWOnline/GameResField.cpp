@@ -36,12 +36,13 @@
 
 #include "GameResField.h"
 #include <string.h>
+#include <cstdint>
 #include <assert.h>
-#include <WWDebug\WWDebug.h>
+#include <wwdebug/wwdebug.h>
 
 // Get rid of the nameless struct/union warning
 #pragma warning(disable: 4201)
-#include <winsock.h>
+#include "Platform/Network/ByteOrder.h"
 #pragma warning(default: 4201)
 
 namespace WWOnline {
@@ -154,9 +155,10 @@ GameResField::GameResField(const char *id, long data)
 	{
 	strncpy(mID, id, sizeof(mID));
 	mDataType = TYPE_LONG;
-	mSize = sizeof(data);
+	const std::int32_t value = static_cast<std::int32_t>(data);
+	mSize = sizeof(value);
 	mData = new char[mSize];
-	memcpy(mData, &data, mSize);
+	memcpy(mData, &value, mSize);
 	mNext = NULL;
 	}
 
@@ -177,9 +179,10 @@ GameResField::GameResField(const char *id, unsigned long data)
 	{
 	strncpy(mID, id, sizeof(mID));
 	mDataType = TYPE_UNSIGNED_LONG;
-	mSize = sizeof(data);
+	const std::uint32_t value = static_cast<std::uint32_t>(data);
+	mSize = sizeof(value);
 	mData = new char[mSize];
-	memcpy(mData, &data, mSize);
+	memcpy(mData, &value, mSize);
 	mNext = NULL;
 	}
 
@@ -244,7 +247,7 @@ GameResField::GameResField(const char *id, void *data, int length)
 
 GameResField::~GameResField()
 	{
-  delete[](mData);
+  delete[] static_cast<char*>(mData);
 	}
 
 
@@ -276,7 +279,7 @@ void GameResField::Host_To_Net(void)
 
 		case TYPE_LONG:
 		case TYPE_UNSIGNED_LONG:
-			*((unsigned long *)mData) = htonl(*((unsigned long *)mData));
+			*((std::uint32_t *)mData) = htonl(*((std::uint32_t *)mData));
 			break;
 
 		// Might be good to insert some type of error message here for unknown
@@ -326,7 +329,7 @@ void GameResField::Net_To_Host(void)
 
 		case TYPE_LONG:
 		case TYPE_UNSIGNED_LONG:
-			*((unsigned long *)mData) = ntohl(*((unsigned long *)mData));
+			*((std::uint32_t *)mData) = ntohl(*((std::uint32_t *)mData));
 			break;
 
 		// Might be good to insert some type of error message here for unknown
@@ -378,7 +381,7 @@ void GameResField::DebugDump(void)
 			break;
 
 		case TYPE_LONG:
-			WWDEBUG_SAY(("[%4s] %ld\n", id, *((long*)mData)));
+			WWDEBUG_SAY(("[%4s] %ld\n", id, static_cast<long>(*((std::int32_t*)mData))));
 			break;
 
 		case TYPE_UNSIGNED_SHORT:
@@ -386,7 +389,7 @@ void GameResField::DebugDump(void)
 			break;
 
 		case TYPE_UNSIGNED_LONG:
-			WWDEBUG_SAY(("[%4s] %lu\n", id, *((unsigned long*)mData)));
+			WWDEBUG_SAY(("[%4s] %lu\n", id, static_cast<unsigned long>(*((std::uint32_t*)mData))));
 			break;
 
 		case TYPE_STRING:

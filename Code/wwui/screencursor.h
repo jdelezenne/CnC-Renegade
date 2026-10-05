@@ -39,7 +39,7 @@
 #define __SCREENCURSOR_H
 
 #include "vector2.h"
-#include "win.h"
+#include "Platform/UI/Constants.h"
 #include "render2d.h"
 
 

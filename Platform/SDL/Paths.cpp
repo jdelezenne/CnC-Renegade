@@ -6,6 +6,28 @@
 
 namespace fs = std::filesystem;
 
+namespace {
+fs::path FilePath(const char* name)
+{
+#ifdef _WIN32
+    return fs::path(name);
+#else
+    std::string normalized(name);
+    for (char& c : normalized) if (c == '\\') c = '/';
+    return fs::path(normalized);
+#endif
+}
+
+bool SameComponent(const fs::path& left, const fs::path& right)
+{
+#ifdef _WIN32
+    return _wcsicmp(left.c_str(), right.c_str()) == 0;
+#else
+    return left == right;
+#endif
+}
+}
+
 const std::string& Platform::PreferenceDirectory()
 {
     static const std::string directory = [] {
@@ -20,7 +42,7 @@ const std::string& Platform::PreferenceDirectory()
 
 std::string Platform::UserPath(const char* relativePath)
 {
-    const fs::path relative = fs::path(relativePath).lexically_normal();
+    const fs::path relative = FilePath(relativePath).lexically_normal();
     if (relative.has_root_path() || (!relative.empty() && *relative.begin() == ".."))
         throw std::invalid_argument("User paths must stay inside the preferences folder");
     const fs::path path = fs::path(PreferenceDirectory()) / relative;
@@ -31,13 +53,13 @@ std::string Platform::UserPath(const char* relativePath)
 namespace {
 fs::path UserRelativePath(const char* name)
 {
-    const fs::path path(name);
+    const fs::path path = FilePath(name);
     if (!path.is_absolute()) return path.lexically_normal();
     const fs::path absolute = path.lexically_normal();
     const fs::path base = fs::current_path().lexically_normal();
     auto item = absolute.begin();
     for (auto root = base.begin(); root != base.end(); ++root, ++item) {
-        if (item == absolute.end() || _wcsicmp(item->c_str(), root->c_str()) != 0) return path;
+        if (item == absolute.end() || !SameComponent(*item, *root)) return path;
     }
     fs::path relative;
     for (; item != absolute.end(); ++item) relative /= *item;
@@ -60,7 +82,11 @@ std::string Platform::ReadPath(const char* path)
         const fs::path user = fs::path(PreferenceDirectory()) / relative;
         if (fs::is_regular_file(user)) return user.string();
     }
+#ifdef _WIN32
     return path;
+#else
+    return FilePath(path).string();
+#endif
 }
 
 std::FILE* Platform::OpenStream(const char* path, const char* mode)

@@ -278,8 +278,8 @@ public:
 	static	void	Menu_Enable( bool onoff )	{ MenuMode = onoff; }
 
 	// Console Mode
-	static	void	Console_Enable()	{ ConsoleMode = true; Flush_Queue(); }
-	static	void	Console_Disable()	{ ConsoleMode = false; }
+	static	void	Console_Enable();
+	static	void	Console_Disable();
 	static	int	Console_Get_Key();
 	static	void	Console_Add_Key( int key );
 	static	bool	Is_Console_Enabled( void )	{ return ConsoleMode; }

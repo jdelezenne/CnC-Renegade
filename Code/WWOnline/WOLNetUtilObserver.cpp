@@ -32,7 +32,7 @@
 *
 ******************************************************************************/
 
-#include <atlbase.h>
+#include "Platform/Online/Pointer.h"
 #include "WOLNetUtilObserver.h"
 #include "WOLSession.h"
 #include "WOLLadder.h"
@@ -155,8 +155,7 @@ STDMETHODIMP NetUtilObserver::QueryInterface(const IID& iid, void** ppv)
 
 ULONG STDMETHODCALLTYPE NetUtilObserver::AddRef(void)
 	{
-	InterlockedIncrement((LPLONG)&mRefCount);
-	return mRefCount;
+	return mRefCount.fetch_add(1, std::memory_order_relaxed) + 1;
 	}
 
 
@@ -176,15 +175,15 @@ ULONG STDMETHODCALLTYPE NetUtilObserver::AddRef(void)
 
 ULONG STDMETHODCALLTYPE NetUtilObserver::Release(void)
 	{
-	InterlockedDecrement((LPLONG)&mRefCount);
+	const auto remaining = mRefCount.fetch_sub(1, std::memory_order_acq_rel) - 1;
 
-	if (mRefCount == 0)
+	if (remaining == 0)
 		{
 		delete this;
 		return 0;
 		}
 
-	return mRefCount;
+	return remaining;
 	}
 
 

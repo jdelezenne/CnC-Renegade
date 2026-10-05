@@ -1,8 +1,16 @@
 include(FetchContent)
-FetchContent_Declare(DXC
-    URL https://github.com/microsoft/DirectXShaderCompiler/releases/download/v1.9.2609/dxc_2026_09_29.zip
-    URL_HASH SHA256=ad31b1fc8443175d204f77a611fdb3ef2ec42759bdc2f1167368de24a4a7e7f1
-    SOURCE_SUBDIR Renegade)
+if(WIN32)
+    set(dxc_url https://github.com/microsoft/DirectXShaderCompiler/releases/download/v1.9.2609/dxc_2026_09_29.zip)
+    set(dxc_hash ad31b1fc8443175d204f77a611fdb3ef2ec42759bdc2f1167368de24a4a7e7f1)
+    set(dxc_executable bin/x64/dxc.exe)
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND CMAKE_HOST_SYSTEM_PROCESSOR MATCHES "^(x86_64|AMD64)$")
+    set(dxc_url https://github.com/microsoft/DirectXShaderCompiler/releases/download/v1.9.2609/linux_dxc_2026_09_28.x86_x64.tar.gz)
+    set(dxc_hash 96faadc7f5c282d2ffda49804beb4c3ee38127bc252b723234e3c5cdf7aa39a1)
+    set(dxc_executable bin/dxc)
+else()
+    message(FATAL_ERROR "A DXC package is required for ${CMAKE_HOST_SYSTEM_NAME}/${CMAKE_HOST_SYSTEM_PROCESSOR}.")
+endif()
+FetchContent_Declare(DXC URL "${dxc_url}" URL_HASH "SHA256=${dxc_hash}" SOURCE_SUBDIR Renegade)
 FetchContent_MakeAvailable(DXC)
 add_executable(Vendor::DXC IMPORTED GLOBAL)
-set_target_properties(Vendor::DXC PROPERTIES IMPORTED_LOCATION "${dxc_SOURCE_DIR}/bin/x64/dxc.exe")
+set_target_properties(Vendor::DXC PROPERTIES IMPORTED_LOCATION "${dxc_SOURCE_DIR}/${dxc_executable}")

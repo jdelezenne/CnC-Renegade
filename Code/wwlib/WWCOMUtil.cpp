@@ -35,6 +35,7 @@
 ******************************************************************************/
 
 #include "WWCOMUtil.h"
+#ifdef _WIN32
 
 /******************************************************************************
 *
@@ -160,19 +161,4 @@ STDMETHODIMP Dispatch_InvokeMethod(IDispatch* object, const OLECHAR* methodName,
 	}
 
 
-HRESULT CreateCOMObjectFromLibrary(const char* library, REFCLSID clsid, REFIID iid, void** object)
-{
-    *object = NULL;
-    HMODULE module = GetModuleHandleA(library);
-    if (!module) module = LoadLibraryA(library);
-    if (!module) return HRESULT_FROM_WIN32(GetLastError());
-    using GetClassObject = HRESULT (STDAPICALLTYPE *)(REFCLSID, REFIID, void**);
-    auto getClassObject = reinterpret_cast<GetClassObject>(GetProcAddress(module, "DllGetClassObject"));
-    if (!getClassObject) return HRESULT_FROM_WIN32(ERROR_PROC_NOT_FOUND);
-    IClassFactory* factory = NULL;
-    HRESULT result = getClassObject(clsid, IID_IClassFactory, reinterpret_cast<void**>(&factory));
-    if (FAILED(result)) return result;
-    result = factory->CreateInstance(NULL, iid, object);
-    factory->Release();
-    return result;
-}
+#endif

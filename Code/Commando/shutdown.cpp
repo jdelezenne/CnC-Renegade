@@ -265,6 +265,8 @@ public:
 		:
 		ThreadClass("SysInfoCopyThread", &Exception_Handler) {}
 
+	~SysInfoCopyThreadClass() { Stop(); }
+
 	void Thread_Function()
 	{
 		DWORD written;

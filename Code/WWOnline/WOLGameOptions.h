@@ -35,13 +35,11 @@
 #ifndef __WOLGAMEOPTIONS_H__
 #define __WOLGAMEOPTIONS_H__
 
+#include "Platform/Online/WOL.h"
 #include "RefPtr.h"
-#include <WWLib\WWString.h>
+#include <wwlib/wwstring.h>
 
-namespace WOL
-{
-#include "wolapi.h"
-}
+
 
 #ifdef _MSC_VER
 #pragma warning (push,3)

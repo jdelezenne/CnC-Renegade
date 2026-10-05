@@ -41,10 +41,10 @@
 #include <stdlib.h>
 #include "WOLServer.h"
 #include "WOLProduct.h"
-#include <commando\_globals.h>
+#include <Commando/_globals.h>
 #include <string.h>
-#include <WWDebug\WWDebug.h>
-#include <WWLib\Settings.h>
+#include <wwdebug/wwdebug.h>
+#include <wwlib/Settings.h>
 
 namespace WWOnline {
 

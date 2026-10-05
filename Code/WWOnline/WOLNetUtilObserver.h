@@ -35,13 +35,11 @@
 #ifndef __WOLNETUTILOBSERVER_H__
 #define __WOLNETUTILOBSERVER_H__
 
-#include <windows.h>
+#include "Platform/Online/WOL.h"
+#include <atomic>
 #include "WOLUser.h"
 
-namespace WOL 
-{
-#include <WOLAPI\wolapi.h>
-}
+
 
 template<typename T> class RefPtr;
 
@@ -92,7 +90,7 @@ class NetUtilObserver :
 		void NotifyClanLadderUpdate(const UserList& users, const RefPtr<SquadData>& squad);
 
 	private:
-		ULONG mRefCount;
+		std::atomic<ULONG> mRefCount;
 		Session* mOuter;
 	};
 

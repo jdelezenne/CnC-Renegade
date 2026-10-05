@@ -38,6 +38,7 @@
 
 #include	"always.h"
 #include	"crc.h"
+#include <cstring>
 
 
 /***********************************************************************************************
@@ -62,7 +63,7 @@ void CRCEngine::operator() (char datum)
 {
 	StagingBuffer.Buffer[Index++] = datum;
 
-	if (Index == sizeof(long))  {
+	if (Index == sizeof(std::uint32_t))  {
 		CRC = Value();
 		StagingBuffer.Composite = 0;
 		Index = 0;
@@ -110,18 +111,14 @@ long CRCEngine::operator() (void const * buffer, int length)
 		**	Perform the fast 'bulk' processing by reading long word sized
 		**	data blocks.
 		*/
-		long const * longptr = (long const *)dataptr;
-		int longcount = bytes_left / sizeof(long);		// Whole 'long' elements remaining.
-		while (longcount--) {
-			CRC = _lrotl(CRC, 1) + *longptr++;
-			bytes_left -= sizeof(long);
-		}
-
-		/*
-		**	If there are remainder bytes, then process these by adding them
-		**	to the staging buffer.
-		*/
-		dataptr = (char const *)longptr;
+        int longcount = bytes_left / sizeof(std::uint32_t);
+        while (longcount--) {
+            std::uint32_t word;
+            std::memcpy(&word, dataptr, sizeof(word));
+            CRC = std::rotl(CRC, 1) + word;
+            dataptr += sizeof(word);
+            bytes_left -= sizeof(word);
+        }
 		while (bytes_left) {
 			operator()(*dataptr);
 			dataptr++;
@@ -135,7 +132,7 @@ long CRCEngine::operator() (void const * buffer, int length)
 	return(Value());
 }
 //    CRC for poly 0x04C11DB7   
-unsigned long  CRC::_Table[ 256 ] =
+std::uint32_t CRC::_Table[ 256 ] =
 {
 	0x00000000L, 0x77073096L, 0xEE0E612CL, 0x990951BAL, 
 	0x076DC419L, 0x706AF48FL, 0xE963A535L, 0x9E6495A3L,
@@ -205,7 +202,7 @@ unsigned long  CRC::_Table[ 256 ] =
 
 unsigned long	CRC::Memory( unsigned char *data, unsigned long length, unsigned long crc )
 {
- 	crc ^= 0xFFFFFFFF;									// invert previous CRC
+	crc = static_cast<std::uint32_t>(crc) ^ 0xFFFFFFFF;									// invert previous CRC
 	while ( length-- ) {
 		crc = CRC32( *data++, crc );					// calc crc for each byte
 	}
@@ -214,7 +211,7 @@ unsigned long	CRC::Memory( unsigned char *data, unsigned long length, unsigned l
 
 unsigned long	CRC::String( const char *string, unsigned long crc)
 {
- 	crc ^= 0xFFFFFFFF;									// invert previous CRC
+	crc = static_cast<std::uint32_t>(crc) ^ 0xFFFFFFFF;									// invert previous CRC
 	while ( *string )	{
 		crc = CRC32( *string++, crc );				// calc crc for each byte
 	}

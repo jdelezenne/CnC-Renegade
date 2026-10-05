@@ -46,13 +46,16 @@
 #include "crc.h"
 #include "msgstatlist.h"
 #include "wwprofile.h"
-#include "commando\nat.h"
-#include "commando\natter.h"
+#ifdef _WIN32
+#include "Commando/nat.h"
+#include "Commando/natter.h"
+#endif
 #include "packetmgr.h"
+#include "Platform/Network/Transport.h"
 #include "bwbalance.h"
 
 #ifdef WWDEBUG
-#include "combat\crandom.h"
+#include "Combat/crandom.h"
 
 int cConnection::LatencyAddLow = 0;
 int cConnection::LatencyAddHigh = 0;
@@ -89,10 +92,10 @@ static const int		INVALID_RHOST_ID			= -1;
 char * Addr_As_String(sockaddr_in *addr)
 {
 	static char _string[128];
-	sprintf(_string, "%d.%d.%d.%d ; %d", 	(int)(addr->sin_addr.S_un.S_un_b.s_b1),
-														(int)(addr->sin_addr.S_un.S_un_b.s_b2),
-														(int)(addr->sin_addr.S_un.S_un_b.s_b3),
-														(int)(addr->sin_addr.S_un.S_un_b.s_b4),
+	sprintf(_string, "%d.%d.%d.%d ; %d", 	(int)(reinterpret_cast<const unsigned char*>(&addr->sin_addr.s_addr)[0]),
+														(int)(reinterpret_cast<const unsigned char*>(&addr->sin_addr.s_addr)[1]),
+														(int)(reinterpret_cast<const unsigned char*>(&addr->sin_addr.s_addr)[2]),
+														(int)(reinterpret_cast<const unsigned char*>(&addr->sin_addr.s_addr)[3]),
 														htonl((int)(addr->sin_port)));
 	return(_string);
 }
@@ -147,8 +150,7 @@ cConnection::cConnection() :
       //
       // Make socket non-blocking
       //
-      u_long arg = 1L;
-      WSA_CHECK(ioctlsocket(Sock, FIONBIO, (u_long *) &arg));
+      WSA_CHECK(Platform::SocketSetNonblocking(Sock));
 
       //
       // Increase the send and rcv buffer sizes a bit
@@ -186,8 +188,8 @@ cConnection::~cConnection()
 		//
 		// Abortively shut down the socket
 		//
-      WSA_CHECK(shutdown(Sock, 2)); // SD_BOTH
-      WSA_CHECK(::closesocket(Sock));
+      WSA_CHECK(Platform::SocketShutdown(Sock, 2)); // SD_BOTH
+      WSA_CHECK(Platform::SocketClose(Sock));
    }
 
    //for (int rhost_id = 0; rhost_id < MAX_RHOSTS; rhost_id++) {
@@ -286,7 +288,7 @@ void cConnection::Init_As_Client(ULONG server_ip, USHORT server_port, unsigned s
 	WWASSERT(server_port >= MIN_SERVER_PORT && server_port <= MAX_SERVER_PORT);
 
    SOCKADDR_IN server_address;
-	ZeroMemory(&server_address, sizeof(server_address));
+	memset(&server_address, 0, sizeof(server_address));
 
    if (!cSinglePlayerData::Is_Single_Player()) {
 		server_address.sin_family			= AF_INET;
@@ -347,7 +349,9 @@ void cConnection::Init_As_Server(USHORT server_port, int max_players,
       WWASSERT(num_tries < 50 && server_port <= MAX_SERVER_PORT);
 
 		// Tell the firewall code that we started a new local server.
+#ifdef _WIN32
 		WOLNATInterface.Set_Server(true);
+#endif
    }
 
 	InitDone = true;
@@ -368,7 +372,7 @@ bool cConnection::Bind(USHORT port, ULONG addr)
 
    if (addr) address.sin_addr.s_addr = htonl(addr);
 
-   if (::bind(Sock, (LPSOCKADDR) &address, sizeof(SOCKADDR_IN)) != SOCKET_ERROR) {
+   if (Platform::SocketBind(Sock, (LPSOCKADDR) &address, sizeof(SOCKADDR_IN)) != SOCKET_ERROR) {
       LocalPort = port;
       WWDEBUG_SAY(("Bound to local port %d.\n", LocalPort));
       return true;
@@ -376,7 +380,7 @@ bool cConnection::Bind(USHORT port, ULONG addr)
       //
       // Any excuse other than address/port already used, is fatal.
       //
-      if (::WSAGetLastError() != WSAEADDRINUSE) {
+      if (Platform::SocketLastError() != Platform::SocketAddressInUseError()) {
 			WSA_ERROR;
       }
       return false;
@@ -570,7 +574,7 @@ int cConnection::Single_Player_recvfrom(char * data)
 
    SLNode<cPacket> * objnode = p_packet_list->Head();
    if (objnode == NULL) {
-      WSASetLastError(WSAEWOULDBLOCK);
+      Platform::SetSocketLastError(Platform::SocketWouldBlockError());
       ret_code = SOCKET_ERROR; // no data received
    } else {
 
@@ -678,7 +682,9 @@ bool cConnection::Receive_Packet()
 	// Intercept packets intended for the firewall negotiation code.
 	//
    if (packet.Get_Type() == PACKETTYPE_FIREWALL_PROBE) {
+#ifdef _WIN32
 		WOLNATInterface.Intercept_Game_Packet(packet);
+#endif
 		packet.Flush();
       WWDEBUG_SAY(("cConnection:: Packet transferred to WOLNAT interface\n"));
 		return(true);
@@ -1293,7 +1299,7 @@ int cConnection::Low_Level_Receive_Wrapper(cPacket & packet)
 
 #if (0)
    	int address_size = sizeof(SOCKADDR_IN);
-		ret_code = recvfrom(Sock, packet.Get_Data(),
+		ret_code = Platform::SocketReceiveFrom(Sock, packet.Get_Data(),
 			packet.Get_Max_Size(), 0,
 	   	(LPSOCKADDR) &packet.Get_From_Address_Wrapper()->FromAddress, &address_size);
 
@@ -1365,7 +1371,7 @@ void cConnection::Handle_Send_Resource_Failure(int rhost_id)
    int len;
 
 	len = sizeof(int);
-   WSA_CHECK(::getsockopt(Sock, SOL_SOCKET, SO_SNDBUF,
+   WSA_CHECK(Platform::SocketGetOption(Sock, SOL_SOCKET, SO_SNDBUF,
       (char *)&orgbuffersize, &len));
 
 	static int time_of_last_reset = 0;
@@ -1400,11 +1406,11 @@ void cConnection::Handle_Send_Resource_Failure(int rhost_id)
 
 			newbuffersize = 4 * orgbuffersize;
 			len = sizeof(int);
-			WSA_CHECK(setsockopt(Sock, SOL_SOCKET, SO_SNDBUF,
+			WSA_CHECK(Platform::SocketSetOption(Sock, SOL_SOCKET, SO_SNDBUF,
 				(char *)&newbuffersize, len));
 
 			len = sizeof(int);
-			WSA_CHECK(::getsockopt(Sock, SOL_SOCKET, SO_SNDBUF,
+			WSA_CHECK(Platform::SocketGetOption(Sock, SOL_SOCKET, SO_SNDBUF,
 				(char *)&newbuffersize, &len));
 
 			WWDEBUG_SAY(("SO_SNDBUF %d -> %d\n",

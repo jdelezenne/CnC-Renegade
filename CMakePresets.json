@@ -26,7 +26,7 @@
       "binaryDir": "${sourceDir}/Build/Windows-MSVC-x86"
     },
     {
-      "name": "windows-clangcl",
+      "name": "windows-clang",
       "displayName": "Windows (Clang x64)",
       "generator": "Ninja Multi-Config",
       "architecture": {
@@ -71,13 +71,13 @@
       "configuration": "Release"
     },
     {
-      "name": "windows-clangcl-debug",
-      "configurePreset": "windows-clangcl",
+      "name": "windows-clang-debug",
+      "configurePreset": "windows-clang",
       "configuration": "Debug"
     },
     {
-      "name": "windows-clangcl-release",
-      "configurePreset": "windows-clangcl",
+      "name": "windows-clang-release",
+      "configurePreset": "windows-clang",
       "configuration": "Release"
     }
   ]

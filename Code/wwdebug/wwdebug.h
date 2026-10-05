@@ -40,6 +40,8 @@
 
 #ifndef WWDEBUG_H
 #define WWDEBUG_H
+
+#include "Platform/Debug.h"
 				
 // The macro MESSAGE allows user to put:
 // #pragma MESSAGE("Hello world")
@@ -139,9 +141,9 @@ void					WWDebug_DBWin32_Message_Handler( const char * message);
 ** the debugger...
 */
 #ifdef WWDEBUG
-#define WWDEBUG_BREAK							__debugbreak()
+#define WWDEBUG_BREAK							Platform::BreakDebugger()
 #else
-#define WWDEBUG_BREAK							__debugbreak()
+#define WWDEBUG_BREAK							Platform::BreakDebugger()
 #endif
 
 /*

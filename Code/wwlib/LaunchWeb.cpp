@@ -31,12 +31,8 @@
 *
 ******************************************************************************/
 
-#include "Platform/Windows/Files.h"
 #include "LaunchWeb.h"
-#include <windows.h>
-#include <shellapi.h>
-#include <stdio.h>
-#include <assert.h>
+#include <SDL3/SDL_misc.h>
 
 /******************************************************************************
 *
@@ -58,5 +54,5 @@
 
 bool LaunchWebBrowser(const char* url)
 {
-    return url && *url && reinterpret_cast<INT_PTR>(ShellExecuteA(NULL, "open", url, NULL, NULL, SW_SHOWNORMAL)) > 32;
+    return url && *url && SDL_OpenURL(url);
 }

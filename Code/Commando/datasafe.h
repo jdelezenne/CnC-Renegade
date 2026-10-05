@@ -140,7 +140,8 @@
 #include <assert.h>
 #include <malloc.h>
 #include <memory.h>
-#include <windows.h>
+#include "Platform/Threads.h"
+#include "Platform/Synchronization.h"
 #endif	//_ALWAYS_H
 
 #ifndef 	_TIMEMGR_H
@@ -583,8 +584,8 @@ class GenericDataSafeClass
 		static void Decrypt(void *data, int size, unsigned long key = SimpleKey, bool do_checksum = true);
 		static void Mem_Copy_Encrypt(void *dest, void *src, int size, bool do_checksum);
 		static void Mem_Copy_Decrypt(void *dest, void *src, int size, bool do_checksum);
-		static __forceinline void Security_Check(void);
-		static __forceinline void Security_Fault(void);
+		static WWINLINE void Security_Check(void);
+		static WWINLINE void Security_Fault(void);
 		static void Say_Security_Fault(void);
 
 		/*
@@ -617,10 +618,10 @@ class GenericDataSafeClass
 				** Constructor. Grabs the mutex.
 				*/
 				inline ThreadLockClass(void) {
-					int deadlock = WaitForSingleObject(GenericDataSafeClass::SafeMutex, 10 * 1000);
-					if (deadlock == WAIT_TIMEOUT) {
+					const bool locked = Platform::LockMutex(GenericDataSafeClass::SafeMutex, 10 * 1000);
+					if (!locked) {
 						WWDEBUG_SAY(("Data Safe: Timeout waiting for data safe mutex\n"));
-						ds_assert(deadlock != WAIT_TIMEOUT);
+						ds_assert(locked);
 					}
 				};
 
@@ -628,7 +629,7 @@ class GenericDataSafeClass
 				** Destructor, releases the mutex.
 				*/
 				inline ~ThreadLockClass(void) {
-					ReleaseMutex(GenericDataSafeClass::SafeMutex);
+					Platform::UnlockMutex(GenericDataSafeClass::SafeMutex);
 				};
 		};
 #else //THREAD_SAFE_DATA_SAFE
@@ -640,11 +641,11 @@ class GenericDataSafeClass
 		{
 			public:
 #ifdef WWDEBUG
-				__forceinline ThreadLockClass(void) {
-					if (GenericDataSafeClass::PreferredThread != GetCurrentThreadId()) {
-						WWDEBUG_SAY(("DATASAFE.H - PreferredThread = %08X, GetCurrentThreadId() == %08X\n", GenericDataSafeClass::PreferredThread, GetCurrentThreadId()));
+				WWINLINE ThreadLockClass(void) {
+					if (GenericDataSafeClass::PreferredThread != Platform::CurrentThreadId()) {
+						WWDEBUG_SAY(("DATASAFE.H - PreferredThread = %08X, Platform::CurrentThreadId() == %08X\n", GenericDataSafeClass::PreferredThread, Platform::CurrentThreadId()));
 					}
-					ds_assert(GenericDataSafeClass::PreferredThread == GetCurrentThreadId());
+					ds_assert(GenericDataSafeClass::PreferredThread == Platform::CurrentThreadId());
 				};
 #endif //WWDEBUG
 		};
@@ -708,7 +709,7 @@ class GenericDataSafeClass
 		** Mutex to ensure thread safety.
 		*/
 #ifdef THREAD_SAFE_DATA_SAFE
-		static HANDLE SafeMutex;
+		static void* SafeMutex;
 #endif //THREAD_SAFE_DATA_SAFE
 
 		/*
@@ -1046,7 +1047,7 @@ inline int GenericDataSafeClass::Get_Type_Size(int type)
  * HISTORY:                                                                                    *
  *   7/9/2001 2:20PM ST : Created                                                              *
  *=============================================================================================*/
-__forceinline void GenericDataSafeClass::Security_Fault(void)
+WWINLINE void GenericDataSafeClass::Security_Fault(void)
 {
 	WWDEBUG_SAY(("Data Safe:Security fault\n"));
 	CRCErrors++;
@@ -1072,7 +1073,7 @@ __forceinline void GenericDataSafeClass::Security_Fault(void)
  * HISTORY:                                                                                    *
  *   7/9/2001 1:08PM ST : Created                                                              *
  *=============================================================================================*/
-__forceinline void GenericDataSafeClass::Security_Check(void)
+WWINLINE void GenericDataSafeClass::Security_Check(void)
 {
 	ThreadLockClass locker;
 

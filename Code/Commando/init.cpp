@@ -523,6 +523,8 @@ public:
 		Version(0),
 		ThreadClass("LogCopyThread", &Exception_Handler) {}
 
+	~CopyThreadClass() { Stop(); }
+
 	void Thread_Function()
 	{
 		// Write log to network folder

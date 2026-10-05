@@ -37,7 +37,7 @@
 ******************************************************************************/
 
 #include "WWCOMUtil.h"
-#include <atlbase.h>
+#include "Platform/Online/Pointer.h"
 #include "WOLSession.h"
 #include "WOLChatObserver.h"
 #include "WOLNetUtilObserver.h"
@@ -46,7 +46,7 @@
 #include "WOLServer.h"
 #include "WaitCondition.h"
 #include "WOLErrorUtil.h"
-#include <WWDebug\WWDebug.h>
+#include <wwdebug/wwdebug.h>
 #include <stdlib.h>
 
 #ifdef _MSC_VER
@@ -128,15 +128,7 @@ Session::Session() :
 	{
 	WWDEBUG_SAY(("WOL: Session instantiated\n"));
 
-	// Initailize COM
-	HRESULT hr = CoInitialize(NULL);
 
-	if (FAILED(hr))
-		{
-		WWDEBUG_SAY(("WOLERROR: CoInitialize() failed!\n"));
-		}
-
-	WWASSERT(SUCCEEDED(hr) && "CoInitialize() failed!");
 	}
 
 
@@ -166,7 +158,7 @@ bool Session::FinalizeCreate(void)
 	//---------------------------------------------------------------------------
 	WWDEBUG_SAY(("WOL: Creating IID_IChat object\n"));
 	WOL::IChat* chatObject = NULL;
-	HRESULT hr = CreateCOMObjectFromLibrary("OnlineServices.dll", WOL::CLSID_Chat,
+	HRESULT hr = Platform::CreateOnlineProvider( WOL::CLSID_Chat,
 			WOL::IID_IChat, (void**)&chatObject);
 
 	if (FAILED(hr))
@@ -177,7 +169,7 @@ bool Session::FinalizeCreate(void)
 
 	if (chatObject)
 		{
-		mChat = chatObject;
+		mChat.Attach(chatObject);
 
 		// Create chat events observer
 		WWDEBUG_SAY(("WOL: Creating chat events observer\n"));
@@ -209,7 +201,7 @@ bool Session::FinalizeCreate(void)
 	WWDEBUG_SAY(("WOL: Creating IID_INetUtil object\n"));
 
 	WOL::INetUtil* utilObject = NULL;
-	hr = CreateCOMObjectFromLibrary("OnlineServices.dll", WOL::CLSID_NetUtil,
+	hr = Platform::CreateOnlineProvider( WOL::CLSID_NetUtil,
 			WOL::IID_INetUtil, (void **)&utilObject);
 
 	if (FAILED(hr))
@@ -220,7 +212,7 @@ bool Session::FinalizeCreate(void)
 
 	if (utilObject)
 		{
-		mNetUtil = utilObject;
+		mNetUtil.Attach(utilObject);
 
 		// Create net utility events observer
 		WWDEBUG_SAY(("WOL: Creating netutil events observer\n"));
@@ -324,7 +316,6 @@ Session::~Session()
 		mChat.Release();
 		}
 
-	CoUninitialize();
 	}
 
 
@@ -1997,7 +1988,7 @@ void Session::RequestSquadInfoByID(unsigned long squadID)
 		wchar_t idString[34];
 
 		// MAGICK NUMBER - 10 - squadID is base 10.
-		_itow(squadID, idString, 10);
+		std::swprintf(idString, 34, L"%d", static_cast<std::int32_t>(squadID));
 
 		// Only add a request that is not already pending.
 		const unsigned int count = mSquadRequests.size();
@@ -2086,7 +2077,7 @@ void Session::MakeSquadRequests(void)
 
 			if (iswdigit(firstChar))
 				{
-				unsigned int squadID = _wtoi(request);
+				unsigned int squadID = static_cast<std::int32_t>(std::wcstol(request, nullptr, 10));
 				WWDEBUG_SAY(("WOL: SquadInfo requested for ID %ld\n", squadID));
 				hr = mChat->RequestSquadInfo(squadID);
 				}
@@ -3275,7 +3266,7 @@ const CComPtr<WOL::IIGROptions>& Session::GetIGRObject(void)
 		WWDEBUG_SAY(("WOL: Creating IID_IIGROptions object\n"));
 		WOL::IIGROptions* igrObject = NULL;
 
-		HRESULT hr = CreateCOMObjectFromLibrary("OnlineServices.dll", WOL::CLSID_IGROptions,
+		HRESULT hr = Platform::CreateOnlineProvider( WOL::CLSID_IGROptions,
 			WOL::IID_IIGROptions, (void**)&igrObject);
 
 		if (SUCCEEDED(hr))
@@ -3292,7 +3283,7 @@ const CComPtr<WOL::IIGROptions>& Session::GetIGRObject(void)
 			WWDEBUG_SAY(("WOLERROR: Failed to create IID_IIGROptions\n"));
 			}
 
-		mIGRObject = igrObject;
+		mIGRObject.Attach(igrObject);
 		}
 
 	return mIGRObject;
