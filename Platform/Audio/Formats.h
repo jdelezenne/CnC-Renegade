@@ -10,7 +10,14 @@ struct WAVEFORMAT {
     std::uint32_t nAvgBytesPerSec;
     std::uint16_t nBlockAlign;
 };
+struct PCMWAVEFORMAT {
+    WAVEFORMAT wf;
+    std::uint16_t wBitsPerSample;
+};
 #pragma pack(pop)
+
+inline constexpr std::uint16_t WAVE_FORMAT_PCM = 1;
+inline constexpr std::uint16_t WAVE_FORMAT_IMA_ADPCM = 0x11;
 
 using LPWAVEFORMAT = WAVEFORMAT*;
 using LPHWAVEOUT = void**;

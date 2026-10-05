@@ -35,6 +35,7 @@
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 #include "savegame.h"
+#include "Platform/Paths.h"
 #include "definitionmgr.h"
 #include "debug.h"
 #include "chunkio.h"
@@ -157,9 +158,10 @@ void	SaveGameManager::Pre_Load_Game
 	//
 	//	Get the root name and extension from the filename
 	//
-	char root_name[_MAX_FNAME] = { 0 };
-	char extension[_MAX_EXT] = { 0 };
-	::_splitpath (filename, NULL, NULL, root_name, extension);
+	const std::string root_name_storage = Platform::FileStem(filename);
+	const std::string extension_storage = Platform::FileExtension(filename);
+	const char* root_name = root_name_storage.c_str();
+	const char* extension = extension_storage.c_str();
 
 	SystemInfoLog::Set_Current_Level(root_name);
 	filename_to_load = filename;
@@ -190,7 +192,7 @@ void	SaveGameManager::Pre_Load_Game
 		//
 		//	HACK HACK - Put the level 9 mix file first...
 		//
-		if (	::lstrcmpi (filename, "M09.mix") == 0 &&
+		if (	::_stricmp (filename, "M09.mix") == 0 &&
 				FileFactoryListClass::Get_Instance () != NULL)
 		{
 			FileFactoryListClass::Get_Instance ()->Set_Search_Start(filename);
@@ -207,8 +209,8 @@ void	SaveGameManager::Pre_Load_Game
 		StringClass map_name(0,true);
 		if (Peek_Map_Name (filename, map_name)) {
 
-			char mix_root_name[_MAX_FNAME] = { 0 };
-			::_splitpath ((const char *)map_name, NULL, NULL, mix_root_name, NULL);
+			const std::string mix_root_storage = Platform::FileStem(map_name);
+			const char* mix_root_name = mix_root_storage.c_str();
 
 			//
 			//	Build the mix filename from the map name...
@@ -220,7 +222,7 @@ void	SaveGameManager::Pre_Load_Game
 			//
 			//	HACK HACK - Put the level 9 mix file first...
 			//
-			if (	::lstrcmpi (mix_filename, "M09.mix") == 0 &&
+			if (	::_stricmp (mix_filename, "M09.mix") == 0 &&
 					FileFactoryListClass::Get_Instance () != NULL)
 			{
 				FileFactoryListClass::Get_Instance ()->Set_Search_Start(mix_filename);
@@ -315,9 +317,10 @@ bool	SaveGameManager::Smart_Peek_Description
 	//
 	//	Get the root name and extension from the filename
 	//
-	char root_name[_MAX_FNAME] = { 0 };
-	char extension[_MAX_EXT] = { 0 };
-	::_splitpath (filename, NULL, NULL, root_name, extension);
+	const std::string root_name_storage = Platform::FileStem(filename);
+	const std::string extension_storage = Platform::FileExtension(filename);
+	const char* root_name = root_name_storage.c_str();
+	const char* extension = extension_storage.c_str();
 
 	StringClass filename_to_load(filename,true);
 

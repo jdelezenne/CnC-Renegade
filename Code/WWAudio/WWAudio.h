@@ -337,10 +337,10 @@ public:
 	//////////////////////////////////////////////////////////////////////
 	//	Callback methods
 	//////////////////////////////////////////////////////////////////////
-	void					Register_EOS_Callback (LPFNEOSCALLBACK callback, DWORD user_param);
+	void					Register_EOS_Callback (LPFNEOSCALLBACK callback, uint32 user_param);
 	void					UnRegister_EOS_Callback (LPFNEOSCALLBACK callback);
 
-	void					Register_Text_Callback (LPFNTEXTCALLBACK callback, DWORD user_param);
+	void					Register_Text_Callback (LPFNTEXTCALLBACK callback, uint32 user_param);
 	void					UnRegister_Text_Callback (LPFNTEXTCALLBACK callback);
 
 	void					Fire_Text_Callback (AudibleSoundClass *sound_obj, const StringClass &text);
@@ -603,7 +603,6 @@ private:
 	//	Static member data
 	//////////////////////////////////////////////////////////////////////
 	static WWAudioClass *						_theInstance;
-	static void*									_TimerSyncEvent;
 
 	//////////////////////////////////////////////////////////////////////
 	//	Private data types
@@ -664,7 +663,6 @@ private:
 	int													m_Max3DSamples;
 	int													m_Max2DBufferSize;
 	int													m_Max3DBufferSize;
-	HTIMER												m_UpdateTimer;
 	bool													m_IsMusicEnabled;
 	bool													m_IsDialogEnabled;
 	bool													m_IsCinematicSoundEnabled;

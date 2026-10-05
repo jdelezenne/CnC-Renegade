@@ -35,6 +35,7 @@
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 #include "singletoninstancekeeper.h"
+#include "win.h"
 #include "wwdebug.h"
 #include "autostart.h"
 

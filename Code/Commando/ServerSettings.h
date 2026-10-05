@@ -34,7 +34,6 @@
  * Functions:                                                                                  *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#include <win.h>
 #include "WWOnline/WOLSession.h"
 
 class StringClass;
@@ -72,7 +71,8 @@ class ServerSettingsClass
 		static char *Get_Preferred_Server(const WWOnline::IRCServerList &server_list);
 		static void Write_Server_List(const WWOnline::IRCServerList &server_listvoid);
 	private:
-		static char SettingsFile[MAX_PATH];
+		static constexpr int FileNameCapacity = 260;
+		static char SettingsFile[FileNameCapacity];
 		static bool IsActive;
 
 		static char MasterPassword[128];

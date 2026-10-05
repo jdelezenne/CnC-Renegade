@@ -41,7 +41,9 @@
 #ifndef _SLAVEMASTER_H
 #define _SLAVEMASTER_H
 
-#include <winbase.h>
+#ifdef _WIN32
+#include "win.h"
+#endif
 
 #define MAX_SLAVES	7
 
@@ -71,14 +73,16 @@ class SlaveServerClass
 		char	Serial[64];
 		char	Password[64];
 		unsigned short Port;
-		char	SettingsFileName[MAX_PATH];
+		char	SettingsFileName[260];
 
 		bool	Enable;
 		bool	IsRunning;
 		unsigned short ControlPort;
 		int	Bandwidth;
 
+#ifdef _WIN32
 		PROCESS_INFORMATION ProcessInfo;
+#endif
 };
 
 

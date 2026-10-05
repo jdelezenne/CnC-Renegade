@@ -34,7 +34,9 @@
 #include "Threads.h"
 #include "refcount.h"
 #include "Utils.h"
-#include <Process.h>
+#include <SDL3/SDL_log.h>
+#include <SDL3/SDL_error.h>
+#include <stdexcept>
 #include "wwdebug.h"
 #include "systimer.h"
 
@@ -44,10 +46,10 @@
 ///////////////////////////////////////////////////////////////////////////////////////////
 WWAudioThreadsClass::DELAYED_RELEASE_INFO *	WWAudioThreadsClass::m_ReleaseListHead	= NULL;
 CriticalSectionClass		WWAudioThreadsClass::m_ListMutex;
-HANDLE						WWAudioThreadsClass::m_hDelayedReleaseThread	= (HANDLE)-1;
-HANDLE						WWAudioThreadsClass::m_hDelayedReleaseEvent	= (HANDLE)-1;
+SDL_Thread*						WWAudioThreadsClass::m_hDelayedReleaseThread	= NULL;
+SDL_Semaphore*				WWAudioThreadsClass::m_hDelayedReleaseEvent	= NULL;
 CriticalSectionClass		WWAudioThreadsClass::m_CriticalSection;
-bool							WWAudioThreadsClass::m_IsFlushing				= false;
+std::atomic<bool>			WWAudioThreadsClass::m_IsFlushing				= false;
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 //
@@ -75,15 +77,23 @@ WWAudioThreadsClass::~WWAudioThreadsClass (void)
 //	Create_Delayed_Release_Thread
 //
 ///////////////////////////////////////////////////////////////////////////////////////////
-HANDLE
-WWAudioThreadsClass::Create_Delayed_Release_Thread (LPVOID param)
+SDL_Thread*
+WWAudioThreadsClass::Create_Delayed_Release_Thread (void* param)
 {
 	//
 	//	If the thread isn't already running, then
 	//
-	if (m_hDelayedReleaseThread == (HANDLE)-1) {
-		m_hDelayedReleaseEvent	= ::CreateEvent (NULL, FALSE, FALSE, NULL);
-		m_hDelayedReleaseThread = (HANDLE)::_beginthread (Delayed_Release_Thread_Proc, 0, param);
+	CriticalSectionClass::LockClass lock(m_CriticalSection);
+	if (m_hDelayedReleaseThread == NULL) {
+		m_hDelayedReleaseEvent = SDL_CreateSemaphore(0);
+		if (!m_hDelayedReleaseEvent) throw std::runtime_error(SDL_GetError());
+		m_IsFlushing = false;
+		m_hDelayedReleaseThread = SDL_CreateThread(Delayed_Release_Thread_Proc, "Audio release", param);
+		if (!m_hDelayedReleaseThread) {
+			SDL_DestroySemaphore(m_hDelayedReleaseEvent);
+			m_hDelayedReleaseEvent = NULL;
+			throw std::runtime_error(SDL_GetError());
+		}
 	}
 
 	return m_hDelayedReleaseThread;
@@ -96,17 +106,29 @@ WWAudioThreadsClass::Create_Delayed_Release_Thread (LPVOID param)
 //
 ///////////////////////////////////////////////////////////////////////////////////////////
 void
-WWAudioThreadsClass::End_Delayed_Release_Thread (DWORD timeout)
+WWAudioThreadsClass::End_Delayed_Release_Thread (std::uint32_t timeout)
 {
 	//
 	//	If the thread is running, then wait for it to finish
 	//
-	if (m_hDelayedReleaseThread != (HANDLE)-1) {
-		::SetEvent (m_hDelayedReleaseEvent);
-		::WaitForSingleObject (m_hDelayedReleaseThread, timeout);
-
-		m_hDelayedReleaseEvent	= (HANDLE)-1;
-		m_hDelayedReleaseThread	= (HANDLE)-1;
+	SDL_Thread* thread = NULL;
+	{
+		CriticalSectionClass::LockClass lock(m_CriticalSection);
+		m_IsFlushing = true;
+		thread = m_hDelayedReleaseThread;
+		if (thread) SDL_SignalSemaphore(m_hDelayedReleaseEvent);
+	}
+	if (thread) {
+		const auto start = Platform::Ticks();
+		while (SDL_GetThreadState(thread) != SDL_THREAD_COMPLETE && Platform::Ticks() - start < timeout)
+			Platform::Sleep(1);
+		if (SDL_GetThreadState(thread) != SDL_THREAD_COMPLETE)
+			SDL_LogWarn(SDL_LOG_CATEGORY_AUDIO, "Waiting for audio release thread after %u ms", timeout);
+		SDL_WaitThread(thread, NULL);
+		CriticalSectionClass::LockClass lock(m_CriticalSection);
+		SDL_DestroySemaphore(m_hDelayedReleaseEvent);
+		m_hDelayedReleaseEvent = NULL;
+		m_hDelayedReleaseThread = NULL;
 	}
 
 	return ;
@@ -122,45 +144,26 @@ void
 WWAudioThreadsClass::Add_Delayed_Release_Object
 (
 	RefCountClass *	object,
-	DWORD					delay
+	std::uint32_t					delay
 )
 {
-	if (m_IsFlushing) {
-		REF_PTR_RELEASE (object);
-	} else {
-
-		//
-		//	Make sure we have a thread running that will handle
-		// the operation for us.
-		//
-		if (m_hDelayedReleaseThread == (HANDLE)-1) {
-			Create_Delayed_Release_Thread ();
-		}
-
-		//
-		//	Wait for the release thread to finish using the
-		// list pointer
-		//
-		{
-			CriticalSectionClass::LockClass lock(m_ListMutex);
-
-			//
-			//	Create a new delay-information structure and
-			//	add it to our list
-			//
-			DELAYED_RELEASE_INFO *info = new DELAYED_RELEASE_INFO;
-			info->object	= object;
-			info->time		= TIMEGETTIME () + delay;
-			info->next		= m_ReleaseListHead;
-			info->prev		= NULL;
-
-			if (info->next != NULL) {
-				info->next->prev = info;
-			}
-
+	bool release_now = false;
+	{
+		CriticalSectionClass::LockClass thread_lock(m_CriticalSection);
+		if (!m_IsFlushing) Create_Delayed_Release_Thread();
+		CriticalSectionClass::LockClass list_lock(m_ListMutex);
+		release_now = m_IsFlushing;
+		if (!release_now) {
+			DELAYED_RELEASE_INFO* info = new DELAYED_RELEASE_INFO;
+			info->object = object;
+			info->time = TIMEGETTIME() + delay;
+			info->next = m_ReleaseListHead;
+			info->prev = NULL;
+			if (info->next) info->next->prev = info;
 			m_ReleaseListHead = info;
 		}
 	}
+	if (release_now) REF_PTR_RELEASE(object);
 
 	return ;
 }
@@ -207,16 +210,16 @@ WWAudioThreadsClass::Flush_Delayed_Release_Objects (void)
 //	Delayed_Release_Thread_Proc
 //
 ///////////////////////////////////////////////////////////////////////////////////////////
-void __cdecl
-WWAudioThreadsClass::Delayed_Release_Thread_Proc (LPVOID /*param*/)
+int
+WWAudioThreadsClass::Delayed_Release_Thread_Proc (void* /*param*/)
 {
-	const DWORD base_timeout = 2000;
-	DWORD timeout = base_timeout + rand () % 1000;
+	const std::uint32_t base_timeout = 2000;
+	std::uint32_t timeout = base_timeout + rand () % 1000;
 
 	//
 	//	Keep looping forever until we are singalled to quit (or an error occurs)
 	//
-	while (::WaitForSingleObject (m_hDelayedReleaseEvent, timeout) == WAIT_TIMEOUT) {
+	while (!SDL_WaitSemaphoreTimeout(m_hDelayedReleaseEvent, timeout)) {
 
 		DELAYED_RELEASE_INFO *release_list = NULL;
 		DELAYED_RELEASE_INFO **release_tail = &release_list;
@@ -227,7 +230,7 @@ WWAudioThreadsClass::Delayed_Release_Thread_Proc (LPVOID /*param*/)
 			//	Loop through all the objects in our delay list, and
 			// free any that have expired.
 			//
-			DWORD current_time			= TIMEGETTIME ();
+			std::uint32_t current_time			= TIMEGETTIME ();
 			DELAYED_RELEASE_INFO *curr = NULL;
 			DELAYED_RELEASE_INFO *prev	= NULL;
 			DELAYED_RELEASE_INFO *next	= NULL;
@@ -279,7 +282,7 @@ WWAudioThreadsClass::Delayed_Release_Thread_Proc (LPVOID /*param*/)
 	}
 
 	Flush_Delayed_Release_Objects ();
-	return ;
+	return 0;
 }
 
 /*

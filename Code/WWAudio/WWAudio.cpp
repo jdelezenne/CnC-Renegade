@@ -36,7 +36,6 @@
 
 
 #include "always.h"
-#include <Windows.H>
 #include "WWAudio.H"
 #include "WWDebug.H"
 #include "Utils.H"
@@ -68,7 +67,6 @@
 //	Static member initialization
 ////////////////////////////////////////////////////////////////////////////////////////////////
 WWAudioClass *WWAudioClass::_theInstance = NULL;
-HANDLE WWAudioClass::_TimerSyncEvent = NULL;
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -141,7 +139,6 @@ WWAudioClass::WWAudioClass (bool lite)
 	  m_PlaybackStereo (true),
 	  m_SpeakerType (0),
 	  m_ReverbFilter (INVALID_MILES_HANDLE),
-	  m_UpdateTimer (-1),
 	  m_Driver3DPseudo (NULL),
 	  m_MusicVolume (DEF_MUSIC_VOL),
 	  m_SoundVolume (DEF_SFX_VOL),
@@ -173,7 +170,6 @@ WWAudioClass::WWAudioClass (bool lite)
 	  m_CachedAreSoundEffectsEnabled (true),
 	  AudioIni (NULL)
 {
-	::InitializeCriticalSection (&MMSLockClass::_MSSLockCriticalSection);
 
 	m_ForceDisable = lite;
 
@@ -184,7 +180,6 @@ WWAudioClass::WWAudioClass (bool lite)
 		AIL_startup ();
 	}
 	_theInstance = this;
-	_TimerSyncEvent = ::CreateEvent (NULL, TRUE, FALSE, "WWAUDIO_TIMER_SYNC");
 
 	//
 	// Set some default values
@@ -230,10 +225,7 @@ WWAudioClass::~WWAudioClass (void)
 
 	Shutdown ();
 	_theInstance = NULL;
-	::CloseHandle(_TimerSyncEvent);
-	_TimerSyncEvent = NULL;
 
-	::DeleteCriticalSection (&MMSLockClass::_MSSLockCriticalSection);
 
 	//
 	//	Free the list of logical "types".
@@ -304,7 +296,7 @@ WWAudioClass::Open_2D_Device (LPWAVEFORMAT format)
 	AIL_set_preference (AIL_LOCK_PROTECTION, NO);
 
 	// Try to use DirectSound if possible
-	S32 success = ::AIL_set_preference (DIG_USE_WAVEOUT, FALSE);
+	S32 success = ::AIL_set_preference (DIG_USE_WAVEOUT, false);
 	//WWASSERT (success == AIL_NO_ERROR);		// This assert fires if there is no sound card.
 
 	// Open the driver
@@ -313,7 +305,7 @@ WWAudioClass::Open_2D_Device (LPWAVEFORMAT format)
 	// Do we need to switch from direct sound to waveout?
 	if ((success == AIL_NO_ERROR) &&
 		 (m_Driver2D != NULL) &&
-		 (m_Driver2D->emulated_ds == TRUE)) {
+		 (m_Driver2D->emulated_ds != 0)) {
 		::AIL_waveOutClose (m_Driver2D);
 		success = 2;
 		WWDEBUG_SAY (("WWAudio: Detected 2D DirectSound emulation, switching to WaveOut.\r\n"));
@@ -324,7 +316,7 @@ WWAudioClass::Open_2D_Device (LPWAVEFORMAT format)
 	if (success != AIL_NO_ERROR) {
 
 		// Try to use the default wave out driver
-		success = ::AIL_set_preference (DIG_USE_WAVEOUT, TRUE);
+		success = ::AIL_set_preference (DIG_USE_WAVEOUT, true);
 		//WWASSERT (success == AIL_NO_ERROR);	// This assert fires if there is no sound card.
 
 		// Open the driver
@@ -539,7 +531,7 @@ WWAudioClass::Find_Cached_Buffer (const char *string_id)
 			// Is this the sound buffer we were looking for?
 			//
 			CACHE_ENTRY_STRUCT &info = m_CachedBuffers[hash_index][index];
-			if (::lstrcmpi (info.string_id, string_id) == 0) {
+			if (::_stricmp (info.string_id, string_id) == 0) {
 				sound_buffer = info.buffer;
 				sound_buffer->Add_Ref ();
 				break;
@@ -1894,7 +1886,7 @@ WWAudioClass::Select_3D_Device (const char *device_name)
 			//
 			//	Is this the device we were looking for?
 			//
-			if (::lstrcmpi (info->name, device_name) == 0) {
+			if (::_stricmp (info->name, device_name) == 0) {
 				retval = Select_3D_Device (device_name, info->driver);
 				break;
 			}
@@ -2492,22 +2484,6 @@ void
 WWAudioClass::Shutdown (void)
 {
 	//
-	// If there is a timer running, then stop the timer...
-	//
-	if (m_UpdateTimer != -1) {
-
-		// Kill the timer
-		::AIL_stop_timer (m_UpdateTimer);
-		::AIL_release_timer_handle (m_UpdateTimer);
-		m_UpdateTimer = -1;
-
-		// Wait for the timer callback function to end
-		::WaitForSingleObject (_TimerSyncEvent, 20000);
-		::CloseHandle (_TimerSyncEvent);
-		_TimerSyncEvent = NULL;
-	}
-
-	//
 	//	Stop the background music
 	//
 	Set_Background_Music (NULL);
@@ -2550,7 +2526,7 @@ WWAudioClass::Shutdown (void)
 //
 ////////////////////////////////////////////////////////////////////////////////////////////////
 void
-WWAudioClass::Register_EOS_Callback (LPFNEOSCALLBACK callback, DWORD user_param)
+WWAudioClass::Register_EOS_Callback (LPFNEOSCALLBACK callback, uint32 user_param)
 {
 	m_EOSCallbackList.Add_Callback (callback, user_param);
 	return;
@@ -2576,7 +2552,7 @@ WWAudioClass::UnRegister_EOS_Callback (LPFNEOSCALLBACK callback)
 //
 ////////////////////////////////////////////////////////////////////////////////////////////////
 void
-WWAudioClass::Register_Text_Callback (LPFNTEXTCALLBACK callback, DWORD user_param)
+WWAudioClass::Register_Text_Callback (LPFNTEXTCALLBACK callback, uint32 user_param)
 {
 	m_TextCallbackList.Add_Callback (callback, user_param);
 	return;
@@ -2878,7 +2854,7 @@ WWAudioClass::Simple_Play_2D_Sound_Effect
 //
 ////////////////////////////////////////////////////////////////////////////////////////////////
 FileClass *
-WWAudioClass::Get_File (LPCTSTR filename)
+WWAudioClass::Get_File (const char* filename)
 {
 	FileClass *file = NULL;
 	if (m_FileFactory != NULL) {
@@ -2940,7 +2916,7 @@ WWAudioClass::Create_Logical_Listener (void)
 //
 ////////////////////////////////////////////////////////////////////////////////////////////
 void
-WWAudioClass::Add_Logical_Type (int id, LPCTSTR display_name)
+WWAudioClass::Add_Logical_Type (int id, const char* display_name)
 {
 	m_LogicalTypes.Add (LOGICAL_TYPE_STRUCT (id, display_name));
 	return ;

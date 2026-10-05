@@ -105,9 +105,9 @@
 #include "dx8wrapper.h"
 #include "metalmap.h"
 #include <ini.h>
-#include <windows.h>
+#include <string>
 #include <stdio.h>
-#include <D3dx8core.h>
+#include <d3dx8core.h>
 #include "texture.h"
 #include "wwprofile.h"
 #include "assetstatus.h"
@@ -680,14 +680,10 @@ RenderObjClass * WW3DAssetManager::Create_Render_Obj(const char * name)
 	if (WW3D_Load_On_Demand && proto == NULL) {	// If we didn't find one, try to load on demand
 		AssetStatusClass::Peek_Instance()->Report_Load_On_Demand_RObj(name);
 
-		char filename [MAX_PATH];
-		const char *mesh_name = ::strchr (name, '.');
-		if (mesh_name != NULL) {
-			::lstrcpyn (filename, name, static_cast<int>(mesh_name - name) + 1);
-			::lstrcat (filename, ".w3d");
-		} else {
-			sprintf( filename, "%s.w3d", name);
-		}
+		const char* mesh_name = ::strchr(name, '.');
+		StringClass filename;
+		filename = std::string(name, mesh_name ? static_cast<std::size_t>(mesh_name - name) : std::strlen(name)).c_str();
+		filename += ".w3d";
 
 		// If we can't find it, try the parent directory
 		if ( Load_3D_Assets( filename ) == false ) {
@@ -854,10 +850,10 @@ HAnimClass *	WW3DAssetManager::Get_HAnim(const char * name)
 
 			AssetStatusClass::Peek_Instance()->Report_Load_On_Demand_HAnim(name);
 
-			char filename[ MAX_PATH ];
+			StringClass filename;
 			const char *animname = strchr( name, '.');
 			if (animname != NULL) {
-				sprintf( filename, "%s.w3d", animname+1);
+				filename.Format("%s.w3d", animname + 1);
 			} else {
 				WWDEBUG_SAY(( "Animation %s has no . in the name\n", name ));
 				WWASSERT( 0 );
@@ -906,8 +902,8 @@ HTreeClass *	WW3DAssetManager::Get_HTree(const char * name)
 		
 		AssetStatusClass::Peek_Instance()->Report_Load_On_Demand_HTree(name);
 
-		char filename[ MAX_PATH ];
-		sprintf( filename, "%s.w3d", name);
+		StringClass filename;
+		filename.Format("%s.w3d", name);
 
 		// If we can't find it, try the parent directory
 		if ( Load_3D_Assets( filename ) == false ) {

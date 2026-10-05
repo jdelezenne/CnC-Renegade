@@ -34,6 +34,7 @@
  * Functions:                                                                                  * 
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
+#include <filesystem>
 #include "movie.h"
 #include "binkmovie.h"
 #include "campaign.h"
@@ -150,7 +151,8 @@ void	MovieGameModeClass::Start_Movie( const char * filename )
 	//
 	//	Play the movie (if it exists locally)
 	//
-	if ( ::GetFileAttributes ( filename ) != 0xFFFFFFFF ) {
+	std::error_code file_error;
+	if ( std::filesystem::exists ( filename, file_error ) ) {
 		Play_Movie ( filename );
 	} else {
 

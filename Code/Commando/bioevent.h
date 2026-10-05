@@ -49,7 +49,7 @@ class	cBioEvent : public cNetEvent
 public:
    cBioEvent(void);
 
-	void						Init(int team_choice, unsigned long clanID);
+	void						Init(int team_choice, uint32 clanID);
 
 	virtual void			Export_Creation(BitStreamClass &packet);
 	virtual void			Import_Creation(BitStreamClass &packet);
@@ -64,7 +64,7 @@ private:
 	WideStringClass		Nickname;
 	char						MapName[256];
 	int TeamChoice;
-	unsigned long ClanID;
+	uint32 ClanID;
 };
 
 //-----------------------------------------------------------------------------

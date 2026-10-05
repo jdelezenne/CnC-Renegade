@@ -215,7 +215,6 @@ set(REN_ww3d2_SOURCES
     "${PROJECT_SOURCE_DIR}/Code/ww3d2/dynamesh.cpp"
     "${PROJECT_SOURCE_DIR}/Code/ww3d2/font3d.cpp"
     "${PROJECT_SOURCE_DIR}/Code/ww3d2/formconv.cpp"
-    "${PROJECT_SOURCE_DIR}/Code/ww3d2/framgrab.cpp"
     "${PROJECT_SOURCE_DIR}/Code/ww3d2/hanim.cpp"
     "${PROJECT_SOURCE_DIR}/Code/ww3d2/hanimmgr.cpp"
     "${PROJECT_SOURCE_DIR}/Code/ww3d2/hcanim.cpp"
@@ -886,6 +885,7 @@ endif()
 
 if(WIN32)
     list(APPEND REN_wwutil_SOURCES "${PROJECT_SOURCE_DIR}/Platform/Windows/StackDump.cpp")
+    list(APPEND REN_ww3d2_SOURCES "${PROJECT_SOURCE_DIR}/Platform/Windows/FrameGrab.cpp")
     list(APPEND REN_scripts_SOURCES "${PROJECT_SOURCE_DIR}/Platform/Windows/Scripts.cpp")
     list(APPEND REN_wwnet_SOURCES "${PROJECT_SOURCE_DIR}/Code/wwnet/netutil.cpp")
     list(APPEND REN_scontrol_SOURCES "${PROJECT_SOURCE_DIR}/Code/SControl/servercontrolsocket.cpp")

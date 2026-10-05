@@ -35,7 +35,8 @@
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 #include "Platform/Paths.h"
-#include "Platform/Windows/Files.h"
+#include "Platform/Files.h"
+#include <filesystem>
 #include "inputconfigmgr.h"
 #include "dlgcontrols.h"
 #include "input.h"
@@ -259,7 +260,7 @@ InputConfigMgrClass::Delete_Configuration (int index)
 	//
 	//	Delete the configuration file
 	//
-	Platform::RemoveFile(full_path);
+	Platform::RemoveRawFile(full_path);
 
 	//
 	//	Now remove this entry from the list
@@ -437,6 +438,7 @@ InputConfigMgrClass::Get_Unique_Config_Filename (StringClass &filename)
 	StringClass config_path;
 	Get_Config_Path (config_path);
 
+	std::error_code file_error;
 	int slot	= 1;
 
 	StringClass full_path;
@@ -452,7 +454,7 @@ InputConfigMgrClass::Get_Unique_Config_Filename (StringClass &filename)
 		//
 		full_path.Format ("%s\\%s", (const char *)config_path, filename.Peek_Buffer());
 
-	} while (::GetFileAttributes (full_path) != 0xFFFFFFFF);
+	} while (std::filesystem::exists (full_path.Peek_Buffer (), file_error));
 
 	return ;
 }

@@ -39,7 +39,7 @@
 
 #include <d3d8.h>
 #include <stdio.h>
-#include <D3dx8core.h>
+#include <d3dx8core.h>
 #include "dx8wrapper.h"
 #include "targa.h"
 #include <nstrdup.h>
@@ -338,7 +338,7 @@ TextureClass::TextureClass(IDirect3DTexture8* d3d_texture)
 	IDirect3DSurface8* surface;
 	DX8_ErrorCode(D3DTexture->GetSurfaceLevel(0,&surface));
 	D3DSURFACE_DESC d3d_desc;
-	::ZeroMemory(&d3d_desc, sizeof(D3DSURFACE_DESC));
+	::memset(&d3d_desc, 0, sizeof(D3DSURFACE_DESC));
 	DX8_ErrorCode(surface->GetDesc(&d3d_desc));
 	Width=d3d_desc.Width;
 	Height=d3d_desc.Height;
@@ -656,7 +656,7 @@ void TextureClass::Apply_New_Surface(IDirect3DTexture8* d3d_texture,bool initial
 	IDirect3DSurface8* surface;
 	DX8_ErrorCode(D3DTexture->GetSurfaceLevel(0,&surface));
 	D3DSURFACE_DESC d3d_desc;
-	::ZeroMemory(&d3d_desc, sizeof(D3DSURFACE_DESC));
+	::memset(&d3d_desc, 0, sizeof(D3DSURFACE_DESC));
 	DX8_ErrorCode(surface->GetDesc(&d3d_desc));
 	if (initialized) {
 		TextureFormat=D3DFormat_To_WW3DFormat(d3d_desc.Format);

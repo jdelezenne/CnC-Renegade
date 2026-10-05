@@ -35,7 +35,6 @@
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 #include "dlgmplangamelist.h"
-#include "win.h"
 #include "listctrl.h"
 #include "gamedata.h"
 #include "gamechannel.h"

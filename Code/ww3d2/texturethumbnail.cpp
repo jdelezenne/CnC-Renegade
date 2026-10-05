@@ -27,7 +27,9 @@
 #include "ffactory.h"
 #include "rawfile.h"
 #include "mixfile.h"
-#include <windows.h>
+#include <filesystem>
+#include <SDL3/SDL_messagebox.h>
+#include "Platform/Platform.h"
 
 DLListClass<ThumbnailManagerClass> ThumbnailManagerClass::ThumbnailManagerList;
 static bool message_box_displayed=false;
@@ -613,13 +615,11 @@ void ThumbnailManagerClass::Update_Thumbnail_File(const char* mix_file_name,bool
 
 	if (display_message_box && !message_box_displayed) {
 		message_box_displayed=true;
-		::MessageBox(NULL,
+		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION, "Updating texture thumbnails",
 			"Some or all texture thumbnails need to be updated.\n"
 			"This will take a while. The update will only be done once\n"
 			"each time a mix file changes and thumb database hasn't been\n"
-			"updated.",
-			"Updating texture thumbnails",
-			MB_OK);
+			"updated.", Platform::GetWindow());
 	}
 
 	// we don't currently have a thumbnail file (either we just deleted it or it never existed, we don't care)
@@ -646,26 +646,15 @@ void ThumbnailManagerClass::Pre_Init(bool display_message_box)
 	// Collect all mix file names
 	DynamicVectorClass<StringClass> mix_names;
 
-	char cur_dir[256];
-	GetCurrentDirectory(sizeof(cur_dir),cur_dir);
-	StringClass new_dir(cur_dir,true);
-	new_dir+="\\Data";
-	SetCurrentDirectory(new_dir);
-
-	WIN32_FIND_DATA find_data;
-	HANDLE handle=FindFirstFile("*.mix",&find_data);
-	if (handle!=INVALID_HANDLE_VALUE) {
-		for (;;) {
-			if (!(find_data.dwFileAttributes&FILE_ATTRIBUTE_DIRECTORY)) {
-				mix_names.Add(find_data.cFileName);
-			}
-			if (!FindNextFile(handle,&find_data)) {
-				FindClose(handle);
-				break;
-			}
+	std::error_code error;
+	std::filesystem::path directory = std::filesystem::current_path() / "Data";
+	if (!std::filesystem::is_directory(directory, error)) directory = std::filesystem::current_path();
+	for (std::filesystem::directory_iterator entry(directory, error), end; entry != end && !error; entry.increment(error)) {
+		if (entry->is_regular_file(error)) {
+			const std::string name = entry->path().filename().string();
+			if (::_stricmp(entry->path().extension().string().c_str(), ".mix") == 0) mix_names.Add(name.c_str());
 		}
 	}
-	SetCurrentDirectory(cur_dir);
 
 	// First generate thumbnails for always.dat
 	Update_Thumbnail_File("always.dat",display_message_box);

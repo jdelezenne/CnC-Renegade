@@ -421,7 +421,7 @@ wchar_t* SubTitleParserClass::Get_Next_Line(void)
 
 	while (eof == false) {
 		// Read in a line of text
-		Read_Line(mInput, mBuffer, LINE_MAX, eof);
+		Read_Line(mInput, mBuffer, BufferSize, eof);
 		mLineNumber++;
 
 		// Remove whitespace

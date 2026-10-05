@@ -7,6 +7,9 @@ const std::string& PreferenceDirectory();
 std::string UserPath(const char* relativePath);
 std::string ReadPath(const char* path);
 std::string WritePath(const char* path);
+std::string FileName(const char* path);
+std::string FileStem(const char* path);
+std::string FileExtension(const char* path);
 std::FILE* OpenStream(const char* path, const char* mode);
 
 }

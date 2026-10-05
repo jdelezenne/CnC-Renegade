@@ -42,6 +42,7 @@
 #include "_globals.h"
 #include "string_ids.h"
 #include "wwaudio.h"
+#include <filesystem>
 
 ////////////////////////////////////////////////////////////////
 //
@@ -226,7 +227,8 @@ MovieOptionsMenuClass::Begin_Play_Movie (void)
 		//
 		//	Play the movie (if it exists locally)
 		//
-		if (::GetFileAttributes (filename->Peek_Buffer ()) != 0xFFFFFFFF) {
+		std::error_code file_error;
+		if (std::filesystem::exists (filename->Peek_Buffer (), file_error)) {
 			Play_Movie (filename->Peek_Buffer ());
 		} else {
 

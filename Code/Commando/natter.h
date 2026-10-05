@@ -65,6 +65,7 @@
 ** Commonly available components.
 */
 #include <wwlib/vector.h>
+#include "mutex.h"
 
 
 #ifdef WWASSERT
@@ -374,7 +375,7 @@ class WOLNATInterfaceClass :	public Observer<WWOnline::UserEvent>,
 		/*
 		** Mutex to serialise access to game options.
 		*/
-		HANDLE GameOptionsMutex;
+		MutexClass GameOptionsMutex;
 
 		/*
 		** Thread safety for game options.
@@ -385,23 +386,10 @@ class WOLNATInterfaceClass :	public Observer<WWOnline::UserEvent>,
 				/*
 				** Constructor. Grabs the mutex.
 				*/
-				inline ThreadLockClass(WOLNATInterfaceClass *wnptr) {
-					WNPtr = wnptr;
-					int deadlock = WaitForSingleObject(wnptr->GameOptionsMutex, 10 * 1000);
-					if (deadlock == WAIT_TIMEOUT) {
-						WWDEBUG_SAY(("FirewallHelper - Timeout waiting for firewall helper data mutex\n"));
-						fw_assert(deadlock != WAIT_TIMEOUT);
-					}
-				};
+				inline ThreadLockClass(WOLNATInterfaceClass *wnptr) : Lock(wnptr->GameOptionsMutex) {}
 
-				WOLNATInterfaceClass *WNPtr;
-
-				/*
-				** Destructor, releases the mutex.
-				*/
-				inline ~ThreadLockClass(void) {
-					ReleaseMutex(WNPtr->GameOptionsMutex);
-				};
+			private:
+				MutexClass::LockClass Lock;
 		};
 		friend ThreadLockClass;
 };

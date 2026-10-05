@@ -44,7 +44,7 @@
 #include "lzo1x.h"
 #include "phys.h"
 #include "wwmemlog.h"
-#include <windows.h>
+#include "Platform/Files.h"
 
 /*
 ** Chunk ID's used by a visibility table to save itself
@@ -478,19 +478,19 @@ void CompressedVisTableClass::Load (void* hfile)
 		BufferSize = 0L;
 	}
 
-	if ((HANDLE)hfile != INVALID_HANDLE_VALUE) {
+	if (hfile != Platform::InvalidFileHandle()) {
 
 		/*
 		** Read the buffer size
 		*/
-		uint32 dwbytes_read = 0L;
-		::ReadFile ((HANDLE)hfile, &BufferSize, sizeof (BufferSize), &dwbytes_read, NULL);
+		std::uint32_t dwbytes_read = 0L;
+		Platform::ReadRawFile(hfile, &BufferSize, sizeof(BufferSize), dwbytes_read);
 
 		/*
 		** Read the buffer
 		*/
 		Buffer = new uint8[BufferSize];
-		::ReadFile ((HANDLE)hfile, Buffer, sizeof (uint8) * BufferSize, &dwbytes_read, NULL);
+		Platform::ReadRawFile(hfile, Buffer, sizeof(uint8) * BufferSize, dwbytes_read);
 	}
 	
 	return;
@@ -498,18 +498,18 @@ void CompressedVisTableClass::Load (void* hfile)
 
 void CompressedVisTableClass::Save (void* hfile)
 {
-	if ((HANDLE)hfile != INVALID_HANDLE_VALUE) {
+	if (hfile != Platform::InvalidFileHandle()) {
 
 		/*
 		** Write the buffer size
 		*/
-		uint32 dwbytes_written = 0L;
-		::WriteFile ((HANDLE)hfile, &BufferSize, sizeof (BufferSize), &dwbytes_written, NULL);
+		std::uint32_t dwbytes_written = 0L;
+		Platform::WriteRawFile(hfile, &BufferSize, sizeof(BufferSize), dwbytes_written);
 
 		/*
 		** Write the buffer
 		*/
-		::WriteFile ((HANDLE)hfile, Buffer, sizeof (uint8) * BufferSize, &dwbytes_written, NULL);		
+		Platform::WriteRawFile(hfile, Buffer, sizeof(uint8) * BufferSize, dwbytes_written);
 	}
 	
 	return;

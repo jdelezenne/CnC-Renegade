@@ -34,6 +34,7 @@
  * Functions:                                                                                  *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
+#include "Platform/Directory.h"
 #include "modpackagemgr.h"
 
 #include "Settings.h"
@@ -114,22 +115,17 @@ ModPackageMgrClass::Shutdown (void)
 void
 ModPackageMgrClass::Build_List (void)
 {
-	WIN32_FIND_DATA find_info	= { 0 };
-	BOOL keep_going				= TRUE;
-	HANDLE file_find				= NULL;
 
 	//
 	//	Build a list of all the saved games we know about
 	//
-	for (file_find = ::FindFirstFile ("data\\*.pkg", &find_info);
-		 (file_find != INVALID_HANDLE_VALUE) && keep_going;
-		  keep_going = ::FindNextFile (file_find, &find_info))
+	for (const auto& file : Platform::ListFiles("data\\*.pkg"))
 	{		
 		//
 		//	Create the package from the data in this mix file
 		//
 		ModPackageClass package;
-		package.Set_Package_Filename (find_info.cFileName);
+		package.Set_Package_Filename (file.Name.c_str());
 
 		//
 		//	Add the package to our list
@@ -137,9 +133,6 @@ ModPackageMgrClass::Build_List (void)
 		PackageList.Add (package);
 	}
 
-	if (file_find != INVALID_HANDLE_VALUE) {			  
-		::FindClose (file_find); 
-	}
 	
 	return ;
 }
@@ -343,9 +336,6 @@ ModPackageMgrClass::Find_Filename_From_CRC
 	bool retval = false;
 
 
-	WIN32_FIND_DATA find_info	= { 0 };
-	BOOL keep_going				= TRUE;
-	HANDLE file_find				= NULL;
 
 	(*filename) = "";
 
@@ -355,27 +345,22 @@ ModPackageMgrClass::Find_Filename_From_CRC
 	//
 	//	Build a list of all the saved games we know about
 	//
-	for (file_find = ::FindFirstFile (full_search_mask, &find_info);
-		 (file_find != INVALID_HANDLE_VALUE) && keep_going;
-		  keep_going = ::FindNextFile (file_find, &find_info))
+	for (const auto& file : Platform::ListFiles(full_search_mask))
 	{
 		//
 		//	Is this the map we were looking for?
 		//
-		if (::CRC_Stringi (find_info.cFileName) == filename_crc) {
+		if (::CRC_Stringi (file.Name.c_str()) == filename_crc) {
 
 			//
 			//	Return the file name to the caller
 			//
-			(*filename) = find_info.cFileName;
+			(*filename) = file.Name.c_str();
 			retval = true;
 			break;
 		}
 	}
 
-	if (file_find != INVALID_HANDLE_VALUE) {
-		::FindClose (file_find);
-	}
 
 	return retval;
 }

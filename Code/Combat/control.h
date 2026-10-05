@@ -40,6 +40,7 @@
 #ifndef	ALWAYS_H
 	#include "always.h"
 #endif
+#include "bittype.h"
 
 #ifndef WWMATH_H
 #include "wwmath.h"
@@ -124,7 +125,7 @@ public:
 	bool	Get_Boolean( BooleanControl control );
 
 	void	Clear_One_Time_Boolean( void )				{OneTimeBooleanBits = 0;}
-	unsigned	long Get_One_Time_Boolean_Bits(void)	{return OneTimeBooleanBits;}
+	uint32 Get_One_Time_Boolean_Bits(void)	{return OneTimeBooleanBits;}
 	unsigned	char Get_Continuous_Boolean_Bits(void) {return ContinuousBooleanBits;}
 
 	// Analog Controls
@@ -143,8 +144,8 @@ public:
 	static void Set_Precision(void);
 
 private:
-	unsigned		long	OneTimeBooleanBits;
-	unsigned		long	PendingOneTimeBooleanBits;
+	uint32	OneTimeBooleanBits;
+	uint32	PendingOneTimeBooleanBits;
 	unsigned		char	ContinuousBooleanBits;
 	unsigned		char	PendingContinuousBooleanBits;
 	float			AnalogValues[ ANALOG_CONTROL_COUNT ];

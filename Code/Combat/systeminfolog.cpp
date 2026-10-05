@@ -16,7 +16,7 @@
 **	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "Platform/Windows/Files.h"
+#include "Platform/Files.h"
 #include "systeminfolog.h"
 #include "Settings.h"
 #include "timemgr.h"
@@ -297,13 +297,12 @@ void PlayerInfoLog::Append_To_Log(PlayerDataClass* data)
 
 	tmp+="\r\n";
 
-	DWORD written;
-	HANDLE file = Platform::OpenFile("history.txt", GENERIC_WRITE, 0, NULL, OPEN_ALWAYS,
-			FILE_ATTRIBUTE_NORMAL, NULL);
-	if (INVALID_HANDLE_VALUE != file) {
-		SetFilePointer(file, 0, NULL, FILE_END);
-		WriteFile(file, tmp, strlen(tmp), &written, NULL);
-		CloseHandle(file);
+	std::uint32_t written;
+	void* file = Platform::OpenRawFile("history.txt", Platform::FileMode::ReadWrite);
+	if (Platform::InvalidFileHandle() != file) {
+		Platform::SeekRawFile(file, 0, SEEK_END);
+		Platform::WriteRawFile(file, tmp, static_cast<int>(strlen(tmp)), written);
+		Platform::CloseRawFile(file);
 	}
 #endif // WWDEBUG
 }

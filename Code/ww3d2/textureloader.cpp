@@ -31,7 +31,7 @@
 #include "dx8caps.h"
 #include "missingtexture.h"
 #include "targa.h"
-#include <D3dx8tex.h>
+#include <d3dx8tex.h>
 #include <cstdio>
 #include "wwmemlog.h"
 #include "texture.h"
@@ -771,10 +771,10 @@ void TextureLoader::Flush_Pending_Load_Tasks(void)
 
 // Nework update macro for texture loader.
 #pragma warning(disable:4201) // warning C4201: nonstandard extension used : nameless struct/union
-#include <mmsystem.h>
+#include "Platform/Platform.h"
 #define UPDATE_NETWORK 											\
 	if (network_callback) {                            \
-		unsigned long time2 = timeGetTime();            \
+		std::uint64_t time2 = Platform::Ticks();            \
 		if (time2 - time > 20) {                        \
 			network_callback();                          \
 			time = time2;                                \
@@ -794,7 +794,7 @@ void TextureLoader::Update(void (*network_callback)(void))
 	// modifying texture tasks.
 	FastCriticalSectionClass::LockClass lock(_ForegroundCriticalSection);
 
-	unsigned long time = timeGetTime();
+	std::uint64_t time = Platform::Ticks();
 
 	// while we have tasks on the foreground queue
 	while (TextureLoadTaskClass *task = _ForegroundQueue.Pop_Front()) {

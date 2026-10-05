@@ -47,7 +47,6 @@
 #include "combatchunkid.h"
 #include "wwprofile.h"
 
-#include "win.h"
 //#include "systimer.h"		// for timegettime
 #include "systimer.h"
 

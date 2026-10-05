@@ -36,6 +36,7 @@
 
 #include "Platform/Paths.h"
 #include "debug.h"
+#include "Platform/Debug.h"
 #include "input.h"
 #include "ww3dtrig.h"
 #include "wwphystrig.h"
@@ -227,7 +228,7 @@ void	DebugManager::Display( char const *buffer )
 	}
 
 	if ( EnabledDevices & DEBUG_DEVICE_WINDOWS ) {
-		OutputDebugString( buffer );		// puts it in the MSVC debug window
+		Platform::DebuggerOutput( buffer );		// puts it in the MSVC debug window
 	}
 }
 
@@ -524,6 +525,7 @@ void ::operator delete (void *ptr)
 
 
 
+#ifdef _WIN32
 #include <imagehlp.h>
 
 
@@ -1022,3 +1024,4 @@ here:
 }
 
 #endif	//(0)
+#endif

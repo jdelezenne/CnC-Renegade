@@ -40,10 +40,12 @@
 #ifndef REALCRC_H
 #define REALCRC_H
 
+#include "bittype.h"
 
-unsigned long	CRC_Memory( const unsigned char *data, unsigned long length, unsigned long crc = 0 );
-unsigned long	CRC_String( const char *string, unsigned long crc = 0 );
-unsigned long	CRC_Stringi( const char *string, unsigned long crc = 0 );
+
+uint32	CRC_Memory( const unsigned char *data, uint32 length, uint32 crc = 0 );
+uint32	CRC_String( const char *string, uint32 crc = 0 );
+uint32	CRC_Stringi( const char *string, uint32 crc = 0 );
 
 
 #endif

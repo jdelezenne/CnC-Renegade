@@ -39,8 +39,9 @@
 #define __UTILS_H
 
 #pragma warning (push, 3)
-#include "win.h"
 #include "Mss.H"
+#include <cstring>
+#include <cstddef>
 #pragma warning (pop)
 
 /////////////////////////////////////////////////////////////////////////////
@@ -78,7 +79,6 @@ class MMSLockClass
 		~MMSLockClass (void) { ::AIL_unlock (); }
 
 
-	static CRITICAL_SECTION _MSSLockCriticalSection;
 };
 
 
@@ -86,11 +86,11 @@ class MMSLockClass
 //
 //  Get_Filename_From_Path
 //
-__inline LPCTSTR
-Get_Filename_From_Path (LPCTSTR path)
+__inline const char*
+Get_Filename_From_Path (const char* path)
 {
 	// Find the last occurance of the directory deliminator
-	LPCTSTR filename = ::strrchr (path, '\\');
+	const char* filename = ::strrchr (path, '\\');
 	if (filename != NULL) {
 		// Increment past the directory deliminator
 		filename ++;

@@ -35,10 +35,9 @@
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 
-#include "Platform/Windows/Files.h"
+#include "Platform/Files.h"
 #include "translatedb.h"
 
-#include <windows.h>
 #include <string.h>
 
 #include "persist.h"
@@ -424,16 +423,10 @@ TranslateDBClass::Export_Table (const char *filename)
 	//
 	//	Create the file
 	//
-	HANDLE file = Platform::OpenFile(filename,
-										  GENERIC_WRITE,
-										  0,
-										  NULL,
-										  CREATE_ALWAYS,
-										  0L,
-										  NULL);
+	void* file = Platform::OpenRawFile(filename, Platform::FileMode::Write);
 
-	WWASSERT (file != INVALID_HANDLE_VALUE);
-	if (file != INVALID_HANDLE_VALUE) {
+	WWASSERT (file != Platform::InvalidFileHandle());
+	if (file != Platform::InvalidFileHandle()) {
 
 		TextFileClass file_obj;
 		file_obj.Attach (file);
@@ -492,7 +485,7 @@ TranslateDBClass::Export_Table (const char *filename)
 		//	Close the file
 		//
 		file_obj.Detach ();
-		::CloseHandle (file);
+		Platform::CloseRawFile(file);
 	}
 	
 	return ;
@@ -510,16 +503,10 @@ TranslateDBClass::Export_C_Header (const char *filename)
 	//
 	//	Create the file
 	//
-	HANDLE file = Platform::OpenFile(filename,
-										  GENERIC_WRITE,
-										  0,
-										  NULL,
-										  CREATE_ALWAYS,
-										  0L,
-										  NULL);
+	void* file = Platform::OpenRawFile(filename, Platform::FileMode::Write);
 
-	WWASSERT (file != INVALID_HANDLE_VALUE);
-	if (file != INVALID_HANDLE_VALUE) {
+	WWASSERT (file != Platform::InvalidFileHandle());
+	if (file != Platform::InvalidFileHandle()) {
 
 		TextFileClass file_obj;
 		file_obj.Attach (file);
@@ -568,7 +555,7 @@ TranslateDBClass::Export_C_Header (const char *filename)
 		//	Close the file
 		//
 		file_obj.Detach ();
-		::CloseHandle (file);
+		Platform::CloseRawFile(file);
 	}
 	
 	return ;
@@ -586,16 +573,10 @@ TranslateDBClass::Import_C_Header (const char *filename)
 	//
 	//	Create the file
 	//
-	HANDLE file = Platform::OpenFile(filename,
-										  GENERIC_READ,
-										  FILE_SHARE_READ,
-										  NULL,
-										  OPEN_EXISTING,
-										  0L,
-										  NULL);
+	void* file = Platform::OpenRawFile(filename, Platform::FileMode::Read);
 
-	WWASSERT (file != INVALID_HANDLE_VALUE);
-	if (file != INVALID_HANDLE_VALUE) {
+	WWASSERT (file != Platform::InvalidFileHandle());
+	if (file != Platform::InvalidFileHandle()) {
 
 		TextFileClass file_obj;
 		file_obj.Attach (file);
@@ -690,7 +671,7 @@ TranslateDBClass::Import_C_Header (const char *filename)
 		//	Close the file
 		//
 		file_obj.Detach ();
-		::CloseHandle (file);
+		Platform::CloseRawFile(file);
 	}
 	
 	return ;
@@ -1181,16 +1162,10 @@ TranslateDBClass::Import_Strings (const char *filename)
 	//
 	//	Open the file
 	//
-	HANDLE file = Platform::OpenFile(	filename,
-											GENERIC_READ,
-											FILE_SHARE_READ,
-											NULL,
-											OPEN_EXISTING,
-											0L,
-											NULL);
+	void* file = Platform::OpenRawFile(filename, Platform::FileMode::Read);
 
-	WWASSERT (file != INVALID_HANDLE_VALUE);
-	if (file != INVALID_HANDLE_VALUE) {
+	WWASSERT (file != Platform::InvalidFileHandle());
+	if (file != Platform::InvalidFileHandle()) {
 
 		//
 		//	Attach this file to a text file class for easier parsing

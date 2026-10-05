@@ -117,7 +117,9 @@
 
 
 #ifndef _UNIX
-#include "framgrab.h"
+#ifdef _WIN32
+#include "Platform/Windows/FrameGrab.h"
+#endif
 #endif
 
 
@@ -212,7 +214,7 @@ WW3D::NPatchesGapFillingModeEnum					WW3D::NPatchesGapFillingMode = NPATCHES_GAP
 unsigned													WW3D::NPatchesLevel=1;
 bool														WW3D::IsTexturingEnabled=true;
 
-static HWND												_Hwnd = NULL;		// Not a member to hide windows from WW3D users
+static Platform::GraphicsWindowHandle												_Hwnd = NULL;		// Not a member to hide windows from WW3D users
 static int												_TextureReduction = 0;
 int														WW3D::LastFrameMemoryAllocations;
 int														WW3D::LastFrameMemoryFrees;
@@ -260,7 +262,7 @@ WW3DErrorType WW3D::Init(void *hwnd, char *defaultpal, bool lite)
 {
 	assert(IsInitted == false);
 	WWDEBUG_SAY(("WW3D::Init hwnd = %p\n",hwnd));
-	_Hwnd = (HWND)hwnd;
+	_Hwnd = (Platform::GraphicsWindowHandle)hwnd;
 	Lite = lite;
 
 	/*
@@ -274,8 +276,6 @@ WW3DErrorType WW3D::Init(void *hwnd, char *defaultpal, bool lite)
 	WWDEBUG_SAY(("Allocate Debug Resources\n"));
 	Allocate_Debug_Resources();
 
- 	MMRESULT r=timeBeginPeriod(1);
-	WWASSERT(r==TIMERR_NOERROR);
 
 	/*
 	** Initialize the dazzle system
@@ -1282,8 +1282,7 @@ void WW3D::Make_Screen_Shot( const char * filename_base )
 	D3DSURFACE_DESC desc;
 	fb->GetDesc(&desc);
 
-	RECT bounds;
-	GetWindowRect(_Hwnd,&bounds);
+	RECT bounds{0, 0, static_cast<LONG>(desc.Width), static_cast<LONG>(desc.Height)};
 
 	D3DLOCKED_RECT lrect;
 

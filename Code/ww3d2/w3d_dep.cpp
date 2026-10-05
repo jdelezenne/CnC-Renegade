@@ -267,10 +267,10 @@ static void Scan_Mesh_Textures (ChunkLoadClass &cload, StringList &files, const 
 					// This chunk's data is a NULL-terminated string
 					// which is the texture filename. Read it and
 					// add it to the list of files referred to.
-					char texture[_MAX_PATH];
-					cload.Read(texture, cload.Cur_Chunk_Length());
-					if (*texture)	// don't push empty filenames
-						files.push_back(texture);
+					std::string texture(cload.Cur_Chunk_Length(), '\0');
+					cload.Read(texture.data(), cload.Cur_Chunk_Length());
+					if (!texture.empty() && texture[0])
+						files.push_back(texture.c_str());
 				}
 				cload.Close_Chunk();
 			}

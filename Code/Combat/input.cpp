@@ -35,6 +35,7 @@
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 #include "input.h"
+#include "Platform/GameState.h"
 #include "Platform/UI/Input.h"
 #include "slist.h"
 #include "assets.h"
@@ -44,7 +45,6 @@
 #include "timemgr.h"
 #include "Settings.h"
 #include "ffactory.h"
-#include "win.h"
 #include "translatedb.h"
 #include "string_ids.h"
 #include "vehicle.h"

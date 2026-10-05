@@ -42,6 +42,7 @@
 #define __PATHMGR_H
 
 
+#include <cstdint>
 #include "vector.h"
 #include "vector3.h"
 #include "bittype.h"
@@ -107,7 +108,7 @@ private:
 	static DynamicVectorClass<PathSolveClass *>	AvailablePathList;
 	static DynamicVectorClass<PathSolveClass *>	UsedPathList;
 	static PathSolveClass *								ActivePath;
-	static __int64											TicksPerMilliSec;
+	static std::int64_t											TicksPerMilliSec;
 };
 
 

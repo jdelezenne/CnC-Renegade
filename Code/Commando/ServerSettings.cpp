@@ -35,7 +35,6 @@
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 
-#include "Platform/Windows/Files.h"
 #include "ServerSettings.h"
 #include "slavemaster.h"
 #include "wwdebug.h"
@@ -67,7 +66,7 @@ const char *SlaveServerSection = "Slave";
 #define ENCRYPTION_STRING_LENGTH				128
 #define KEY_SLAVE_SERIAL						"Serial"
 
-char ServerSettingsClass::SettingsFile[MAX_PATH];
+char ServerSettingsClass::SettingsFile[FileNameCapacity];
 bool ServerSettingsClass::IsActive = false;
 char ServerSettingsClass::MasterPassword[128];
 ServerSettingsClass::GameModeTypeEnum ServerSettingsClass::GameMode = MODE_NONE;
@@ -123,8 +122,8 @@ void ServerSettingsClass::Set_Settings_File_Name(char *filename)
  *=============================================================================================*/
 bool ServerSettingsClass::Parse(bool apply)
 {
-	char master_settings[MAX_PATH];
-	char slave_settings[MAX_PATH];
+	char master_settings[FileNameCapacity];
+	char slave_settings[FileNameCapacity];
 	char slave_section[256];
 	char slave_nick[128];
 	char slave_serial[128];
@@ -219,7 +218,7 @@ bool ServerSettingsClass::Parse(bool apply)
 		/*
 		** Make sure the master server settings file is there.
 		*/
-		char filename[MAX_PATH];
+		char filename[FileNameCapacity];
 		sprintf(filename, "data\\%s", master_settings);
 		file.Set_Name(filename);
 		if (!file.Is_Available()) {
@@ -667,7 +666,6 @@ void ServerSettingsClass::Encrypt_Serial(StringClass serial_in, StringClass &ser
 {
 	char *s;
 	int numberlength = serial_in.Get_Length();
-	unsigned long bytesread;
 	char stringbuffer[ENCRYPTION_STRING_LENGTH];
 	int p;
 
@@ -679,8 +677,8 @@ void ServerSettingsClass::Encrypt_Serial(StringClass serial_in, StringClass &ser
 	/*
 	** See if the key file is available. If not, don't bother encrypting.
 	*/
-	HANDLE handle = Platform::OpenFile("woldata.key", GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
-	if (handle == INVALID_HANDLE_VALUE) {
+	RawFileClass key("woldata.key");
+	if (!key.Open()) {
 		delete [] s;
 		serial_out = serial_in;
 		return;
@@ -689,7 +687,7 @@ void ServerSettingsClass::Encrypt_Serial(StringClass serial_in, StringClass &ser
 	/*
 	** Read the key.
 	*/
-	if (!ReadFile(handle, stringbuffer, sizeof (stringbuffer), &bytesread, NULL)) {
+	if (key.Read(stringbuffer, sizeof(stringbuffer)) != sizeof(stringbuffer)) {
 		WWDEBUG_SAY(("Unable to read serial encryption key file\n"));
 		delete [] s;
 		serial_out = serial_in;

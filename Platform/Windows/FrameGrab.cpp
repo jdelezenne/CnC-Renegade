@@ -20,7 +20,7 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "framgrab.h"
+#include "Platform/Windows/FrameGrab.h"
 #include <stdio.h>
 #include <io.h>
 //#include <errno.h>

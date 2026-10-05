@@ -43,6 +43,7 @@
 #include "assetmgr.h"
 #include "ww3d.h"
 #include <stdlib.h>
+#include "Platform/Paths.h"
 
 
 /******************************************************************************
@@ -79,9 +80,8 @@ SubTitleManagerClass* SubTitleManagerClass::Create(const char* filename, const c
 		instance->Set_Font(font);
 
 		// Retrieve moviename
-		char fname[_MAX_FNAME];
-		_splitpath(filename, NULL, NULL, fname, NULL);
-		bool loaded = instance->Load_Sub_Titles(fname, subtitlefilename);
+		const std::string fname = Platform::FileStem(filename);
+		bool loaded = instance->Load_Sub_Titles(fname.c_str(), subtitlefilename);
 
 		if (loaded == false) {
 			delete instance;

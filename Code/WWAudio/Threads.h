@@ -37,7 +37,10 @@
 #ifndef __WWAUDIO_THREADS_H
 #define __WWAUDIO_THREADS_H
 
-#include "Windows.H"
+#include <SDL3/SDL_thread.h>
+#include <SDL3/SDL_mutex.h>
+#include <atomic>
+#include <cstdint>
 #include "Vector.H"
 #include "mutex.h"
 
@@ -70,9 +73,9 @@ class WWAudioThreadsClass
 		//
 		//	Delayed release mechanism
 		//
-		static HANDLE		Create_Delayed_Release_Thread (LPVOID param = NULL);
-		static void			End_Delayed_Release_Thread (DWORD timeout = 20000);
-		static void			Add_Delayed_Release_Object (RefCountClass *object, DWORD delay = 2000);
+		static SDL_Thread*		Create_Delayed_Release_Thread (void* param = NULL);
+		static void			End_Delayed_Release_Thread (std::uint32_t timeout = 20000);
+		static void			Add_Delayed_Release_Object (RefCountClass *object, std::uint32_t delay = 2000);
 		static void			Flush_Delayed_Release_Objects (void);
 
 	private:
@@ -80,7 +83,7 @@ class WWAudioThreadsClass
 		//////////////////////////////////////////////////////////////////////
 		//	Private methods
 		//////////////////////////////////////////////////////////////////////
-		static void	__cdecl Delayed_Release_Thread_Proc (LPVOID param);
+		static int Delayed_Release_Thread_Proc (void* param);
 
 		//////////////////////////////////////////////////////////////////////
 		//	Private data types
@@ -88,7 +91,7 @@ class WWAudioThreadsClass
 		typedef struct _DELAYED_RELEASE_INFO
 		{
 			RefCountClass *	object;
-			DWORD					time;
+			std::uint32_t					time;
 
 			_DELAYED_RELEASE_INFO *next;
 			_DELAYED_RELEASE_INFO *prev;
@@ -100,12 +103,12 @@ class WWAudioThreadsClass
 		//////////////////////////////////////////////////////////////////////
 		//	Private member data
 		//////////////////////////////////////////////////////////////////////
-		static HANDLE						m_hDelayedReleaseThread;
-		static HANDLE						m_hDelayedReleaseEvent;
+		static SDL_Thread*						m_hDelayedReleaseThread;
+		static SDL_Semaphore*						m_hDelayedReleaseEvent;
 		static CriticalSectionClass	m_CriticalSection;
 		static DELAYED_RELEASE_INFO *	m_ReleaseListHead;
 		static CriticalSectionClass	m_ListMutex;
-		static bool							m_IsFlushing;
+		static std::atomic<bool>							m_IsFlushing;
 };
 
 #endif //__WWAUDIO_THREADS_H

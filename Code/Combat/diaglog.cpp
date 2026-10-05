@@ -39,7 +39,7 @@
 #include "wwfile.h"
 #include "timemgr.h"
 
-#include <WTYPES.H>	// for SYSTEMTIME
+#include "Platform/Calendar.h"
 
 FileClass * _DiagLogFile = NULL;
 
@@ -66,8 +66,8 @@ void	DiagLogClass::Init( void )
 		_DiagLogFile = file;
 	}
 
-	SYSTEMTIME dt;
-	::GetSystemTime( &dt );
+	Platform::CalendarTime dt;
+	Platform::UtcCalendarTime(dt);
 	StringClass dt_string;
 	dt_string.Format( "%02d/%02d/%02d %02d:%02d:%02d", dt.wMonth, dt.wDay, dt.wYear, dt.wHour, dt.wMinute, dt.wSecond );
 	DIAG_LOG(( "OPEN", "%s", (const char *)dt_string ));
@@ -76,8 +76,8 @@ void	DiagLogClass::Init( void )
 void	DiagLogClass::Shutdown( void )
 {
 	if ( _DiagLogFile != NULL ) {
-		SYSTEMTIME dt;
-		::GetSystemTime( &dt );
+		Platform::CalendarTime dt;
+		Platform::UtcCalendarTime(dt);
 		StringClass dt_string;
 		dt_string.Format( "%02d/%02d/%02d %02d:%02d:%02d", dt.wMonth, dt.wDay, dt.wYear, dt.wHour, dt.wMinute, dt.wSecond );
 		DIAG_LOG(( "CLOS", "%s", (const char *)dt_string ));

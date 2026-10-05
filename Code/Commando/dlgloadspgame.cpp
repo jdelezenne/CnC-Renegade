@@ -36,7 +36,8 @@
 
 
 #include "Platform/Paths.h"
-#include "Platform/Windows/Files.h"
+#include "Platform/Files.h"
+#include "Platform/Directory.h"
 #include "dlgloadspgame.h"
 #include "listctrl.h"
 #include "dialogresource.h"
@@ -120,7 +121,7 @@ LoadSPGameMenuClass::On_Init_Dialog (void)
 		//
 		//	Sort the list and select the first entry
 		//
-		list_ctrl->Sort (LoadListSortCallback, MAKELONG (CurrSortCol, IsSortAscending));
+		list_ctrl->Sort (LoadListSortCallback, ((static_cast<uint32>(CurrSortCol) & 0xffffu) | (static_cast<uint32>(IsSortAscending) << 16)));
 		list_ctrl->Set_Curr_Sel (0);
 		Update_Button_State ();
 
@@ -146,43 +147,25 @@ LoadSPGameMenuClass::Build_List (const char *search_string, int start_index)
 {
 	ListCtrlClass *list_ctrl = (ListCtrlClass *)Get_Dlg_Item (IDC_LOAD_GAME_LIST_CTRL);
 
-	WIN32_FIND_DATA find_info	= { 0 };
-	BOOL keep_going				= TRUE;
-	HANDLE file_find			= NULL;
 
 	//
 	//	Get the path to the directory we'll be searching
 	//
-	StringClass path_name;
-	const char *search_dir = ::strrchr (search_string, '\\');
-	if (search_dir != NULL) {
-
-		//
-		//	Strip the search mask from the string
-		//
-		path_name	= search_string;
-		int len		= ::strlen (search_string);
-		int index	= search_dir - search_string;
-		path_name.Erase (index, len - index);
-	}
-	
 	//
 	//	Build a list of all the saved games we know about
 	//
 	int index = start_index;
-	for (file_find = ::FindFirstFile (search_string, &find_info);
-		 (file_find != INVALID_HANDLE_VALUE) && keep_going;
-		  keep_going = ::FindNextFile (file_find, &find_info))
+	for (const auto& file : Platform::ListFiles(search_string))
 	{
 //		if (1 || Is_Game_Allowed( find_info.cFileName ) ) {
-		if ( Is_Game_Allowed( find_info.cFileName ) ) {
+		if ( Is_Game_Allowed( file.Name.c_str() ) ) {
 
 			//
 			//	Get the user description and map name from the file
 			//
 			WideStringClass description;
 			WideStringClass map_name;
-			SaveGameManager::Smart_Peek_Description (find_info.cFileName, description, map_name);
+			SaveGameManager::Smart_Peek_Description (file.Name.c_str(), description, map_name);
 
 			//
 			//	Default to the map name if we don't have a description
@@ -192,11 +175,11 @@ LoadSPGameMenuClass::Build_List (const char *search_string, int start_index)
 			}
 
 			// Get rank
-			int rank = Get_Game_Rank( find_info.cFileName );
+			int rank = Get_Game_Rank( file.Name.c_str() );
 
 			// Modify description for games with a rank
 			if ( rank ) {
-				int mission = atoi( find_info.cFileName+1 );
+				int mission = atoi( file.Name.c_str()+1 );
 				switch ( mission ) {
 					case 0:	description = TRANSLATE( IDS_LoadScreen_Tutorial_Item_00_Title ); break;
 					case 1:	description = TRANSLATE( IDS_Enc_Miss_Title_M01_01 ); break;
@@ -217,18 +200,16 @@ LoadSPGameMenuClass::Build_List (const char *search_string, int start_index)
 			//
 			//	Get the time this file was last written
 			//
-			SYSTEMTIME system_time	= { 0 };
-			FILETIME local_time		= { 0 };
-			::FileTimeToLocalFileTime (&find_info.ftLastWriteTime, &local_time);
-			::FileTimeToSystemTime (&local_time, &system_time);
+			const auto& system_time = file.LocalTime;
+			const SDL_Time local_time = file.ModifiedTime;
 
 			//
 			//	Build the time and date strings
 			//
 			WideStringClass time_string;
 			WideStringClass date_string;
-			time_string.Format (L"%d:%02d:%02d", system_time.wHour, system_time.wMinute, system_time.wSecond);
-			date_string.Format (L"%d/%d/%d", system_time.wMonth, system_time.wDay, system_time.wYear);
+			time_string.Format (L"%d:%02d:%02d", system_time.hour, system_time.minute, system_time.second);
+			date_string.Format (L"%d/%d/%d", system_time.month, system_time.day, system_time.year);
 
 			//
 			//	Add this entry to the list control
@@ -244,20 +225,15 @@ LoadSPGameMenuClass::Build_List (const char *search_string, int start_index)
 				//
 				//	Build the full path to the file
 				//
-				StringClass file_path = path_name;
-				file_path += "\\";
-				file_path += find_info.cFileName;
+				StringClass file_path(file.Path.c_str());
 				
-				list_ctrl->Set_Entry_Data (item_index, 0, (uintptr_t)new FILETIME(local_time));
+				list_ctrl->Set_Entry_Data (item_index, 0, (uintptr_t)new SDL_Time(local_time));
 				list_ctrl->Set_Entry_Data (item_index, 1, (uintptr_t)new StringClass(file_path));
-				list_ctrl->Set_Entry_Data (item_index, 2, (uintptr_t)new StringClass(find_info.cFileName));
+				list_ctrl->Set_Entry_Data (item_index, 2, (uintptr_t)new StringClass(file.Name.c_str()));
 			}
 		}
 	}
 
-	if (file_find != INVALID_HANDLE_VALUE) {			  
-		::FindClose (file_find); 
-	}
 
 	return index;
 }
@@ -378,7 +354,7 @@ LoadSPGameMenuClass::On_ListCtrl_Column_Click
 		//
 		//	Sort the list by the column that was clicked
 		//
-		list_ctrl->Sort (LoadListSortCallback, MAKELONG (CurrSortCol, IsSortAscending));
+		list_ctrl->Sort (LoadListSortCallback, ((static_cast<uint32>(CurrSortCol) & 0xffffu) | (static_cast<uint32>(IsSortAscending) << 16)));
 
 		//
 		//	Update the sort marker
@@ -409,7 +385,7 @@ LoadSPGameMenuClass::On_ListCtrl_Delete_Entry
 		//
 		//	Remove the data we associated with this entry
 		//
-		FILETIME *file_time		= (FILETIME *)list_ctrl->Get_Entry_Data (item_index, 0);
+		SDL_Time *file_time		= (SDL_Time *)list_ctrl->Get_Entry_Data (item_index, 0);
 		StringClass *path			= (StringClass *)list_ctrl->Get_Entry_Data (item_index, 1);
 		StringClass *filename	= (StringClass *)list_ctrl->Get_Entry_Data (item_index, 2);
 		list_ctrl->Set_Entry_Data (item_index, 0, 0);
@@ -449,17 +425,17 @@ LoadSPGameMenuClass::LoadListSortCallback (ListCtrlClass *list_ctrl, int item_in
 	//
 	//	Get the sorting params
 	//
-	int	sort_col_index = LOWORD (user_param);
-	BOOL	sort_ascending	= HIWORD (user_param);
+	int	sort_col_index = (user_param & 0xffffu);
+	bool	sort_ascending	= (user_param >> 16) != 0;
 
 	if (sort_col_index == 0 || sort_col_index == 1) {
 		
 		//
 		//	Sort by time
 		//
-		FILETIME *file_time1 = (FILETIME *)list_ctrl->Get_Entry_Data (item_index1, 0);
-		FILETIME *file_time2 = (FILETIME *)list_ctrl->Get_Entry_Data (item_index2, 0);
-		retval = ::CompareFileTime (file_time1, file_time2);
+		SDL_Time *file_time1 = (SDL_Time *)list_ctrl->Get_Entry_Data (item_index1, 0);
+		SDL_Time *file_time2 = (SDL_Time *)list_ctrl->Get_Entry_Data (item_index2, 0);
+		retval = (*file_time1 > *file_time2) - (*file_time1 < *file_time2);
 
 	} else {
 		
@@ -641,7 +617,7 @@ LoadSPGameMenuClass::Update_Button_State (void)
 			//	Check to see if this is a saved game or a level file.
 			//
 			int len = filename.Get_Length ();
-			if (len >= 4 && ::lstrcmpi ((filename.Peek_Buffer () + (len - 4)), ".mix") != 0) {
+			if (len >= 4 && ::_stricmp ((filename.Peek_Buffer () + (len - 4)), ".mix") != 0) {
 				enable = true;
 			}
 		}
@@ -704,7 +680,7 @@ LoadSPGameMenuClass::Delete_Game (bool prompt)
 
 			// Never delete .MIX files
 			int len = filename.Get_Length ();
-			if (len >= 4 && ::lstrcmpi ((filename.Peek_Buffer () + (len - 4)), ".mix") != 0) {
+			if (len >= 4 && ::_stricmp ((filename.Peek_Buffer () + (len - 4)), ".mix") != 0) {
 
 				if (prompt) {
 
@@ -725,7 +701,7 @@ LoadSPGameMenuClass::Delete_Game (bool prompt)
 					//
 					//	Delete the file and remove its entry from the list
 					//
-					if (Platform::RemoveFile(filename) != 0) {
+					if (Platform::RemoveRawFile(filename) != 0) {
 						list_ctrl->Delete_Entry (item_index);
 					}
 				}

@@ -38,7 +38,7 @@
 #include "pathmgr.h"
 #include "pathsolve.h"
 #include "chunkio.h"
-#include "win.h"
+#include <SDL3/SDL_timer.h>
 #include "wwmemlog.h"
 #include "systimer.h"
 
@@ -58,7 +58,7 @@ enum
 DynamicVectorClass<PathSolveClass *>	PathMgrClass::AvailablePathList;
 DynamicVectorClass<PathSolveClass *>	PathMgrClass::UsedPathList;
 PathSolveClass *								PathMgrClass::ActivePath = NULL;
-__int64											PathMgrClass::TicksPerMilliSec = 0;
+std::int64_t											PathMgrClass::TicksPerMilliSec = 0;
 
 
 /////////////////////////////////////////////////////////////////////////
@@ -81,7 +81,7 @@ PathMgrClass::Initialize (void)
 	//	Determine what the resolution of our timer is
 	//
 	if (TicksPerMilliSec == 0) {
-		::QueryPerformanceFrequency ((LARGE_INTEGER *)&TicksPerMilliSec);
+		TicksPerMilliSec = static_cast<std::int64_t>(SDL_GetPerformanceFrequency());
 		TicksPerMilliSec /= 1000;
 	}
 
@@ -317,12 +317,10 @@ PathMgrClass::Load (ChunkLoadClass &cload)
 //	Get_Time
 //
 ///////////////////////////////////////////////////////////////////////////
-static inline __int64
+static inline std::int64_t
 Get_Time (void)
 {
-	__int64 curr_time = 0;
-	::QueryPerformanceCounter ((LARGE_INTEGER *)&curr_time);
-	return curr_time;
+	return static_cast<std::int64_t>(SDL_GetPerformanceCounter());
 }
 
 
@@ -334,8 +332,8 @@ Get_Time (void)
 void
 PathMgrClass::Resolve_Paths (const Vector3 &camera_pos, uint32 milliseconds)
 {
-	__int64 start_time	= Get_Time ();
-	__int64 end_time		= start_time + (((__int64)milliseconds) * TicksPerMilliSec);
+	std::int64_t start_time	= Get_Time ();
+	std::int64_t end_time		= start_time + (((std::int64_t)milliseconds) * TicksPerMilliSec);
 
 	WWMEMLOG(MEM_PATHFIND);
 

@@ -40,25 +40,12 @@
 #include "wwdebug.h"
 #include "utils.h"
 #include "ffactory.h"
-#include "win.h"
 #include "wwprofile.h"
 
 
 /////////////////////////////////////////////////////////////////////////////////
 //	FileMappingClass
 /////////////////////////////////////////////////////////////////////////////////
-class FileMappingClass
-{
-public:
-	StringClass			Filename;
-	HANDLE				FileMapping;
-	int					RefCount;	
-
-	bool operator== (const FileMappingClass &src)	{ return false; }
-	bool operator!= (const FileMappingClass &src)	{ return false; }
-};
-
-static DynamicVectorClass<FileMappingClass> MappingList;
 
 
 
@@ -215,7 +202,7 @@ SoundBufferClass::Load_From_File (FileClass &file)
 	// Open the file if necessary
 	bool we_opened = false;
 	if (file.Is_Open () == false) {
-		we_opened = (file.Open () == TRUE);
+		we_opened = (file.Open () != 0);
 	}
 
 	// Determine the size of the buffer
@@ -329,7 +316,7 @@ StreamSoundBufferClass::Free_Buffer (void)
 bool
 StreamSoundBufferClass::Load_From_File
 (
-	HANDLE			/*hfile*/,
+	void*			/*hfile*/,
 	unsigned long	/*size*/,
 	unsigned long	/*offset*/
 )
@@ -371,7 +358,7 @@ StreamSoundBufferClass::Load_From_File (FileClass &file)
 	// Open the file if necessary
 	bool we_opened = false;
 	if (file.Is_Open () == false) {
-		we_opened = (file.Open () == TRUE);
+		we_opened = (file.Open () != 0);
 	}
 
 	m_Length = file.Size ();

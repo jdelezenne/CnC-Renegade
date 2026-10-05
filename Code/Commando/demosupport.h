@@ -39,7 +39,7 @@
 class cDemoSupport 
 {
 public:
-	static __forceinline void Security_Check(void);
+	static inline void Security_Check(void);
 
 private:
 };
@@ -50,7 +50,7 @@ private:
 // This routine should be called a handful of times each frame, from different 
 // places in the code.
 //
-__forceinline void 
+inline void
 cDemoSupport::Security_Check
 (
 	void

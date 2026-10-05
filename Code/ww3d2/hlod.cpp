@@ -134,7 +134,6 @@
 #include "predlod.h"
 #include "rinfo.h"
 #include <string.h>
-#include <win.h>
 #include "sphere.h"
 #include "boxrobj.h"
 
@@ -441,7 +440,7 @@ WW3DErrorType HLodDefClass::Save(ChunkSaveClass & csave)
 	WW3DErrorType ret_val = WW3D_ERROR_SAVE_FAILED;
 
 	// Begin a chunk that identifies an aggregate
-	if (csave.Begin_Chunk (W3D_CHUNK_HLOD) == TRUE) {
+	if (csave.Begin_Chunk (W3D_CHUNK_HLOD) == true) {
 		
 		// Attempt to save the different sections of the aggregate definition
 		if ((Save_Header (csave) == WW3D_ERROR_OK) &&
@@ -478,7 +477,7 @@ WW3DErrorType HLodDefClass::Save_Header(ChunkSaveClass &csave)
 	WW3DErrorType ret_val = WW3D_ERROR_SAVE_FAILED;
 
 	// Begin a chunk that identifies the aggregate
-	if (csave.Begin_Chunk (W3D_CHUNK_HLOD_HEADER) == TRUE) {
+	if (csave.Begin_Chunk (W3D_CHUNK_HLOD_HEADER) == true) {
 		
 		// Fill the header structure
 		W3dHLodHeaderStruct header = { 0 };
@@ -486,11 +485,11 @@ WW3DErrorType HLodDefClass::Save_Header(ChunkSaveClass &csave)
 		header.LodCount = LodCount;
 		
 		// Copy the name to the header
-		::lstrcpyn (header.Name, Name, sizeof (header.Name));
+		::strncpy (header.Name, Name, sizeof (header.Name));
 		header.Name[sizeof (header.Name) - 1] = 0;
 
 		// Copy the hierarchy tree name to the header
-		::lstrcpyn (header.HierarchyName, HierarchyTreeName, sizeof (header.HierarchyName));
+		::strncpy (header.HierarchyName, HierarchyTreeName, sizeof (header.HierarchyName));
 		header.HierarchyName[sizeof (header.HierarchyName) - 1] = 0;		
 
 		// Write the header out to the chunk
@@ -581,7 +580,7 @@ WW3DErrorType HLodDefClass::Load_W3D(ChunkLoadClass & cload)
 	*/
 	Free();
 
-	if (read_header(cload) == FALSE) {        
+	if (read_header(cload) == false) {
 	  return WW3D_ERROR_LOAD_FAILED;
 	}
 
@@ -657,7 +656,7 @@ bool HLodDefClass::read_header(ChunkLoadClass & cload)
 	cload.Close_Chunk();
 
 	// Copy the name into our internal variable
-	Name = ::_strdup(header.Name);
+	Name = ::strdup(header.Name);
 	HierarchyTreeName = ::strdup(header.HierarchyName);
 	LodCount = header.LodCount;
 	Lod = new SubObjectArrayClass[LodCount];
@@ -851,10 +850,10 @@ bool HLodDefClass::SubObjectArrayClass::Save_W3D(ChunkSaveClass &csave)
 	bool ret_val = false;	
 
 	// Begin a chunk that identifies the LOD array
-	if (csave.Begin_Chunk (W3D_CHUNK_HLOD_LOD_ARRAY) == TRUE) {
+	if (csave.Begin_Chunk (W3D_CHUNK_HLOD_LOD_ARRAY) == true) {
 
 		// Begin a chunk that identifies the LOD header
-		if (csave.Begin_Chunk (W3D_CHUNK_HLOD_SUB_OBJECT_ARRAY_HEADER) == TRUE) {
+		if (csave.Begin_Chunk (W3D_CHUNK_HLOD_SUB_OBJECT_ARRAY_HEADER) == true) {
 
 			W3dHLodArrayHeaderStruct header = { 0 };
 			header.ModelCount = ModelCount;
@@ -875,14 +874,14 @@ bool HLodDefClass::SubObjectArrayClass::Save_W3D(ChunkSaveClass &csave)
 				  index ++) {
 			
 				// Save this LOD sub-obj to the chunk
-				ret_val &= (csave.Begin_Chunk (W3D_CHUNK_HLOD_SUB_OBJECT) == TRUE);
+				ret_val &= (csave.Begin_Chunk (W3D_CHUNK_HLOD_SUB_OBJECT) == true);
 				if (ret_val) {
 					
 					W3dHLodSubObjectStruct info = { 0 };
 					info.BoneIndex = BoneIndex[index];
 					
 					// Copy this model name into the structure
-					::lstrcpyn (info.Name, ModelName[index], sizeof (info.Name));
+					::strncpy (info.Name, ModelName[index], sizeof (info.Name));
 					info.Name[sizeof (info.Name) - 1] = 0;
 
 					// Write the LOD sub-obj structure out to the chunk

@@ -1401,7 +1401,7 @@ void WOLBuddyMgr::HandleNotification(PageMessage& page)
 
 				// Grab the reason code
 				const WCHAR* codeString = message.Peek_Buffer() + DECLINE_CMD_LEN;
-				int code = _wtoi(codeString);
+				int code = std::wcstol(codeString, nullptr, 10);
 
 				if (code > DECLINE_MIN && code < DECLINE_MAX)
 					{

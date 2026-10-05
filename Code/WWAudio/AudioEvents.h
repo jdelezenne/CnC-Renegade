@@ -41,6 +41,7 @@
 #ifndef __AUDIO_EVENTS_H
 #define __AUDIO_EVENTS_H
 
+#include "Platform/Callbacks.h"
 #include "simplevec.h"
 #include "bittype.h"
 #include "vector.h"
@@ -66,10 +67,10 @@ class StringClass;
 // Callback declarations.  These functions are called when a registered event occurs
 // in the sound library/
 //
-typedef void (_stdcall  *LPFNSOSCALLBACK)		(SoundSceneObjClass *sound_obj, uint32 user_param);
-typedef void (_stdcall  *LPFNEOSCALLBACK)		(SoundSceneObjClass *sound_obj, uint32 user_param);
-typedef void (_stdcall  *LPFNHEARDCALLBACK)	(LogicalListenerClass *listener, LogicalSoundClass *sound_obj, uint32 user_param);
-typedef void (_stdcall  *LPFNTEXTCALLBACK)	(AudibleSoundClass *sound_obj, const StringClass &text, uint32 user_param);
+typedef void (REN_CALLBACK  *LPFNSOSCALLBACK)		(SoundSceneObjClass *sound_obj, uint32 user_param);
+typedef void (REN_CALLBACK  *LPFNEOSCALLBACK)		(SoundSceneObjClass *sound_obj, uint32 user_param);
+typedef void (REN_CALLBACK  *LPFNHEARDCALLBACK)	(LogicalListenerClass *listener, LogicalSoundClass *sound_obj, uint32 user_param);
+typedef void (REN_CALLBACK  *LPFNTEXTCALLBACK)	(AudibleSoundClass *sound_obj, const StringClass &text, uint32 user_param);
 
 
 /////////////////////////////////////////////////////////////////////////////////

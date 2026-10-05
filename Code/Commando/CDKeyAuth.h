@@ -23,6 +23,7 @@
 INCLUDES
 ********/
 #include <wwlib/wwstring.h>
+#include "bittype.h"
 
 /********
 DEFINES
@@ -38,7 +39,7 @@ protected:
 public:
 	static void GetSerialNum(StringClass &serial);
 	static void DisconnectUser(int localid);
-	static void AuthenticateUser(int localid, ULONG ip, char *challenge, char *authstring);
+	static void AuthenticateUser(int localid, uint32 ip, char *challenge, char *authstring);
 	static char *GenChallenge(int nchars);
 	static void AuthSerial(const char *challenge, StringClass &resp);
 

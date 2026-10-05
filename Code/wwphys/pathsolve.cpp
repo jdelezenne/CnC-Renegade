@@ -37,7 +37,7 @@
 
 #include "pathsolve.h"
 
-#include <windows.h>
+#include <SDL3/SDL_timer.h>
 #include "pathfind.h"
 #include "pathfindportal.h"
 #include "pathnode.h"
@@ -74,7 +74,7 @@ enum
 ///////////////////////////////////////////////////////////////////////////
 //	Static member initialization
 ///////////////////////////////////////////////////////////////////////////
-__int64 PathSolveClass::_TicksPerMilliSec = 0;
+std::int64_t PathSolveClass::_TicksPerMilliSec = 0;
 
 
 ///////////////////////////////////////////////////////////////////////////
@@ -86,12 +86,10 @@ __int64 PathSolveClass::_TicksPerMilliSec = 0;
 //	Get_Time
 //
 ///////////////////////////////////////////////////////////////////////////
-static inline __int64
+static inline std::int64_t
 Get_Time (void)
 {
-	__int64 curr_time = 0;
-	::QueryPerformanceCounter ((LARGE_INTEGER *)&curr_time);
-	return curr_time;
+	return static_cast<std::int64_t>(SDL_GetPerformanceCounter());
 }
 
 
@@ -217,7 +215,7 @@ PathSolveClass::PathSolveClass (void)
 	// per millisecond we will get.
 	//
 	if (_TicksPerMilliSec == 0) {
-		::QueryPerformanceFrequency ((LARGE_INTEGER *)&_TicksPerMilliSec);
+		_TicksPerMilliSec = static_cast<std::int64_t>(SDL_GetPerformanceFrequency());
 		_TicksPerMilliSec /= 1000;
 	}
 
@@ -247,7 +245,7 @@ PathSolveClass::PathSolveClass (const Vector3 &start, const Vector3 &dest)
 	// per millisecond we will get.
 	//
 	if (_TicksPerMilliSec == 0) {
-		::QueryPerformanceFrequency ((LARGE_INTEGER *)&_TicksPerMilliSec);
+		_TicksPerMilliSec = static_cast<std::int64_t>(SDL_GetPerformanceFrequency());
 		_TicksPerMilliSec /= 1000;
 	}
 
@@ -337,8 +335,8 @@ PathSolveClass::Resolve_Path (unsigned int milliseconds)
 {
 	WWMEMLOG(MEM_PATHFIND);
 
-	__int64 start_time	= Get_Time ();
-	__int64 end_time		= start_time + (((__int64)milliseconds) * _TicksPerMilliSec);
+	std::int64_t start_time	= Get_Time ();
+	std::int64_t end_time		= start_time + (((std::int64_t)milliseconds) * _TicksPerMilliSec);
 
 	int iterations = 0;
 	//Begin_Distributed_Solve ();

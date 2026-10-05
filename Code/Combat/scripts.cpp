@@ -46,7 +46,10 @@
 #include "rawfile.h"
 #include "gametype.h"
 #include <stdio.h>
-#include <win.h>
+#include <SDL3/SDL_loadso.h>
+#include <SDL3/SDL_filesystem.h>
+#include <SDL3/SDL_error.h>
+#include <filesystem>
 
 ScriptCommands* EngineCommands = NULL;
 
@@ -61,7 +64,7 @@ ScriptCommands* EngineCommands = NULL;
 /*
 **
 */
-HINSTANCE hDLL = NULL;
+SDL_SharedObject* hDLL = NULL;
 LPFN_CREATE_SCRIPT ScriptManager::ScriptCreateFunct = NULL;
 LPFN_DESTROY_SCRIPT ScriptManager::ScriptDestroyFunct = NULL;
 SimpleDynVecClass<ScriptClass *> ScriptManager::ActiveScriptList;
@@ -78,23 +81,8 @@ void ScriptManager::Init(void)
 	hDLL = NULL;
 	EngineCommands = Get_Script_Commands();
 
-#ifdef	PARAM_EDITING_ON	// Editor build
-	Load_Scripts("SCRIPTS.DLL");
-#else
-	#ifdef	WWDEBUG		// DEBUG and PROFILE
-		if ( DebugManager::Load_Debug_Scripts() ) {
-			Load_Scripts("SCRIPTSD.DLL");		// DEBUG
-		} else {
-	#ifdef	NDEBUG		// PROFILE
-			Load_Scripts("SCRIPTSP.DLL");		// PROFILE
-	#else
-			Load_Scripts("SCRIPTSD.DLL");		// DEBUG
-	#endif
-		}
-	#else
-		Load_Scripts("SCRIPTS.DLL");		// RELEASE
-	#endif
-#endif
+	Load_Scripts(REN_SCRIPT_LIBRARY_NAME);
+
 }
 
 
@@ -115,7 +103,7 @@ void ScriptManager::Shutdown(void)
 	}
 
 	if (hDLL != NULL) {
-		FreeLibrary(hDLL);
+		SDL_UnloadObject(hDLL);
 		hDLL = NULL;
 	}
 }
@@ -202,7 +190,13 @@ void ScriptManager::Load_Scripts(const char* dll_filename)
 	}
 #endif
 
-	hDLL = LoadLibrary(dll_filename);
+	const char* base_path = SDL_GetBasePath();
+	if (!base_path) {
+		Debug_Say(("Could not locate script library directory: %s\n", SDL_GetError()));
+		return;
+	}
+	const std::string library_path = (std::filesystem::path(base_path) / dll_filename).string();
+	hDLL = SDL_LoadObject(library_path.c_str());
 
 	if (hDLL == NULL) {
 		Debug_Say(("Cound not load DLL file %s\n", dll_filename));
@@ -210,7 +204,7 @@ void ScriptManager::Load_Scripts(const char* dll_filename)
 	}
 
 	// Get create script function
-	ScriptCreateFunct = (LPFN_CREATE_SCRIPT)GetProcAddress(hDLL, LPSTR_CREATE_SCRIPT);
+	ScriptCreateFunct = (LPFN_CREATE_SCRIPT)SDL_LoadFunction(hDLL, LPSTR_CREATE_SCRIPT);
 	assert(ScriptCreateFunct != NULL);
 
 	if (!ScriptCreateFunct) {
@@ -218,7 +212,7 @@ void ScriptManager::Load_Scripts(const char* dll_filename)
 	}
 
 	// Get destroy script function
-	ScriptDestroyFunct = (LPFN_DESTROY_SCRIPT)GetProcAddress(hDLL, LPSTR_DESTROY_SCRIPT);
+	ScriptDestroyFunct = (LPFN_DESTROY_SCRIPT)SDL_LoadFunction(hDLL, LPSTR_DESTROY_SCRIPT);
 	assert(ScriptDestroyFunct != NULL);
 
 	if (!ScriptDestroyFunct) {
@@ -227,7 +221,7 @@ void ScriptManager::Load_Scripts(const char* dll_filename)
 
 	// Initialize request script destroy function
 	LPFN_SET_REQUEST_DESTROY_FUNC set_request_destroy_func = 
-		(LPFN_SET_REQUEST_DESTROY_FUNC)GetProcAddress(hDLL, LPSTR_SET_REQUEST_DESTROY_FUNC);
+		(LPFN_SET_REQUEST_DESTROY_FUNC)SDL_LoadFunction(hDLL, LPSTR_SET_REQUEST_DESTROY_FUNC);
 	assert(set_request_destroy_func != NULL);
 
 	if (set_request_destroy_func != NULL) {
@@ -239,7 +233,7 @@ void ScriptManager::Load_Scripts(const char* dll_filename)
 	// Initialize script commands if not being run from the editor
 	if (CombatManager::Are_Observers_Active()) {
 		LPFN_SET_SCRIPT_COMMANDS set_commands_func =
-			(LPFN_SET_SCRIPT_COMMANDS)GetProcAddress(hDLL, LPSTR_SET_SCRIPT_COMMANDS);
+			(LPFN_SET_SCRIPT_COMMANDS)SDL_LoadFunction(hDLL, LPSTR_SET_SCRIPT_COMMANDS);
 		assert(set_commands_func != NULL);
 
 		if (set_commands_func != NULL) {

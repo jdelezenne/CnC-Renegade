@@ -95,3 +95,24 @@ std::FILE* Platform::OpenStream(const char* path, const char* mode)
     const std::string resolved = write ? WritePath(path) : ReadPath(path);
     return std::fopen(resolved.c_str(), mode);
 }
+
+std::string Platform::FileName(const char* path)
+{
+    const std::string name(path);
+    const auto separator = name.find_last_of("/\\");
+    if (separator != std::string::npos) return name.substr(separator + 1);
+    return name.size() >= 2 && name[1] == ':' ? name.substr(2) : name;
+}
+
+std::string Platform::FileStem(const char* path)
+{
+    const std::string name = FileName(path);
+    return name.substr(0, name.find_last_of('.'));
+}
+
+std::string Platform::FileExtension(const char* path)
+{
+    const std::string name = FileName(path);
+    const auto extension = name.find_last_of('.');
+    return extension == std::string::npos ? std::string() : name.substr(extension);
+}

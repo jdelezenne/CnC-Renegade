@@ -522,7 +522,7 @@ void WOLChatMgr::GetLobbyDisplayName(const RefPtr<ChannelData>& lobby, WideStrin
 				TRANSLATE (IDS_MENU_LOBBY_NAME_08),
 				};
 
-			int channelNumber = _wtol(extName);
+			int channelNumber = std::wcstol(extName, nullptr, 10);
 			int subnum = (channelNumber / 8);
 			int nameNumber = (channelNumber % 8);
 

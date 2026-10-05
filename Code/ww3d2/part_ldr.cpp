@@ -34,10 +34,10 @@
 
 
 #include "part_ldr.h"
+#include "Platform/Paths.h"
 #include "part_emt.h"
 #include "w3derr.h"
 #include "chunkio.h"
-#include "win.h"		// for lstrcpy, can this be improved?
 #include "assetmgr.h"
 #include "texture.h"
 
@@ -285,7 +285,7 @@ void
 ParticleEmitterDefClass::Set_User_String (const char *pstring)		
 { 
 	SAFE_FREE (m_pUserString); 
-	m_pUserString = ::_strdup (pstring); 
+	m_pUserString = ::strdup (pstring);
 	return ;
 }
 
@@ -298,7 +298,7 @@ void
 ParticleEmitterDefClass::Set_Name (const char *pname)			
 { 
 	SAFE_FREE (m_pName); 
-	m_pName = ::_strdup (pname); 
+	m_pName = ::strdup (pname);
 	return ;
 }
 
@@ -310,7 +310,7 @@ ParticleEmitterDefClass::Set_Name (const char *pname)
 void							
 ParticleEmitterDefClass::Set_Texture_Filename (const char *pname)	
 { 
-	::lstrcpy (m_Info.TextureFilename, pname); 
+	::strcpy (m_Info.TextureFilename, pname);
 	Normalize_Filename (); 
 	return ;
 }
@@ -323,19 +323,8 @@ ParticleEmitterDefClass::Set_Texture_Filename (const char *pname)
 void
 ParticleEmitterDefClass::Normalize_Filename (void)
 {	
-	TCHAR path[MAX_PATH];
-	::lstrcpy (path, m_Info.TextureFilename);
-
-	// Find the last occurance of the directory deliminator
-	LPCTSTR filename = ::strrchr (path, '\\');
-	if (filename != NULL) {
-		
-		// Increment past the directory deliminator
-		filename ++;
-
-		// Now copy the filename protion of the path to the structure
-		::lstrcpy (m_Info.TextureFilename, filename);
-	}
+	const std::string filename = Platform::FileName(m_Info.TextureFilename);
+	::strcpy(m_Info.TextureFilename, filename.c_str());
 
 	return ;
 }
@@ -540,7 +529,7 @@ ParticleEmitterDefClass::Read_Header (ChunkLoadClass &chunk_load)
 		if (chunk_load.Read (&header, sizeof (header)) == sizeof (header)) {
 
 			// Copy the name from the header structure
-			m_pName = ::_strdup (header.Name);
+			m_pName = ::strdup (header.Name);
 			m_Version = header.Version;
 
 			// Success!
@@ -1138,7 +1127,7 @@ ParticleEmitterDefClass::Save_W3D (ChunkSaveClass &chunk_save)
 	WW3DErrorType ret_val = WW3D_ERROR_SAVE_FAILED;
 
 	// Begin a chunk that identifies an emitter
-	if (chunk_save.Begin_Chunk (W3D_CHUNK_EMITTER) == TRUE) {
+	if (chunk_save.Begin_Chunk (W3D_CHUNK_EMITTER) == true) {
 		
 		// Attempt to save the different sections of the emitter definition
 		if ((Save_Header (chunk_save) == WW3D_ERROR_OK) &&
@@ -1175,12 +1164,12 @@ ParticleEmitterDefClass::Save_Header (ChunkSaveClass &chunk_save)
 	WW3DErrorType ret_val = WW3D_ERROR_SAVE_FAILED;
 
 	// Begin a chunk that identifies the emitter
-	if (chunk_save.Begin_Chunk (W3D_CHUNK_EMITTER_HEADER) == TRUE) {
+	if (chunk_save.Begin_Chunk (W3D_CHUNK_EMITTER_HEADER) == true) {
 		
 		// Fill the header structure
 		W3dEmitterHeaderStruct header = { 0 };
 		header.Version = W3D_CURRENT_EMITTER_VERSION;
-		::lstrcpyn (header.Name, m_pName, sizeof (header.Name));
+		::strncpy (header.Name, m_pName, sizeof (header.Name));
 		header.Name[sizeof (header.Name) - 1] = 0;
 
 		// Write the header out to the chunk
@@ -1210,9 +1199,9 @@ ParticleEmitterDefClass::Save_User_Data (ChunkSaveClass &chunk_save)
 	WW3DErrorType ret_val = WW3D_ERROR_SAVE_FAILED;
 
 	// Begin a chunk that contains user information
-	if (chunk_save.Begin_Chunk (W3D_CHUNK_EMITTER_USER_DATA) == TRUE) {
+	if (chunk_save.Begin_Chunk (W3D_CHUNK_EMITTER_USER_DATA) == true) {
 		
-		DWORD string_len = m_pUserString ? (::lstrlen (m_pUserString) + 1) : 0;
+		uint32 string_len = m_pUserString ? (::strlen (m_pUserString) + 1) : 0;
 
 		// Fill the header structure
 		W3dEmitterUserInfoStruct user_info = { 0 };
@@ -1257,7 +1246,7 @@ ParticleEmitterDefClass::Save_Info (ChunkSaveClass &chunk_save)
 	WW3DErrorType ret_val = WW3D_ERROR_SAVE_FAILED;
 
 	// Begin a chunk that identifies the generic emitter settings
-	if (chunk_save.Begin_Chunk (W3D_CHUNK_EMITTER_INFO) == TRUE) {
+	if (chunk_save.Begin_Chunk (W3D_CHUNK_EMITTER_INFO) == true) {
 		
 		// Write the settings structure out to the chunk
 		if (chunk_save.Write (&m_Info, sizeof (m_Info)) == sizeof (m_Info))
@@ -1286,7 +1275,7 @@ ParticleEmitterDefClass::Save_InfoV2 (ChunkSaveClass &chunk_save)
 	WW3DErrorType ret_val = WW3D_ERROR_SAVE_FAILED;
 
 	// Begin a chunk that identifies the generic emitter settings
-	if (chunk_save.Begin_Chunk (W3D_CHUNK_EMITTER_INFOV2) == TRUE) {
+	if (chunk_save.Begin_Chunk (W3D_CHUNK_EMITTER_INFOV2) == true) {
 		
 		// Write the settings structure out to the chunk
 		if (chunk_save.Write (&m_InfoV2, sizeof (m_InfoV2)) == sizeof (m_InfoV2))
@@ -1315,7 +1304,7 @@ ParticleEmitterDefClass::Save_Props (ChunkSaveClass &chunk_save)
 	WW3DErrorType ret_val = WW3D_ERROR_SAVE_FAILED;
 
 	// Begin a chunk that identifies the generic emitter settings
-	if (chunk_save.Begin_Chunk (W3D_CHUNK_EMITTER_PROPS) == TRUE) {
+	if (chunk_save.Begin_Chunk (W3D_CHUNK_EMITTER_PROPS) == true) {
 		
 		//
 		//	Fill in the property struct
@@ -1474,7 +1463,7 @@ ParticleEmitterDefClass::Save_Line_Properties (ChunkSaveClass &chunk_save)
 	WW3DErrorType ret_val = WW3D_ERROR_SAVE_FAILED;
 
 	// Begin a chunk that identifies the line properties
-	if (chunk_save.Begin_Chunk (W3D_CHUNK_EMITTER_LINE_PROPERTIES) == TRUE) {
+	if (chunk_save.Begin_Chunk (W3D_CHUNK_EMITTER_LINE_PROPERTIES) == true) {
 		
 		// Write the line properties structure out to the chunk
 		if (chunk_save.Write (&m_LineProperties, sizeof (m_LineProperties)) == sizeof (m_LineProperties))
@@ -1504,7 +1493,7 @@ ParticleEmitterDefClass::Save_Rotation_Keyframes (ChunkSaveClass & chunk_save)
 	WW3DErrorType ret_val = WW3D_ERROR_SAVE_FAILED;
 
 	// Begin a chunk that identifies the rotation keyframes
-	if (chunk_save.Begin_Chunk (W3D_CHUNK_EMITTER_ROTATION_KEYFRAMES) == TRUE) {
+	if (chunk_save.Begin_Chunk (W3D_CHUNK_EMITTER_ROTATION_KEYFRAMES) == true) {
 
 		// Write the header
 		W3dEmitterRotationHeaderStruct header;
@@ -1553,7 +1542,7 @@ ParticleEmitterDefClass::Save_Frame_Keyframes (ChunkSaveClass & chunk_save)
 	WW3DErrorType ret_val = WW3D_ERROR_SAVE_FAILED;
 	
 	// Begin a chunk that identifies the rotation keyframes
-	if (chunk_save.Begin_Chunk (W3D_CHUNK_EMITTER_FRAME_KEYFRAMES) == TRUE) {
+	if (chunk_save.Begin_Chunk (W3D_CHUNK_EMITTER_FRAME_KEYFRAMES) == true) {
 
 		// Write the header
 		W3dEmitterFrameHeaderStruct header;
@@ -1600,7 +1589,7 @@ ParticleEmitterDefClass::Save_Blur_Time_Keyframes (ChunkSaveClass & chunk_save)
 	WW3DErrorType ret_val = WW3D_ERROR_SAVE_FAILED;
 	
 	// Begin a chunk that identifies the rotation keyframes
-	if (chunk_save.Begin_Chunk (W3D_CHUNK_EMITTER_BLUR_TIME_KEYFRAMES) == TRUE) {
+	if (chunk_save.Begin_Chunk (W3D_CHUNK_EMITTER_BLUR_TIME_KEYFRAMES) == true) {
 
 		// Write the header
 		W3dEmitterBlurTimeHeaderStruct header;

@@ -36,7 +36,6 @@
 
 #include "clientpingmanager.h"
 
-#include <windows.h>
 #include "systimer.h"
 
 #include "gamemode.h"
@@ -47,11 +46,11 @@
 // Class statics
 //
 int		cClientPingManager::PingNumber						= 0;
-DWORD		cClientPingManager::TimeSentMs						= 0;
-DWORD		cClientPingManager::LastRoundTripPingMs			= 0;
-DWORD		cClientPingManager::AvgRoundTripPingMs				= 0;
+uint32		cClientPingManager::TimeSentMs						= 0;
+uint32		cClientPingManager::LastRoundTripPingMs			= 0;
+uint32		cClientPingManager::AvgRoundTripPingMs				= 0;
 bool		cClientPingManager::IsAwaitingResponse				= false;
-DWORD		cClientPingManager::RoundTripPingSamplesMs[];
+uint32		cClientPingManager::RoundTripPingSamplesMs[];
 
 //-----------------------------------------------------------------------------
 void
@@ -83,7 +82,7 @@ cClientPingManager::Think
 	{
 		if (!IsAwaitingResponse)
 		{
-			DWORD time_now_ms = TIMEGETTIME();
+			uint32 time_now_ms = TIMEGETTIME();
 			if (time_now_ms - TimeSentMs >= MIN_PING_DELAY_MS)
 			{
 				PingNumber++;
@@ -104,7 +103,7 @@ cClientPingManager::Think
 }
 
 //-----------------------------------------------------------------------------
-DWORD
+uint32
 cClientPingManager::Get_Last_Round_Trip_Ping_Ms
 (
 	void
@@ -114,7 +113,7 @@ cClientPingManager::Get_Last_Round_Trip_Ping_Ms
 }
 
 //-----------------------------------------------------------------------------
-DWORD
+uint32
 cClientPingManager::Get_Avg_Round_Trip_Ping_Ms
 (
 	void
@@ -136,8 +135,8 @@ cClientPingManager::Compute_Average_Round_Trip_Ping_Ms
 
 	AvgRoundTripPingMs = 0;
 
-	DWORD num_pings = 0;
-	DWORD total_ping = 0;
+	uint32 num_pings = 0;
+	uint32 total_ping = 0;
 
 	for (int i = 0; i < MAX_SAMPLES; i++)
 	{
@@ -150,7 +149,7 @@ cClientPingManager::Compute_Average_Round_Trip_Ping_Ms
 
 	if (num_pings > 0)
 	{
-		AvgRoundTripPingMs = (DWORD)(total_ping / (float) num_pings);
+		AvgRoundTripPingMs = (uint32)(total_ping / (float) num_pings);
 	}
 }
 

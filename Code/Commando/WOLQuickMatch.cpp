@@ -33,6 +33,7 @@
 ******************************************************************************/
 
 #include "WOLQuickMatch.h"
+#include <SDL3/SDL_cpuinfo.h>
 #include <WWOnline/PingProfile.h>
 #include <WWOnline/WaitCondition.h>
 #include <WWOnline/WOLProduct.h>
@@ -292,9 +293,7 @@ bool WOLQuickMatch::SendClientInfo(void)
 	int speed = CPUDetectClass::Get_Processor_Speed();
 
 	// Get amount of physical memory
-	MEMORYSTATUS memStatus;
-	GlobalMemoryStatus(&memStatus);
-	unsigned long memory = (memStatus.dwTotalPhys / 1048576);
+	unsigned long memory = SDL_GetSystemRAM();
 
 	//-------------------------------------------------------------------------
 	// Gather pings

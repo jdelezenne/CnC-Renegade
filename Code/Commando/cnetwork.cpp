@@ -498,11 +498,6 @@ void cNetwork::Compute_Exe_Key(void)
 {
    WWDEBUG_SAY(("cNetwork::Compute_Exe_Key\n"));
 
-	char exe_filename[500];
-   int succeeded = 0;
-	succeeded = ::GetModuleFileName(NULL, exe_filename, sizeof(exe_filename));
-	WWASSERT(succeeded);
-
 	StringClass key_string;
 	StringClass string;
 	StringClass build_string;

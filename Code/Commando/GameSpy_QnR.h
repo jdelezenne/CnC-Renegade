@@ -25,8 +25,6 @@ INCLUDES
 ********/
 #if !defined(REN_ENABLE_GAMESPY) || REN_ENABLE_GAMESPY
 #include <GameSpy\gqueryreporting.h>
-#else
-#include <windows.h>
 #endif
 #include <wwlib/widestring.h>
 #include "trim.h"
@@ -40,17 +38,17 @@ class CGameSpyQnR
 
 protected:
 	char secret_key[9];
-	BOOL m_GSInit;
-	BOOL m_GSEnabled;
+	bool m_GSInit;
+	bool m_GSEnabled;
 #if !defined(REN_ENABLE_GAMESPY) || REN_ENABLE_GAMESPY
 	qr_t query_reporting_rec;
 #else
 	void *query_reporting_rec;
 #endif
 	void DoGameStuff(void);
-	BOOL Append_InfoKey_Pair(char *outbuf, int maxlen, const char *key, const char *value);
-	BOOL Append_InfoKey_Pair(char *outbuf, int maxlen, const char *key, const StringClass &value);
-	BOOL Append_InfoKey_Pair(char *outbuf, int maxlen, const char *key, const WideStringClass &value);
+	bool Append_InfoKey_Pair(char *outbuf, int maxlen, const char *key, const char *value);
+	bool Append_InfoKey_Pair(char *outbuf, int maxlen, const char *key, const StringClass &value);
+	bool Append_InfoKey_Pair(char *outbuf, int maxlen, const char *key, const WideStringClass &value);
 	static const char *gamename;
 	static const char *bname;
 	static const int prodid;
@@ -63,17 +61,17 @@ public:
 	void LaunchArcade(void);
 	void TrackUsage(void);
 	void Shutdown(void);
-	BOOL Parse_HeartBeat_List(const char *list);
+	bool Parse_HeartBeat_List(const char *list);
 	const char *Get_GameSpy_GameName(void) { return gamename; } 
 	const char *Get_Default_HeartBeat_List(void) { return default_heartbeat_list; } 
-	void Enable_Reporting(BOOL enable) {
+	void Enable_Reporting(bool enable) {
 #if !defined(REN_ENABLE_GAMESPY) || REN_ENABLE_GAMESPY
 		m_GSEnabled = enable;
 #else
-		m_GSEnabled = FALSE;
+		m_GSEnabled = false;
 #endif
 	}
-	BOOL IsEnabled(void) { return m_GSEnabled; }
+	bool IsEnabled(void) { return m_GSEnabled; }
 	void Think();
 	void basic_callback(char *outbuf, int maxlen); 
 	void info_callback(char *outbuf, int maxlen);

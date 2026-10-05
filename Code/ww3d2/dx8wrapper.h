@@ -44,6 +44,7 @@
 #define DX8_WRAPPER_H
 
 #include "always.h"
+#include "Platform/Graphics/Types.h"
 #include "dllist.h"
 #include "d3d8.h"
 #include "matrix4.h"
@@ -382,7 +383,7 @@ public:
 	**	DX8Wrapper::Set_Render_Target ((IDirect3DSurface8 *)NULL);
 	**
 	*/
-	static IDirect3DSwapChain8 *	Create_Additional_Swap_Chain (HWND render_window);
+	static IDirect3DSwapChain8 *	Create_Additional_Swap_Chain (Platform::GraphicsWindowHandle render_window);
 
 	/*
 	** Render target interface. If render target format is WW3D_FORMAT_UNKNOWN, current display format is used.

@@ -39,6 +39,7 @@
 #include "ww3d.h"
 #include "wwdebug.h"
 #include "miscutil.h"
+#include "Platform/GameState.h"
 #include "slist.h"
 //#include "menu.h"
 #include "textdisplay.h"

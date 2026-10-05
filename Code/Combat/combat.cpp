@@ -67,6 +67,7 @@
 #include "hudinfo.h"
 #include "weathermgr.h"
 #include "thread.h"
+#include "Platform/Threads.h"
 #include "savegame.h"
 #include "assetdep.h"
 #include "saveloadstatus.h"
@@ -356,7 +357,11 @@ StringClass	_load_map_name;
 static class LoadThreadClass : public ThreadClass
 {
 public:
-	LoadThreadClass(const char *thread_name = "Game loader thread") : ThreadClass(thread_name, &Exception_Handler) {}
+	LoadThreadClass(const char *thread_name = "Game loader thread") : ThreadClass(thread_name
+#ifdef _WIN32
+		, &Exception_Handler
+#endif
+	) {}
 
 	~LoadThreadClass() { Stop(); }
 
@@ -370,7 +375,7 @@ public:
 
 		#ifndef PARAM_EDITING_ON
 			// Tell the datasafe to expect calls from this thread now.
-			GenericDataSafeClass::Set_Preferred_Thread(GetCurrentThreadId());
+			GenericDataSafeClass::Set_Preferred_Thread(Platform::CurrentThreadId());
 		#endif // PARAM_EDITING_ON
 
 		CombatManager::Inc_Load_Progress();

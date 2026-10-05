@@ -67,9 +67,9 @@ class RenderDeviceDescClass
 
 public:
 
-	RenderDeviceDescClass(void) : DeviceName(NULL), DeviceVendor(NULL), DevicePlatform(NULL), 
-											DriverName(NULL), DriverVendor(NULL), DriverVersion(NULL),
-											HardwareName(NULL), HardwareVendor(NULL), HardwareChipset(NULL)
+	RenderDeviceDescClass(void) : DeviceName(static_cast<const char*>(nullptr)), DeviceVendor(static_cast<const char*>(nullptr)), DevicePlatform(static_cast<const char*>(nullptr)),
+											DriverName(static_cast<const char*>(nullptr)), DriverVendor(static_cast<const char*>(nullptr)), DriverVersion(static_cast<const char*>(nullptr)),
+											HardwareName(static_cast<const char*>(nullptr)), HardwareVendor(static_cast<const char*>(nullptr)), HardwareChipset(static_cast<const char*>(nullptr))
 	{
 	}
 

@@ -42,7 +42,6 @@
 #define __SOUNDOBJ_H
 
 #pragma warning (push, 3)
-#include "win.h"
 #include "mss.h"
 #pragma warning (pop)
 
@@ -182,7 +181,7 @@ class AudibleSoundClass : public SoundSceneObjClass
 		//////////////////////////////////////////////////////////////////////
 		//	Informational methods
 		//////////////////////////////////////////////////////////////////////
-		virtual LPCTSTR			Get_Filename (void) const;
+		virtual const char*			Get_Filename (void) const;
 		virtual bool				Is_Playing (void) const  {return(Get_State() == STATE_PLAYING);}
 
 		//////////////////////////////////////////////////////////////////////

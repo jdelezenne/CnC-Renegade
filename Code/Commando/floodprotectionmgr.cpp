@@ -35,6 +35,7 @@
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 #include "floodprotectionmgr.h"
+#include "Platform/Platform.h"
 #include "combat.h"
 #include "messagewindow.h"
 #include "translatedb.h"
@@ -70,7 +71,7 @@ FloodProtectionMgrClass::Decay_Old_Entries (void)
 {
 	const int DECAY_TIME	= 15000;
 
-	uint32 curr_time = ::GetTickCount ();
+	uint32 curr_time = static_cast<uint32>(Platform::Ticks());
 
 	//
 	//	Loop over all the entries in the list
@@ -124,7 +125,7 @@ FloodProtectionMgrClass::Detect_Flooding (const WCHAR *text)
 		//	Add a new entry to the list
 		//
 		FLOOD_ENTRY entry;
-		entry.time		= ::GetTickCount ();
+		entry.time		= static_cast<uint32>(Platform::Ticks());
 		entry.text_len	= 0;
 		FloodList.Add (entry);
 	}

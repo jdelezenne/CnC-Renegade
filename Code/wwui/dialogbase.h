@@ -50,6 +50,7 @@
 #include "widestring.h"
 #include "controladvisesink.h"
 #include "Platform/Callbacks.h"
+#include "Platform/UI/Constants.h"
 #include "notify.h"
 
 ////////////////////////////////////////////////////////////////

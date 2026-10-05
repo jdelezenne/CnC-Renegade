@@ -34,6 +34,8 @@
  * Functions:                                                                                  *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
+#include "Platform/GameState.h"
+#include "Platform/Threads.h"
 #include "combatgmode.h"
 #include "level.h"
 #include "input.h"
@@ -695,7 +697,7 @@ void CombatGameModeClass::Load_Level( void )
 	}
 	WWLOG_INTERMEDIATE("Threaded level load");
 
-	GenericDataSafeClass::Set_Preferred_Thread(GetCurrentThreadId());
+	GenericDataSafeClass::Set_Preferred_Thread(Platform::CurrentThreadId());
 	TextureLoader::Continue_Texture_Load();
 	WWLOG_INTERMEDIATE("TextureLoader::Continue_Texture_Load()");
 

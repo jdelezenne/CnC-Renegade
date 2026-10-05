@@ -34,6 +34,7 @@
  * Functions:                                                                                  *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
+#include "Platform/Directory.h"
 #include "skinpackagemgr.h"
 #include "Settings.h"
 #include "_globals.h"
@@ -106,22 +107,17 @@ SkinPackageMgrClass::Shutdown (void)
 void
 SkinPackageMgrClass::Build_List (void)
 {
-	WIN32_FIND_DATA find_info	= { 0 };
-	BOOL keep_going				= TRUE;
-	HANDLE file_find				= NULL;
 
 	//
 	//	Build a list of all the saved games we know about
 	//
-	for (file_find = ::FindFirstFile ("*.pkg", &find_info);
-		 (file_find != INVALID_HANDLE_VALUE) && keep_going;
-		  keep_going = ::FindNextFile (file_find, &find_info))
+	for (const auto& file : Platform::ListFiles("*.pkg"))
 	{		
 		//
 		//	Create the package from the data in this mix file
 		//
 		SkinPackageClass package;
-		package.Set_Package_Filename (find_info.cFileName);
+		package.Set_Package_Filename (file.Name.c_str());
 
 		//
 		//	Add the package to our list
@@ -129,9 +125,6 @@ SkinPackageMgrClass::Build_List (void)
 		PackageList.Add (package);
 	}
 
-	if (file_find != INVALID_HANDLE_VALUE) {			  
-		::FindClose (file_find); 
-	}
 	
 	return ;
 }

@@ -1133,7 +1133,7 @@ void DefenseObjectClass::Export(BitStreamClass & packet)
 
 	packet.Add(health,							BITPACK_HEALTH);
 	packet.Add(shield_strength,				BITPACK_SHIELD_STRENGTH);
-	packet.Add((unsigned long)ShieldType,	BITPACK_SHIELD_TYPE);
+	packet.Add((uint32)ShieldType,	BITPACK_SHIELD_TYPE);
 
    //LastSentHealth = Health;
    //LastSentSkin = Skin;

@@ -48,7 +48,6 @@
 #include "refcount.h"
 #include "camera.h"
 #include "quat.h"
-#include "win.h"
 #include "vertmaterial.h"
 #include "wwprofile.h"
 #include "texture.h"

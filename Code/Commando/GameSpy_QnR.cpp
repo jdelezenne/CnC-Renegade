@@ -132,7 +132,7 @@ void c_basic_callback(char *outbuf, int maxlen, void *userdata)
 /***********
 A simple game object. Consists of some data and a main loop function.
 ***********/
-CGameSpyQnR::CGameSpyQnR(void) : m_GSInit(FALSE), m_GSEnabled(FALSE)
+CGameSpyQnR::CGameSpyQnR(void) : m_GSInit(false), m_GSEnabled(false)
 {
 	// Secret keys removed per Security review requirements. LFeenanEA - 27th January 2025
 	
@@ -172,7 +172,7 @@ CGameSpyQnR::~CGameSpyQnR()
 
 void CGameSpyQnR::LaunchArcade(void) {
     SettingsClass settings(APPLICATION_SETTINGS_SECTION_GAMESPY);
-    BOOL launched = FALSE;
+    bool launched = false;
     {
         StringClass value;
         settings.Get_String("ArcadeDirectory", value);
@@ -188,7 +188,7 @@ void CGameSpyQnR::LaunchArcade(void) {
 				StringClass params("+svc ");
 				params += gamename;
 				if (((int)ShellExecute (NULL, "open", value, params, NULL, SW_SHOW)) > 32) {
-					launched = TRUE;
+					launched = true;
 				}
 			}
 		}
@@ -248,7 +248,7 @@ void CGameSpyQnR::Init(void) {
 	
 		ConsoleBox.Print("Initializing GameSpy Q&R\n");
 
-		BOOL test = FALSE;
+		bool test = false;
 		// Init the GameSpy QnR engine
 		extern ULONG g_ip_override;
 		char ipstr[32];
@@ -274,7 +274,7 @@ void CGameSpyQnR::Init(void) {
 		gcd_init_qr(query_reporting_rec, cdkey_id);
 
 		StartTime = time(NULL);
-		m_GSInit = TRUE;
+		m_GSInit = true;
 	}
 #endif
 }
@@ -537,9 +537,9 @@ void CGameSpyQnR::rules_callback(char *outbuf, int maxlen)
 
 }
 
-BOOL CGameSpyQnR::Parse_HeartBeat_List(const char *list) {
+bool CGameSpyQnR::Parse_HeartBeat_List(const char *list) {
 
-	BOOL master_added = false;
+	bool master_added = false;
 
 	char *str = new char[strlen(list)+1];
 	strcpy(str, list);
@@ -583,7 +583,7 @@ BOOL CGameSpyQnR::Parse_HeartBeat_List(const char *list) {
 	return true;
 }
 
-BOOL CGameSpyQnR::Append_InfoKey_Pair(char *outbuf, int maxlen, const char *key, const char *value) {
+bool CGameSpyQnR::Append_InfoKey_Pair(char *outbuf, int maxlen, const char *key, const char *value) {
 
 	WWASSERT(value);
 	WWASSERT(outbuf);
@@ -591,7 +591,7 @@ BOOL CGameSpyQnR::Append_InfoKey_Pair(char *outbuf, int maxlen, const char *key,
 
 	int clen = strlen(outbuf);
 
-	if (clen + strlen(key) + strlen(value) + 3 > (unsigned int)maxlen) return FALSE;
+	if (clen + strlen(key) + strlen(value) + 3 > (unsigned int)maxlen) return false;
 
 	char *s = new char[strlen(value)+1];
 	strcpy(s, value);
@@ -604,17 +604,17 @@ BOOL CGameSpyQnR::Append_InfoKey_Pair(char *outbuf, int maxlen, const char *key,
 	sprintf(&outbuf[clen], "\\%s\\%s", key, t);
 	delete [] s;
 
-	return TRUE;
+	return true;
 }
 
-BOOL CGameSpyQnR::Append_InfoKey_Pair(char *outbuf, int maxlen, const char *key, const WideStringClass &value) {
+bool CGameSpyQnR::Append_InfoKey_Pair(char *outbuf, int maxlen, const char *key, const WideStringClass &value) {
 	static StringClass text;
 
 	value.Convert_To(text);
 	return Append_InfoKey_Pair(outbuf, maxlen, key, text.Peek_Buffer());
 }
 
-BOOL CGameSpyQnR::Append_InfoKey_Pair(char *outbuf, int maxlen, const char *key, const StringClass &value) {
+bool CGameSpyQnR::Append_InfoKey_Pair(char *outbuf, int maxlen, const char *key, const StringClass &value) {
 
 	return Append_InfoKey_Pair(outbuf, maxlen, key, value.Peek_Buffer());
 }

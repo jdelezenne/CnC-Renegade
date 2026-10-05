@@ -44,7 +44,9 @@
 
 #include <WWOnline/WaitCondition.h>
 #include <wwlib/Except.h>
-#include <windows.h>
+#include "thread.h"
+#include <atomic>
+#include <memory>
 #include <BandTest/BandTest.h>
 
 
@@ -76,18 +78,18 @@ class BandwidthCheckerClass
 		#pragma pack(pop)
 
 		static RefPtr<WaitCondition> Detect(void);
-		static void Check_Now(HANDLE event);
+		static void Check_Now(std::shared_ptr<std::atomic<bool>> event);
 
 		static bool Got_Bandwidth(void) {return(GotBandwidth);};
 		static void Force_Upstream_Bandwidth(unsigned int up);
 		static unsigned long Get_Upstream_Bandwidth(void);
 		static unsigned long Get_Reported_Upstream_Bandwidth(void);
-		static const WCHAR *Get_Upstream_Bandwidth_As_String(void);
+		static const wchar_t *Get_Upstream_Bandwidth_As_String(void);
 		static unsigned long Get_Downstream_Bandwidth(void);
 		static unsigned long Get_Reported_Downstream_Bandwidth(void);
-		static const WCHAR *Get_Downstream_Bandwidth_As_String(void);
-		static const WCHAR *Get_Bandwidth_As_String(void);
-		static const WCHAR *Get_Bandwidth_As_String(PackedBandwidthType bandwidth);
+		static const wchar_t *Get_Downstream_Bandwidth_As_String(void);
+		static const wchar_t *Get_Bandwidth_As_String(void);
+		static const wchar_t *Get_Bandwidth_As_String(PackedBandwidthType bandwidth);
 		static PackedBandwidthType Get_Packed_Bandwidth(void);
 		static bool Failed_Due_To_No_Connection(void) {return(FailureCode == BANDTEST_NO_IP_DETECT);}
 		static void Get_Compact_Log(StringClass &log_string);
@@ -100,25 +102,29 @@ class BandwidthCheckerClass
 
 		static class BandwidthCheckerThreadClass : public ThreadClass {
 			public:
-				BandwidthCheckerThreadClass(const char *thread_name = "Bandwidth checker thread") : ThreadClass(thread_name, &Exception_Handler) {}
+				BandwidthCheckerThreadClass(const char *thread_name = "Bandwidth checker thread") : ThreadClass(thread_name
+#ifdef _WIN32
+					, &Exception_Handler
+#endif
+				) {}
 				~BandwidthCheckerThreadClass() { Stop(); }
 				void Thread_Function(void) {BandwidthCheckerClass::Check();};
 		} Thread;
 		friend BandwidthCheckerThreadClass;
 
-		static HANDLE EventNotify;
+		static std::shared_ptr<std::atomic<bool>> EventNotify;
 		static unsigned long UpstreamBandwidth;
 		static unsigned long ReportedUpstreamBandwidth;
 		static unsigned long DownstreamBandwidth;
 		static unsigned long ReportedDownstreamBandwidth;
-		static const WCHAR *UpstreamBandwidthString;
-		static const WCHAR *DownstreamBandwidthString;
+		static const wchar_t *UpstreamBandwidthString;
+		static const wchar_t *DownstreamBandwidthString;
 
 		#define NUM_BANDS 12
 
 		static const char *ErrorList[13];
 		static unsigned long Bandwidths[NUM_BANDS * 2];
-		static const WCHAR *BandwidthNames[NUM_BANDS + 1];
+		static const wchar_t *BandwidthNames[NUM_BANDS + 1];
 		static int FailureCode;
 		static bool GotBandwidth;
 		static const char *DefaultServerName;
@@ -150,7 +156,7 @@ class BandwidthDetectWait : public SingleWait
 
 		RefPtr<WWOnline::Session> WOLSession;
 		unsigned int mPingsRemaining;
-		HANDLE mEvent;
+		std::shared_ptr<std::atomic<bool>> mEvent;
 
 
 };

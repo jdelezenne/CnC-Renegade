@@ -686,7 +686,7 @@ WW3DErrorType MeshModelClass::read_v3_materials(ChunkLoadClass & cload,MeshLoadC
 				/*
 				** Read in the texture filename
 				*/
-				char filename[_MAX_FNAME + _MAX_EXT];
+				char filename[512];
 				if (!cload.Open_Chunk()) goto Error;
 					if (cload.Cur_Chunk_ID() != W3D_CHUNK_MAP3_FILENAME) goto Error;
 					if (cload.Cur_Chunk_Length() >= sizeof(filename)) goto Error;
@@ -718,7 +718,7 @@ WW3DErrorType MeshModelClass::read_v3_materials(ChunkLoadClass & cload,MeshLoadC
 					/*
 					** Read in the texture filename
 					*/
-					char filename[_MAX_FNAME + _MAX_EXT];
+					char filename[512];
 					if (!cload.Open_Chunk()) goto Error;
 						if (cload.Cur_Chunk_ID() != W3D_CHUNK_MAP3_FILENAME) goto Error;
 						if (cload.Cur_Chunk_Length() >= sizeof(filename)) goto Error;

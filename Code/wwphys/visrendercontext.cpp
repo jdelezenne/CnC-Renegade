@@ -43,7 +43,6 @@
 #include "visrendercontext.h"
 #include "simplevec.h"
 
-#include "win.h"
 #include "rawfile.h"
 #include "visrasterizer.h"
 

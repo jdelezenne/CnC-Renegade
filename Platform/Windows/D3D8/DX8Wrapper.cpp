@@ -68,7 +68,7 @@
 #include "missingtexture.h"
 #include "thread.h"
 #include <stdio.h>
-#include <D3dx8core.h>
+#include <d3dx8core.h>
 #include "pot.h"
 #include "wwprofile.h"
 #include "ffactory.h"
@@ -89,7 +89,7 @@ const int DEFAULT_TEXTURE_BIT_DEPTH = 16;
 **
 ***********************************************************************************/
 
-static HWND						_Hwnd															= NULL;
+static Platform::GraphicsWindowHandle						_Hwnd															= NULL;
 bool								DX8Wrapper::IsInitted									= false;
 bool								DX8Wrapper::_EnableTriangleDraw						= true;
 
@@ -209,7 +209,7 @@ bool DX8Wrapper::Init(void * hwnd, bool lite)
 	/*
 	** Initialize all variables!
 	*/
-	_Hwnd = (HWND)hwnd;
+	_Hwnd = (Platform::GraphicsWindowHandle)hwnd;
 	_MainThreadID=ThreadClass::_Get_Current_Thread_ID();
 	WWDEBUG_SAY(("DX8Wrapper main thread: 0x%x\n",_MainThreadID));
 	CurRenderDevice = -1;
@@ -222,9 +222,9 @@ bool DX8Wrapper::Init(void * hwnd, bool lite)
 
 	for (int light=0;light<4;++light) CurrentDX8LightEnables[light]=false;
 
-	::ZeroMemory(&old_world, sizeof(D3DMATRIX));
-	::ZeroMemory(&old_view, sizeof(D3DMATRIX));
-	::ZeroMemory(&old_prj, sizeof(D3DMATRIX));
+	::memset(&old_world, 0, sizeof(D3DMATRIX));
+	::memset(&old_view, 0, sizeof(D3DMATRIX));
+	::memset(&old_prj, 0, sizeof(D3DMATRIX));
 
 	//old_vertex_shader; TODO
 	//old_sr_shader;
@@ -398,7 +398,7 @@ bool DX8Wrapper::Create_Device(void)
 		return false;
 	}
 
-	::ZeroMemory(&CurrentAdapterIdentifier, sizeof(D3DADAPTER_IDENTIFIER8));
+	::memset(&CurrentAdapterIdentifier, 0, sizeof(D3DADAPTER_IDENTIFIER8));
 	if (FAILED( D3DInterface->GetAdapterIdentifier(CurRenderDevice,D3DENUM_NO_WHQL_LEVEL,&CurrentAdapterIdentifier))) {
 		return false;
 	}
@@ -530,7 +530,7 @@ void DX8Wrapper::Enumerate_Devices()
 	for (int adapter_index=0; adapter_index<adapter_count; adapter_index++) {
 
 		D3DADAPTER_IDENTIFIER8 id;
-		::ZeroMemory(&id, sizeof(D3DADAPTER_IDENTIFIER8));
+		::memset(&id, 0, sizeof(D3DADAPTER_IDENTIFIER8));
 		HRESULT res = D3DInterface->GetAdapterIdentifier(adapter_index,D3DENUM_NO_WHQL_LEVEL,&id);
 
 		if (res == D3D_OK) {
@@ -543,12 +543,16 @@ void DX8Wrapper::Enumerate_Devices()
 			desc.set_device_name(id.Description);
 			desc.set_driver_name(id.Driver);
 
+#ifdef _WIN32
+			const auto version_high = static_cast<std::uint32_t>(id.DriverVersion.HighPart);
+			const auto version_low = static_cast<std::uint32_t>(id.DriverVersion.LowPart);
+#else
+			const auto version_high = id.DriverVersionHighPart;
+			const auto version_low = id.DriverVersionLowPart;
+#endif
 			char buf[64];
-			sprintf(buf,"%d.%d.%d.%d", //"%04x.%04x.%04x.%04x",
-				HIWORD(id.DriverVersion.HighPart),
-				LOWORD(id.DriverVersion.HighPart),
-				HIWORD(id.DriverVersion.LowPart),
-				LOWORD(id.DriverVersion.LowPart));
+			snprintf(buf, sizeof(buf), "%u.%u.%u.%u", version_high >> 16, version_high & 0xffff,
+				version_low >> 16, version_low & 0xffff);
 
 			desc.set_driver_version(buf);
 
@@ -564,7 +568,7 @@ void DX8Wrapper::Enumerate_Devices()
 			int mode_count = D3DInterface->GetAdapterModeCount(adapter_index);
 			for (int mode_index=0; mode_index<mode_count; mode_index++) {
 				D3DDISPLAYMODE d3dmode;
-				::ZeroMemory(&d3dmode, sizeof(D3DDISPLAYMODE));
+				::memset(&d3dmode, 0, sizeof(D3DDISPLAYMODE));
 				HRESULT res = D3DInterface->EnumAdapterModes(adapter_index,mode_index,&d3dmode);
 
 				if (res == D3D_OK) {
@@ -692,7 +696,7 @@ bool DX8Wrapper::Set_Render_Device(int dev, int width, int height, int bits, int
 	/*
 	** Initialize values for D3DPRESENT_PARAMETERS members.
 	*/
-	::ZeroMemory(&_PresentParameters, sizeof(D3DPRESENT_PARAMETERS));
+	::memset(&_PresentParameters, 0, sizeof(D3DPRESENT_PARAMETERS));
 
 	_PresentParameters.BackBufferWidth = ResolutionWidth;
 	_PresentParameters.BackBufferHeight = ResolutionHeight;
@@ -715,7 +719,7 @@ bool DX8Wrapper::Set_Render_Device(int dev, int width, int height, int bits, int
 	** - the depth buffer must use
 	*/
 
-	::ZeroMemory(&DesktopMode, sizeof(D3DDISPLAYMODE));
+	::memset(&DesktopMode, 0, sizeof(D3DDISPLAYMODE));
 	D3DInterface->GetAdapterDisplayMode( CurRenderDevice, &DesktopMode );
 	_PresentParameters.BackBufferFormat = DesktopMode.Format;
 
@@ -1158,7 +1162,7 @@ bool DX8Wrapper::Find_Color_Mode(D3DFORMAT colorbuffer, int resx, int resy, UINT
 	UINT i,j,modemax;
 	UINT rx,ry;
 	D3DDISPLAYMODE dmode;
-	::ZeroMemory(&dmode, sizeof(D3DDISPLAYMODE));
+	::memset(&dmode, 0, sizeof(D3DDISPLAYMODE));
 
 	rx=(unsigned int) resx;
 	ry=(unsigned int) resy;
@@ -1681,7 +1685,7 @@ void DX8Wrapper::Draw(
 
 #ifdef MESH_RENDER_SNAPSHOT_ENABLED
 	if (WW3D::Is_Snapshot_Activated()) {
-		unsigned long passes=0;
+		DWORD passes=0;
 		SNAPSHOT_SAY(("ValidateDevice: "));
 		HRESULT res=D3DDevice->ValidateDevice(&passes);
 		switch (res) {
@@ -2127,7 +2131,7 @@ IDirect3DTexture8 * DX8Wrapper::_Create_DX8_Texture(
 	IDirect3DTexture8 *texture = NULL;
 
 	D3DSURFACE_DESC surface_desc;
-	::ZeroMemory(&surface_desc, sizeof(D3DSURFACE_DESC));
+	::memset(&surface_desc, 0, sizeof(D3DSURFACE_DESC));
 	surface->GetDesc(&surface_desc);
 
 	// This function will create a texture with a different (but similar) format if the surface is
@@ -2317,7 +2321,7 @@ void DX8Wrapper::Set_Light_Environment(LightEnvironmentClass* light_env)
 		Set_DX8_Render_State(D3DRS_AMBIENT,Convert_Color(light_env->Get_Equivalent_Ambient(),0.0f));
 
 		D3DLIGHT8 light;
-		::ZeroMemory(&light, sizeof(D3DLIGHT8));
+		::memset(&light, 0, sizeof(D3DLIGHT8));
 		light.Type=D3DLIGHT_DIRECTIONAL;
 
 		int l;
@@ -2564,7 +2568,7 @@ DX8Wrapper::Set_Render_Target(IDirect3DSurface8 *render_target, bool use_default
 
 
 IDirect3DSwapChain8 *
-DX8Wrapper::Create_Additional_Swap_Chain (HWND render_window)
+DX8Wrapper::Create_Additional_Swap_Chain (Platform::GraphicsWindowHandle render_window)
 {
 	DX8_Assert();
 
@@ -2647,8 +2651,10 @@ void DX8Wrapper::Set_Gamma(float gamma,float bright,float contrast,bool calibrat
 
 	if (Get_Current_Caps()->Support_Gamma())	{
 		DX8Wrapper::_Get_D3D_Device8()->SetGammaRamp(flag,&ramp);
-	} else {
-		HWND hwnd = GetDesktopWindow();
+	}
+#ifdef _WIN32
+	else {
+		Platform::GraphicsWindowHandle hwnd = GetDesktopWindow();
 		HDC hdc = GetDC(hwnd);
 		if (hdc)
 		{
@@ -2656,6 +2662,7 @@ void DX8Wrapper::Set_Gamma(float gamma,float bright,float contrast,bool calibrat
 			ReleaseDC (hwnd, hdc);
 		}
 	}
+#endif
 }
 
 const char* DX8Wrapper::Get_DX8_Render_State_Name(D3DRENDERSTATETYPE state)
