@@ -26,10 +26,13 @@
 #include <cstdio>
 #include <stdexcept>
 #include <string>
+#include <cstdlib>
 
 namespace {
 thread_local ThreadClass* CurrentWorker = nullptr;
 thread_local int AppliedPriority = 0;
+thread_local int ExitCode = 0;
+struct ThreadExit { int Code; };
 void ApplyPriority(int priority)
 {
     if (priority == AppliedPriority) return;
@@ -51,13 +54,18 @@ ThreadClass::~ThreadClass() { Stop(); }
 
 void ThreadClass::Invoke_Thread_Function(void* context)
 {
-    static_cast<ThreadClass*>(context)->Thread_Function();
+    try {
+        static_cast<ThreadClass*>(context)->Thread_Function();
+    } catch (const ThreadExit& exit) {
+        ExitCode = exit.Code;
+    }
 }
 
 int ThreadClass::Internal_Thread_Function(void* context)
 {
     auto* thread = static_cast<ThreadClass*>(context);
     CurrentWorker = thread;
+    ExitCode = 0;
     thread->ThreadID = Platform::CurrentThreadId();
     ApplyPriority(thread->thread_priority.load());
     Platform::RunThreadFunction(&Invoke_Thread_Function, thread, thread->ExceptionHandler,
@@ -65,7 +73,13 @@ int ThreadClass::Internal_Thread_Function(void* context)
     thread->running = false;
     thread->ThreadID = 0;
     CurrentWorker = nullptr;
-    return 0;
+    return ExitCode;
+}
+
+void ThreadClass::Exit_Current_Thread(int status)
+{
+    if (CurrentWorker) throw ThreadExit{status};
+    std::_Exit(status);
 }
 
 void ThreadClass::Execute()

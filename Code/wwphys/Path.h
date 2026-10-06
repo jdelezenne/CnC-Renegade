@@ -193,7 +193,7 @@ public:
 	static bool			Are_Move_Vectors_Displayed (void)	{ return m_DisplayMoveVectors; }
 	static void			Display_Move_Vectors (bool onoff)	{ m_DisplayMoveVectors = onoff; }
 
-#ifdef WWDEBUG
+#if defined(WWDEBUG) || !defined(NDEBUG)
 	int					Get_Path_Vector_Length(void) {return(m_PathActions.Length());};
 	int					Get_Path_Vector_Count(void) {return(m_PathActions.Count());};
 #endif //WWDEBUG

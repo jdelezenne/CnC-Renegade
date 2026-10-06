@@ -34,8 +34,10 @@
  * Functions:                                                                                  *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
+#include "Platform/Application.h"
 #include "Platform/Paths.h"
-#include "Platform/Windows/Files.h"
+#include "Platform/Files.h"
+#include "Platform/Calendar.h"
 #include "WOLGMode.h"
 #include "GameData.h"
 #include "GameChanList.h"
@@ -429,7 +431,7 @@ void WolGameModeClass::Think(void)
 		if ((mPatchAvailable || !mConnected) && mStartQuitProcessTime) {
 			if (time - mStartQuitProcessTime > 1000 * 4) {
 				if (SlaveMaster.Am_I_Slave()) {
-					Set_Exit_On_Exception(true);
+					Platform::SetExitOnException(true);
          		cGameData::Set_Manual_Exit(true);
 				} else {
 					Quit_And_Restart();
@@ -1745,8 +1747,8 @@ void WolGameModeClass::HandleNotification(GameOptionsMessage& message)
 					unsigned long versionminor,versionmajor;
 					Get_Version_Number(&versionmajor,&versionminor);
 
-					SYSTEMTIME time;
-					GetSystemTime(&time);
+					Platform::CalendarTime time;
+					Platform::UtcCalendarTime(time);
 					tmp.Format("%d/%d/%d %d:%d\t%d.%d\t",
 						time.wMonth,
 						time.wDay,
@@ -1763,11 +1765,7 @@ void WolGameModeClass::HandleNotification(GameOptionsMessage& message)
 					// Verify the sysinfo folder
 					StringClass dirname(0,true);
 					dirname.Format("sysinfo_%d",DebugManager::Get_Version_Number());
-					if (GetFileAttributes(dirname)==0xffffffff) {
-						if (!Platform::MakeDirectory(dirname,NULL)) {
-							return;
-						}
-					}
+					if (!Platform::CreateUserDirectory(dirname)) return;
 
 					StringClass filename(0,true);
 					filename=dirname;
@@ -1776,14 +1774,12 @@ void WolGameModeClass::HandleNotification(GameOptionsMessage& message)
 					filename+=tmp;
 					filename+=".txt";
 
-					DWORD written;
-					HANDLE file;
-					file = Platform::OpenFile(filename, GENERIC_WRITE, 0, NULL, OPEN_ALWAYS,
-							FILE_ATTRIBUTE_NORMAL, NULL);
-					if (INVALID_HANDLE_VALUE != file) {
-						SetFilePointer(file, 0, NULL, FILE_END);
-						WriteFile(file, datastring, strlen(datastring), &written, NULL);
-						CloseHandle(file);
+					std::uint32_t written;
+					void* file = Platform::OpenRawFile(filename, Platform::FileMode::ReadWrite);
+					if (Platform::InvalidFileHandle() != file) {
+						Platform::SeekRawFile(file, 0, SEEK_END);
+						Platform::WriteRawFile(file, datastring, strlen(datastring), written);
+						Platform::CloseRawFile(file);
 					}
 				}
 			}
@@ -1927,7 +1923,7 @@ void WolGameModeClass::Handle_Disconnect(void)
 					if (cPlayerManager::Count() == 0) {
 						if (SlaveMaster.Am_I_Slave()) {
 							AutoRestart.Set_Restart_Flag(false);
-							Set_Exit_On_Exception(true);
+							Platform::SetExitOnException(true);
          				cGameData::Set_Manual_Exit(true);
 						} else {
 							Quit_And_Restart();
@@ -2034,7 +2030,7 @@ void WolGameModeClass::Quit_And_Restart(void)
 			** If we lost connection then drop out of the game and try to re-establish connection.
 			*/
 			AutoRestart.Set_Restart_Flag(true);
-			Set_Exit_On_Exception(true);
+			Platform::SetExitOnException(true);
 			cGameData::Set_Manual_Exit(true);
 			Stop_Main_Loop(EXIT_SUCCESS);
 		}
@@ -2115,7 +2111,7 @@ void WolGameModeClass::Game_Start_Timed_Out(void)
 			mConnected = false;
 			if (SlaveMaster.Am_I_Slave()) {
 				AutoRestart.Set_Restart_Flag(false);
-				Set_Exit_On_Exception(true);
+				Platform::SetExitOnException(true);
          	cGameData::Set_Manual_Exit(true);
 			} else {
 				Quit_And_Restart();

@@ -1,6 +1,18 @@
 #pragma once
 #include "Platform/Network/Sockets.h"
+#include <cstdint>
+#include <vector>
+#include <string>
 namespace Platform {
+int SocketStartup();
+SOCKET SocketCreate(int family, int type, int protocol);
+int SocketAddressFamilyError();
+int SocketNoBufferError();
+std::string SocketErrorText(int error);
+std::string IPv4HostName(std::uint32_t address);
+bool LocalIPv4Addresses(std::vector<std::uint32_t>& addresses);
+bool LocalTcpEndpoint(const char* host, std::uint16_t remotePort, std::uint32_t& address, std::uint16_t& port);
+int SocketCleanup();
 int SocketLastError();
 void SetSocketLastError(int error);
 int SocketWouldBlockError();

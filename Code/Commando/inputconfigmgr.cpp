@@ -317,7 +317,7 @@ InputConfigMgrClass::Find_Configuration (const char *filename)
 		//
 		//	Is this the entry we're looking for?
 		//
-		if (::lstrcmpi (ConfigList[index].Get_Filename (), filename) == 0) {
+		if (::stricmp (ConfigList[index].Get_Filename (), filename) == 0) {
 			retval = index;
 			break;
 		}

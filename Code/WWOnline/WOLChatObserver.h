@@ -66,101 +66,101 @@ class ChatObserver :
 		//---------------------------------------------------------------------------
 		// IChatEvent Methods
 		//---------------------------------------------------------------------------
-		STDMETHOD(OnServerList)(HRESULT hr, WOL::Server* servers);
+		virtual HRESULT STDMETHODCALLTYPE OnServerList(HRESULT hr, WOL::Server* servers);
         
-		STDMETHOD(OnUpdateList)(HRESULT hr, WOL::Update* updates);
+		virtual HRESULT STDMETHODCALLTYPE OnUpdateList(HRESULT hr, WOL::Update* updates);
     
-		STDMETHOD(OnServerError)(HRESULT hr, LPCSTR ircmsg);
+		virtual HRESULT STDMETHODCALLTYPE OnServerError(HRESULT hr, LPCSTR ircmsg);
     
-		STDMETHOD(OnConnection)(HRESULT hr, LPCSTR motd);
+		virtual HRESULT STDMETHODCALLTYPE OnConnection(HRESULT hr, LPCSTR motd);
     
-		STDMETHOD(OnMessageOfTheDay)(HRESULT hr, LPCSTR motd);
+		virtual HRESULT STDMETHODCALLTYPE OnMessageOfTheDay(HRESULT hr, LPCSTR motd);
     
-		STDMETHOD(OnChannelList)(HRESULT hr, WOL::Channel* channels);
+		virtual HRESULT STDMETHODCALLTYPE OnChannelList(HRESULT hr, WOL::Channel* channels);
     
-		STDMETHOD(OnChannelCreate)(HRESULT hr, WOL::Channel* channel);
+		virtual HRESULT STDMETHODCALLTYPE OnChannelCreate(HRESULT hr, WOL::Channel* channel);
     
-		STDMETHOD(OnChannelJoin)(HRESULT hr, WOL::Channel* channel, WOL::User* user);
+		virtual HRESULT STDMETHODCALLTYPE OnChannelJoin(HRESULT hr, WOL::Channel* channel, WOL::User* user);
     
-		STDMETHOD(OnChannelLeave)(HRESULT hr, WOL::Channel* channel, WOL::User* user);
+		virtual HRESULT STDMETHODCALLTYPE OnChannelLeave(HRESULT hr, WOL::Channel* channel, WOL::User* user);
     
-		STDMETHOD(OnChannelTopic)(HRESULT hr, WOL::Channel* channel, LPCSTR topic);
+		virtual HRESULT STDMETHODCALLTYPE OnChannelTopic(HRESULT hr, WOL::Channel* channel, LPCSTR topic);
     
-		STDMETHOD(OnPrivateAction)(HRESULT hr, WOL::User* user, LPCSTR action);
+		virtual HRESULT STDMETHODCALLTYPE OnPrivateAction(HRESULT hr, WOL::User* user, LPCSTR action);
     
-		STDMETHOD(OnPublicAction)(HRESULT hr, WOL::Channel* channel, WOL::User* user, LPCSTR action);
+		virtual HRESULT STDMETHODCALLTYPE OnPublicAction(HRESULT hr, WOL::Channel* channel, WOL::User* user, LPCSTR action);
     
-		STDMETHOD(OnUserList)(HRESULT hr, WOL::Channel* channel, WOL::User* users);
+		virtual HRESULT STDMETHODCALLTYPE OnUserList(HRESULT hr, WOL::Channel* channel, WOL::User* users);
     
-		STDMETHOD(OnPublicMessage)(HRESULT hr, WOL::Channel* channel, WOL::User* user, LPCSTR message);
+		virtual HRESULT STDMETHODCALLTYPE OnPublicMessage(HRESULT hr, WOL::Channel* channel, WOL::User* user, LPCSTR message);
     
-		STDMETHOD(OnPrivateMessage)(HRESULT hr, WOL::User* user, LPCSTR message);
+		virtual HRESULT STDMETHODCALLTYPE OnPrivateMessage(HRESULT hr, WOL::User* user, LPCSTR message);
     
-		STDMETHOD(OnSystemMessage)(HRESULT hr, LPCSTR message);
+		virtual HRESULT STDMETHODCALLTYPE OnSystemMessage(HRESULT hr, LPCSTR message);
     
-		STDMETHOD(OnNetStatus)(HRESULT hr);
+		virtual HRESULT STDMETHODCALLTYPE OnNetStatus(HRESULT hr);
     
-		STDMETHOD(OnLogout)(HRESULT status, WOL::User* user);
+		virtual HRESULT STDMETHODCALLTYPE OnLogout(HRESULT status, WOL::User* user);
     
-		STDMETHOD(OnPrivateGameOptions)(HRESULT hr, WOL::User* user, LPCSTR options);
+		virtual HRESULT STDMETHODCALLTYPE OnPrivateGameOptions(HRESULT hr, WOL::User* user, LPCSTR options);
     
-		STDMETHOD(OnPublicGameOptions)(HRESULT hr, WOL::Channel* channel, WOL::User* user, LPCSTR options);
+		virtual HRESULT STDMETHODCALLTYPE OnPublicGameOptions(HRESULT hr, WOL::Channel* channel, WOL::User* user, LPCSTR options);
     
-		STDMETHOD(OnGameStart)(HRESULT hr, WOL::Channel* channel, WOL::User* users, int gameid);
+		virtual HRESULT STDMETHODCALLTYPE OnGameStart(HRESULT hr, WOL::Channel* channel, WOL::User* users, int gameid);
     
-		STDMETHOD(OnUserKick)(HRESULT hr, WOL::Channel* channel, WOL::User* kicked, WOL::User* kicker);
+		virtual HRESULT STDMETHODCALLTYPE OnUserKick(HRESULT hr, WOL::Channel* channel, WOL::User* kicked, WOL::User* kicker);
     
-		STDMETHOD(OnUserIP)(HRESULT hr, WOL::User* user);
+		virtual HRESULT STDMETHODCALLTYPE OnUserIP(HRESULT hr, WOL::User* user);
     
-		STDMETHOD(OnFind)(HRESULT hr, WOL::Channel* chan);
+		virtual HRESULT STDMETHODCALLTYPE OnFind(HRESULT hr, WOL::Channel* chan);
     
-		STDMETHOD(OnPageSend)(HRESULT hr);
+		virtual HRESULT STDMETHODCALLTYPE OnPageSend(HRESULT hr);
     
-		STDMETHOD(OnPaged)(HRESULT hr, WOL::User* user, LPCSTR message);
+		virtual HRESULT STDMETHODCALLTYPE OnPaged(HRESULT hr, WOL::User* user, LPCSTR message);
     
-		STDMETHOD(OnServerBannedYou)(HRESULT hr, WOL::time_t bannedTill);
+		virtual HRESULT STDMETHODCALLTYPE OnServerBannedYou(HRESULT hr, WOL::time_t bannedTill);
     
-		STDMETHOD(OnUserFlags)(HRESULT hr, LPCSTR name, unsigned int flags, unsigned int mask);
+		virtual HRESULT STDMETHODCALLTYPE OnUserFlags(HRESULT hr, LPCSTR name, unsigned int flags, unsigned int mask);
     
-		STDMETHOD(OnChannelBan)(HRESULT hr, LPCSTR name, int banned);
+		virtual HRESULT STDMETHODCALLTYPE OnChannelBan(HRESULT hr, LPCSTR name, int banned);
     
-		STDMETHOD(OnSquadInfo)(HRESULT hr, unsigned long id, WOL::Squad* squad);
+		virtual HRESULT STDMETHODCALLTYPE OnSquadInfo(HRESULT hr, unsigned long id, WOL::Squad* squad);
     
-		STDMETHOD(OnUserLocale)(HRESULT hr, WOL::User* users);
+		virtual HRESULT STDMETHODCALLTYPE OnUserLocale(HRESULT hr, WOL::User* users);
     
-		STDMETHOD(OnUserTeam)(HRESULT hr, WOL::User* users);
+		virtual HRESULT STDMETHODCALLTYPE OnUserTeam(HRESULT hr, WOL::User* users);
     
-		STDMETHOD(OnSetLocale)(HRESULT hr, WOL::Locale newlocale);
+		virtual HRESULT STDMETHODCALLTYPE OnSetLocale(HRESULT hr, WOL::Locale newlocale);
     
-		STDMETHOD(OnSetTeam)(HRESULT hr, int newteam);
+		virtual HRESULT STDMETHODCALLTYPE OnSetTeam(HRESULT hr, int newteam);
 
-		STDMETHOD(OnBuddyList)(HRESULT hr, WOL::User* buddyList);
+		virtual HRESULT STDMETHODCALLTYPE OnBuddyList(HRESULT hr, WOL::User* buddyList);
         
-		STDMETHOD(OnBuddyAdd)(HRESULT hr, WOL::User* buddyAdded);
+		virtual HRESULT STDMETHODCALLTYPE OnBuddyAdd(HRESULT hr, WOL::User* buddyAdded);
         
-		STDMETHOD(OnBuddyDelete)(HRESULT hr, WOL::User* buddyDeleted);
+		virtual HRESULT STDMETHODCALLTYPE OnBuddyDelete(HRESULT hr, WOL::User* buddyDeleted);
 
-		STDMETHOD(OnPublicUnicodeMessage)(HRESULT hr, WOL::Channel* channel, WOL::User* user, const unsigned short* message);
+		virtual HRESULT STDMETHODCALLTYPE OnPublicUnicodeMessage(HRESULT hr, WOL::Channel* channel, WOL::User* user, const unsigned short* message);
         
-		STDMETHOD(OnPrivateUnicodeMessage)(HRESULT hr, WOL::User* user, const unsigned short* message);
+		virtual HRESULT STDMETHODCALLTYPE OnPrivateUnicodeMessage(HRESULT hr, WOL::User* user, const unsigned short* message);
         
-		STDMETHOD(OnPrivateUnicodeAction)(HRESULT hr, WOL::User* user, const unsigned short* action);
+		virtual HRESULT STDMETHODCALLTYPE OnPrivateUnicodeAction(HRESULT hr, WOL::User* user, const unsigned short* action);
         
-		STDMETHOD(OnPublicUnicodeAction)(HRESULT hr, WOL::Channel* channel, WOL::User* user, const unsigned short* action);
+		virtual HRESULT STDMETHODCALLTYPE OnPublicUnicodeAction(HRESULT hr, WOL::Channel* channel, WOL::User* user, const unsigned short* action);
         
-		STDMETHOD(OnPagedUnicode)(HRESULT hr, WOL::User* user, const unsigned short* message);
+		virtual HRESULT STDMETHODCALLTYPE OnPagedUnicode(HRESULT hr, WOL::User* user, const unsigned short* message);
         
-		STDMETHOD(OnServerTime)(HRESULT hr, WOL::time_t stime);
+		virtual HRESULT STDMETHODCALLTYPE OnServerTime(HRESULT hr, WOL::time_t stime);
         
-		STDMETHOD(OnInsiderStatus)(HRESULT hr, WOL::User* users);
+		virtual HRESULT STDMETHODCALLTYPE OnInsiderStatus(HRESULT hr, WOL::User* users);
         
-		STDMETHOD(OnSetLocalIP)(HRESULT hr, LPCSTR message);
+		virtual HRESULT STDMETHODCALLTYPE OnSetLocalIP(HRESULT hr, LPCSTR message);
 
-		STDMETHOD(OnChannelListBegin)(HRESULT hr);
+		virtual HRESULT STDMETHODCALLTYPE OnChannelListBegin(HRESULT hr);
         
-		STDMETHOD(OnChannelListEntry)(HRESULT hr, WOL::Channel* channel);
+		virtual HRESULT STDMETHODCALLTYPE OnChannelListEntry(HRESULT hr, WOL::Channel* channel);
         
-		STDMETHOD(OnChannelListEnd)(HRESULT hr);
+		virtual HRESULT STDMETHODCALLTYPE OnChannelListEnd(HRESULT hr);
 
 	protected:
 		virtual ~ChatObserver();

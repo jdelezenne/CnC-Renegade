@@ -66,19 +66,19 @@ class NetUtilObserver :
 		//---------------------------------------------------------------------------
 		// INetUtilEvent Methods
 		//---------------------------------------------------------------------------
-		STDMETHOD(OnPing)(HRESULT hr, int time, unsigned long ip, int handle);
+		virtual HRESULT STDMETHODCALLTYPE OnPing(HRESULT hr, int time, unsigned long ip, int handle);
         
-		STDMETHOD(OnLadderList)(HRESULT hr, WOL::Ladder* list, int count, long time, int keyRung);
+		virtual HRESULT STDMETHODCALLTYPE OnLadderList(HRESULT hr, WOL::Ladder* list, int count, long time, int keyRung);
        
-		STDMETHOD(OnGameresSent)(HRESULT hr);
+		virtual HRESULT STDMETHODCALLTYPE OnGameresSent(HRESULT hr);
       
-		STDMETHOD(OnNewNick)(HRESULT hr, LPCSTR message, LPCSTR nick, LPCSTR pass);
+		virtual HRESULT STDMETHODCALLTYPE OnNewNick(HRESULT hr, LPCSTR message, LPCSTR nick, LPCSTR pass);
         
-		STDMETHOD(OnAgeCheck)(HRESULT hr, int years, int consent);
+		virtual HRESULT STDMETHODCALLTYPE OnAgeCheck(HRESULT hr, int years, int consent);
    
-		STDMETHOD(OnWDTState)(HRESULT hr, unsigned char* state, int length);
+		virtual HRESULT STDMETHODCALLTYPE OnWDTState(HRESULT hr, unsigned char* state, int length);
 
-		STDMETHOD(OnHighscore)(HRESULT hr, WOL::Highscore* list, int count, long time, int keyRung);
+		virtual HRESULT STDMETHODCALLTYPE OnHighscore(HRESULT hr, WOL::Highscore* list, int count, long time, int keyRung);
 
 	protected:
 		virtual ~NetUtilObserver();

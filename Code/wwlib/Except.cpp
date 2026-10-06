@@ -71,7 +71,7 @@
 #ifdef WWDEBUG
 #define DebugString 	WWDebug_Printf
 #else
-void DebugString(char const *, ...){};
+static void DebugString(char const *, ...){};
 #endif //WWDEBUG
 
 /*

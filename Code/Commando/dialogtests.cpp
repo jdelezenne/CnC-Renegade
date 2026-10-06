@@ -84,7 +84,7 @@
 #include "dlgmultiplayoptions.h"
 #include "WWAudio.h"
 #include "dlgmplanhostoptions.h"
-#include "shellapi.h"
+#include <SDL3/SDL_misc.h>
 #include "gamespyadmin.h"
 #include "dlgmpwolmain.h"
 #include "specialbuilds.h"
@@ -283,12 +283,12 @@ SplashOutroMenuDialogClass::On_Command (int ctrl_id, int mesage_id, DWORD param)
 	switch (ctrl_id)
 	{
 		case IDC_BUY_RENEGADE:
-			::ShellExecute (NULL, "open", "http://www.ea.com/storeEntry.jsp?sDestinationURL=DETAIL&sSku=14180W&sEntryPoint=EXPSITE", NULL, NULL, SW_SHOW);
+			SDL_OpenURL("http://www.ea.com/storeEntry.jsp?sDestinationURL=DETAIL&sSku=14180W&sEntryPoint=EXPSITE");
 			Stop_Main_Loop (EXIT_SUCCESS);
 			break;
 
 		case IDC_VISIT_WEB_BUTTON:
-			::ShellExecute (NULL, "open", "http://www.westwood.com/games/ccuniverse/renegade", NULL, NULL, SW_SHOW);
+			SDL_OpenURL("http://www.westwood.com/games/ccuniverse/renegade");
 			Stop_Main_Loop (EXIT_SUCCESS);
 			break;
 

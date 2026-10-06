@@ -34,6 +34,7 @@
  * Functions:                                                                                  *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
+#include "Platform/Application.h"
 #include "always.h"
 #include "autostart.h"
 //#include "dlgmplangametype.h"
@@ -43,7 +44,6 @@
 #include "gamedata.h"
 #include "gameinitmgr.h"
 #include "campaign.h"
-#include "win.h"
 #include "except.h"
 #include "listctrl.h"
 #include "dlgwolautostart.h"
@@ -676,7 +676,7 @@ void AutoRestartClass::Think(void)
 			** Give up and restart if we fail enough times when trying to create a channel.
 			*/
 			if (NumChannelCreateTries > 10) {
-				Set_Exit_On_Exception(true);
+				Platform::SetExitOnException(true);
          	cGameData::Set_Manual_Exit(true);
 			}
 			if (TIMEGETTIME() - LastChannelCreateTime > 5*1000) {
@@ -891,9 +891,9 @@ void AutoRestartClass::Set_Restart_Flag(bool enable)
 
 		if (enable) {
 			settings.Set_Int(SETTING_AUTO_RESTART_TYPE, GameMode);
-			Set_Exit_On_Exception(true);
+			Platform::SetExitOnException(true);
 		} else {
-			Set_Exit_On_Exception(false);
+			Platform::SetExitOnException(false);
 		}
 
 

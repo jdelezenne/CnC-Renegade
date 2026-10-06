@@ -139,8 +139,8 @@ bool MPWolMainMenuClass::CheckWOLVersion(void)
 	}
 
 	// WOLAPI version 1.19.3 or better required.
-	const LONG minVersion = MAKELONG(19,1);
-	const LONG minBuild = MAKELONG(0,3);
+	const LONG minVersion = ((1u << 16) | 19u);
+	const LONG minBuild = (3u << 16);
 
 	unsigned long wolVersion = 0;
 	unsigned long wolBuild = 0;
@@ -154,7 +154,7 @@ bool MPWolMainMenuClass::CheckWOLVersion(void)
 	}
 
 	WideStringClass string(0, true);
-	string.Format(L"WOLAPI V%u.%u", HIWORD(wolVersion), LOWORD(wolVersion));
+	string.Format(L"WOLAPI V%u.%u", ((uint32(wolVersion) >> 16) & 0xffffu), (uint32(wolVersion) & 0xffffu));
 	wolText += string;
 
 	char buildString[32] = {0};
@@ -163,7 +163,7 @@ bool MPWolMainMenuClass::CheckWOLVersion(void)
 
 	if (SUCCEEDED(hr)) {
 		wolBuild = atol(buildString);
-		string.Format(L".%u", HIWORD(wolBuild));
+		string.Format(L".%u", ((uint32(wolBuild) >> 16) & 0xffffu));
 		wolText += string;
 	}
 

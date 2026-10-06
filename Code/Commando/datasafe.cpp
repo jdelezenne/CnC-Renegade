@@ -79,9 +79,9 @@
 **
 ** I need to make this stuff static so that I can templatize the derived class and have all expansions use the same data.
 */
-unsigned long GenericDataSafeClass::SimpleKey;
-unsigned long GenericDataSafeClass::HandleKey;
-unsigned long GenericDataSafeClass::Checksum;
+std::uint32_t GenericDataSafeClass::SimpleKey;
+std::uint32_t GenericDataSafeClass::HandleKey;
+std::uint32_t GenericDataSafeClass::Checksum;
 unsigned long GenericDataSafeClass::ShuffleDelay;
 unsigned long GenericDataSafeClass::SecurityCheckDelay;
 DataSafeHandleClass GenericDataSafeClass::SentinelOne = 0;
@@ -494,26 +494,7 @@ DataSafeEntryClass *GenericDataSafeClass::Get_Entry_By_Index(int list, int index
  * HISTORY:                                                                                    *
  *   6/19/2001 9:29PM ST : Created                                                             *
  *=============================================================================================*/
-void GenericDataSafeClass::Mem_Copy_Encrypt(void *dest, void *src, int size, bool do_checksum)
-{
-	ds_assert((size % 4) == 0);
-	unsigned long temp;
-	unsigned long *s = (unsigned long *) src;
-	unsigned long *d = (unsigned long *) dest;
 
-	if (do_checksum) {
-		for (int i = 0 ; i < (size / 4) ; i++) {
-			temp = *s++;
-			temp = temp ^ SimpleKey;
-			Checksum = Checksum ^ temp;
-			*d++ = temp;
-		}
-	} else {
-		for (int i = 0 ; i < (size / 4) ; i++) {
-			*d++ = *s++ ^ SimpleKey;
-		}
-	}
-}
 
 
 
@@ -535,26 +516,7 @@ void GenericDataSafeClass::Mem_Copy_Encrypt(void *dest, void *src, int size, boo
  * HISTORY:                                                                                    *
  *   6/19/2001 9:29PM ST : Created                                                             *
  *=============================================================================================*/
-void GenericDataSafeClass::Mem_Copy_Decrypt(void *dest, void *src, int size, bool do_checksum)
-{
-	ds_assert((size % 4) == 0);
-	unsigned long temp;
-	unsigned long *s = (unsigned long *) src;
-	unsigned long *d = (unsigned long *) dest;
 
-	if (do_checksum) {
-		for (int i = 0 ; i < (size / 4) ; i++) {
-			temp = *s++;
-			Checksum = Checksum ^ temp;
-			temp = temp ^ SimpleKey;
-			*d++ = temp;
-		}
-	} else {
-		for (int i = 0 ; i < (size / 4) ; i++) {
-			*d++ = *s++ ^ SimpleKey;
-		}
-	}
-}
 
 
 /***********************************************************************************************
@@ -574,22 +536,7 @@ void GenericDataSafeClass::Mem_Copy_Decrypt(void *dest, void *src, int size, boo
  * HISTORY:                                                                                    *
  *   6/19/2001 9:29PM ST : Created                                                             *
  *=============================================================================================*/
-void GenericDataSafeClass::Encrypt(void *data, int size, unsigned long key, bool do_checksum)
-{
-	ds_assert((size % 4) == 0);
-	unsigned long *data_ptr = (unsigned long*)data;
 
-	if (do_checksum) {
-		for (int i = 0 ; i < (size / 4) ; i++) {
-			*data_ptr ^= key;
-			Checksum ^= *data_ptr++;
-		}
-	} else {
-		for (int i = 0 ; i < (size / 4) ; i++) {
-			*data_ptr ^= key;
-		}
-	}
-}
 
 
 /***********************************************************************************************
@@ -609,22 +556,7 @@ void GenericDataSafeClass::Encrypt(void *data, int size, unsigned long key, bool
  * HISTORY:                                                                                    *
  *   6/19/2001 9:29PM ST : Created                                                             *
  *=============================================================================================*/
-void GenericDataSafeClass::Decrypt(void *data, int size, unsigned long key, bool do_checksum)
-{
-	ds_assert((size % 4) == 0);
-	unsigned long *data_ptr = (unsigned long*)data;
 
-	if (do_checksum) {
-		for (int i = 0 ; i < (size / 4) ; i++) {
-			Checksum ^= *data_ptr;
-			*data_ptr++ ^= key;
-		}
-	} else {
-		for (int i = 0 ; i < (size / 4) ; i++) {
-			*data_ptr++ ^= key;
-		}
-	}
-}
 
 
 
@@ -982,8 +914,8 @@ void GenericDataSafeClass::Shuffle(bool forced)
 	/*
 	** Locals.
 	*/
-	unsigned long new_key;
-	unsigned long mod_key;
+	std::uint32_t new_key;
+	std::uint32_t mod_key;
 	int i,j;
 
 	/*

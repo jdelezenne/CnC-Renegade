@@ -108,6 +108,13 @@ void BufferedFileClass::Close(void)
  *=============================================================================================*/
 int BufferedFileClass::Read(void * buffer, int size)
 {
+	if (!buffer || size <= 0) return 0;
+	const bool close_after_read = !Is_Open();
+	if (close_after_read && !Open(READ)) return 0;
+	struct CloseOnExit {
+		BufferedFileClass* File;
+		~CloseOnExit() { if (File) File->Close(); }
+	} close_on_exit{close_after_read ? this : nullptr};
 	int read = 0;
 
 	// If there is anything in the buffer, copy it in.

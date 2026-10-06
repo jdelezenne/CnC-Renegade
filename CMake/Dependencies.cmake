@@ -12,7 +12,8 @@ function(ren_find_dependencies)
     ren_sdk_root(REGEX "${PROJECT_SOURCE_DIR}/Vendors/Regex-0.12")
     ren_sdk_root(GAMESPY "${PROJECT_SOURCE_DIR}/Code/GameSpy")
 
-    find_path(REN_DIRECTX_INCLUDE_DIR d3dx8.h PATHS "${REN_DIRECTX_ROOT}/include" NO_DEFAULT_PATH)
+    find_path(REN_DIRECTX_INCLUDE_DIR d3dx8.h PATHS "${REN_DIRECTX_ROOT}"
+        PATH_SUFFIXES include Include INCLUDE NO_DEFAULT_PATH)
     find_file(REN_REGEX_SOURCE NAMES gnu_regex.c regex.c PATHS "${REN_REGEX_ROOT}" NO_DEFAULT_PATH)
     find_path(REN_REGEX_INCLUDE_DIR NAMES gnu_regex.h regex.h PATHS "${REN_REGEX_ROOT}" NO_DEFAULT_PATH)
     find_path(REN_GAMESPY_HEADER_DIR gqueryreporting.h PATHS "${REN_GAMESPY_ROOT}" NO_DEFAULT_PATH)

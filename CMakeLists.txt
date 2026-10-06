@@ -4,6 +4,8 @@ project(Renegade LANGUAGES C CXX)
 if(WIN32)
     enable_language(RC)
 endif()
+option(REN_ENABLE_WWDEBUG "Enable Westwood debugging in Debug builds" ON)
+
 option(REN_ENABLE_GAMESPY "Enable the original GameSpy SDK integration" ON)
 include(CMake/Dependencies.cmake)
 ren_find_dependencies()

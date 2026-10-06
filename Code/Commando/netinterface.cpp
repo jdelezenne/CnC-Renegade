@@ -32,8 +32,7 @@
 
 #include "miscutil.h"
 #include "wwdebug.h"
-#include "win.h"
-#include "mmsys.h"
+#include "Platform/SystemInfo.h"
 #include "gamespyadmin.h"
 #include "useroptions.h"
 
@@ -99,17 +98,12 @@ void cNetInterface::Set_Nickname(WideStringClass & name)
 //-----------------------------------------------------------------------------
 void cNetInterface::Set_Random_Nickname(void)
 {      
-	char name[MAX_COMPUTERNAME_LENGTH + 1];
-	DWORD size = sizeof(name);
-	::GetComputerName(name, &size);
-
-	int length_test = MAX_COMPUTERNAME_LENGTH + 1 - MAX_NICKNAME_LENGTH;
-	if (length_test > 0) {
-		name[MAX_NICKNAME_LENGTH - 1] = 0;
-	}
+	auto name = Platform::ComputerName();
+	if (name.empty()) name = "Player";
+	if (name.size() >= MAX_NICKNAME_LENGTH) name.resize(MAX_NICKNAME_LENGTH - 1);
 
 	WideStringClass widename;
-	widename.Convert_From(name);
+	widename.Convert_From(name.c_str());
 
    Set_Nickname(widename);
 }

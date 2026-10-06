@@ -76,7 +76,7 @@ const LoginInfoList& LoginInfo::GetList(void)
 			// Four logins allowed per user
 			_mLoginList.reserve(4);
 
-			const CComPtr<WOL::IChat>& chat = session->GetChatObject();
+			const Platform::OnlinePointer<WOL::IChat>& chat = session->GetChatObject();
 
 			for (int index = 1; index <= MAX_NICKNAMES; ++index)
 				{
@@ -337,7 +337,7 @@ void LoginInfo::SetLocale(WOL::Locale locale)
 
 		if (session.IsValid() && session->IsStoreLoginAllowed())
 			{
-			const CComPtr<WOL::IChat>& chat = session->GetChatObject();
+			const Platform::OnlinePointer<WOL::IChat>& chat = session->GetChatObject();
 			WWASSERT(chat);
 			chat->SetNickLocale(index, locale);
 			}
@@ -373,7 +373,7 @@ WOL::Locale LoginInfo::GetLocale(void)
 
 			if (session.IsValid())
 				{
-				const CComPtr<WOL::IChat>& chat = session->GetChatObject();
+				const Platform::OnlinePointer<WOL::IChat>& chat = session->GetChatObject();
 				WWASSERT(chat);
 				chat->GetNickLocale(index, &mLocale);
 				}
@@ -476,7 +476,7 @@ void LoginInfo::Forget(bool purge)
 
 			if (index != 0)
 				{
-				const CComPtr<WOL::IChat>& chat = session->GetChatObject();
+				const Platform::OnlinePointer<WOL::IChat>& chat = session->GetChatObject();
 				chat->SetNick(index, "", "", false);
 				chat->SetNickLocale(index, WOL::LOC_UNKNOWN);
 				}
@@ -521,7 +521,7 @@ int LoginInfo::IndexOf(const wchar_t* nick)
 		char username[64];
 		wcstombs(username, nick, sizeof(username));
 
-		const CComPtr<WOL::IChat>& chat = session->GetChatObject();
+		const Platform::OnlinePointer<WOL::IChat>& chat = session->GetChatObject();
 
 		for (int index  = 1; index <= MAX_NICKNAMES; ++index)
 			{
@@ -589,7 +589,7 @@ void LoginInfo::StoreLogin(const char* nickname, const char* password,
 
 	if (session.IsValid() && session->IsStoreLoginAllowed())
 		{
-		const CComPtr<WOL::IChat>& chat = session->GetChatObject();
+		const Platform::OnlinePointer<WOL::IChat>& chat = session->GetChatObject();
 
 		// Find the next empty slot
 		int index;

@@ -66,6 +66,62 @@
 #include "chunkio.h"
 #include <string.h>
 #include <assert.h>
+#include "widestring.h"
+#include <limits>
+#include <vector>
+
+uint32 ChunkSaveClass::Write_Wide_String(const WideStringClass& string)
+{
+    std::vector<uint8> bytes;
+    const auto append = [&bytes](uint32 unit) {
+        bytes.push_back(static_cast<uint8>(unit));
+        bytes.push_back(static_cast<uint8>(unit >> 8));
+    };
+    const wchar_t* text = string;
+    for (; *text; ++text) {
+        uint32 codepoint = static_cast<uint32>(*text);
+        if (codepoint > 0x10ffff) return 0;
+        if (codepoint > 0xffff) {
+            codepoint -= 0x10000;
+            append(0xd800 + (codepoint >> 10));
+            append(0xdc00 + (codepoint & 0x3ff));
+        } else {
+            append(codepoint);
+        }
+    }
+    append(0);
+    if (bytes.size() > std::numeric_limits<uint32>::max()) return 0;
+    return Write(bytes.data(), static_cast<uint32>(bytes.size()));
+}
+
+uint32 ChunkLoadClass::Read_Wide_String(WideStringClass& string, uint32 nbytes)
+{
+    string = L"";
+    std::vector<uint8> bytes(nbytes);
+    const uint32 read = Read(bytes.data(), nbytes);
+    if (read != nbytes || (nbytes & 1)) return 0;
+    const auto unit = [&bytes](std::size_t offset) -> uint32 {
+        return bytes[offset] | (static_cast<uint32>(bytes[offset + 1]) << 8);
+    };
+    std::wstring text;
+    text.reserve(nbytes / 2);
+    for (std::size_t offset = 0; offset < bytes.size(); offset += 2) {
+        uint32 codepoint = unit(offset);
+        if (!codepoint) break;
+        if constexpr (sizeof(wchar_t) > 2) {
+            if (codepoint >= 0xd800 && codepoint <= 0xdbff && offset + 3 < bytes.size()) {
+                const uint32 low = unit(offset + 2);
+                if (low >= 0xdc00 && low <= 0xdfff) {
+                    codepoint = 0x10000 + ((codepoint - 0xd800) << 10) + low - 0xdc00;
+                    offset += 2;
+                }
+            }
+        }
+        text.push_back(static_cast<wchar_t>(codepoint));
+    }
+    string = text.c_str();
+    return read;
+}
 
 
 /*********************************************************************************************** 

@@ -144,11 +144,11 @@ class Session :
 		virtual bool Process(void);
 
 		// Retrieve pointer to IChat object
-		const CComPtr<WOL::IChat>& GetChatObject(void) const
+		const Platform::OnlinePointer<WOL::IChat>& GetChatObject(void) const
 			{return mChat;}
 
 		// Retrieve pointer to INetUtil object
-		const CComPtr<WOL::INetUtil>& GetNetUtilObject(void) const
+		const Platform::OnlinePointer<WOL::INetUtil>& GetNetUtilObject(void) const
 			{return mNetUtil;}
 
 		// Obtain current patch download list
@@ -450,7 +450,7 @@ class Session :
 
 		RefPtr<UserData> GetUserOrBuddy(const wchar_t*);
 
-		const CComPtr<WOL::IIGROptions>& GetIGRObject(void);
+		const Platform::OnlinePointer<WOL::IIGROptions>& GetIGRObject(void);
 		
 	private:
 		void ClearServers(void);
@@ -462,15 +462,15 @@ class Session :
 		void MakeLadderRequests(void);
 		void MakePingRequests(void);
 
-		CComPtr<WOL::IChat> mChat;
-		CComPtr<WOL::IChatEvent> mChatEvents;
+		Platform::OnlinePointer<WOL::IChat> mChat;
+		Platform::OnlinePointer<WOL::IChatEvent> mChatEvents;
 		unsigned long mChatCookie;
 
-		CComPtr<WOL::INetUtil> mNetUtil;
-		CComPtr<WOL::INetUtilEvent> mNetUtilEvents;
+		Platform::OnlinePointer<WOL::INetUtil> mNetUtil;
+		Platform::OnlinePointer<WOL::INetUtilEvent> mNetUtilEvents;
 		unsigned long mNetUtilCookie;
 
-		CComPtr<WOL::IIGROptions> mIGRObject;
+		Platform::OnlinePointer<WOL::IIGROptions> mIGRObject;
 
 		// Server data
 		bool mRequestingServerList;
@@ -551,17 +551,17 @@ class ChatAdvisement :
 		public RefCounted
 	{
 	public:
-		static RefPtr<ChatAdvisement> Create(const CComPtr<WOL::IChat>&, const CComPtr<WOL::IChatEvent>&);
+		static RefPtr<ChatAdvisement> Create(const Platform::OnlinePointer<WOL::IChat>&, const Platform::OnlinePointer<WOL::IChatEvent>&);
 
 	private:
-		ChatAdvisement(const CComPtr<WOL::IChat>&, const CComPtr<WOL::IChatEvent>&);
+		ChatAdvisement(const Platform::OnlinePointer<WOL::IChat>&, const Platform::OnlinePointer<WOL::IChatEvent>&);
 		virtual ~ChatAdvisement();
 
 		// Prevent copy and assignment
 		ChatAdvisement(const ChatAdvisement&);
 		const ChatAdvisement& operator=(const ChatAdvisement&);
 
-		CComPtr<WOL::IChat> mChat;
+		Platform::OnlinePointer<WOL::IChat> mChat;
 		unsigned long mChatCookie;
 	};
 

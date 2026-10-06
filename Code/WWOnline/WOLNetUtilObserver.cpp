@@ -122,9 +122,9 @@ void NetUtilObserver::Init(Session& outer)
 *
 ****************************************************************************/
 
-STDMETHODIMP NetUtilObserver::QueryInterface(const IID& iid, void** ppv)
+HRESULT STDMETHODCALLTYPE NetUtilObserver::QueryInterface(const IID& iid, void** ppv)
 	{
-	if ((iid == IID_IUnknown) || (iid == WOL::IID_INetUtilEvent))
+	if ((iid == Platform::IID_OnlineInterface) || (iid == WOL::IID_INetUtilEvent))
 		{
 		*ppv = static_cast<WOL::INetUtilEvent*>(this);
 		}
@@ -134,7 +134,7 @@ STDMETHODIMP NetUtilObserver::QueryInterface(const IID& iid, void** ppv)
 		return E_NOINTERFACE;
 		}
 
-	static_cast<IUnknown*>(*ppv)->AddRef();
+	static_cast<Platform::OnlineInterface*>(*ppv)->AddRef();
 	return S_OK;
 	}
 
@@ -205,7 +205,7 @@ ULONG STDMETHODCALLTYPE NetUtilObserver::Release(void)
 *
 ******************************************************************************/
 
-STDMETHODIMP NetUtilObserver::OnPing(HRESULT result, int time, unsigned long ip, int handle)
+HRESULT STDMETHODCALLTYPE NetUtilObserver::OnPing(HRESULT result, int time, unsigned long ip, int handle)
 	{
 	if (mOuter == NULL)
 		{
@@ -279,7 +279,7 @@ STDMETHODIMP NetUtilObserver::OnPing(HRESULT result, int time, unsigned long ip,
 *
 ******************************************************************************/
 
-STDMETHODIMP NetUtilObserver::OnLadderList(HRESULT result, WOL::Ladder* list,
+HRESULT STDMETHODCALLTYPE NetUtilObserver::OnLadderList(HRESULT result, WOL::Ladder* list,
 			int rungCount, long timeStamp, int keyRung)
 	{
 	if (mOuter == NULL)
@@ -520,7 +520,7 @@ void NetUtilObserver::NotifyClanLadderUpdate(const UserList& users, const RefPtr
 *
 ******************************************************************************/
 
-STDMETHODIMP NetUtilObserver::OnGameresSent(HRESULT)
+HRESULT STDMETHODCALLTYPE NetUtilObserver::OnGameresSent(HRESULT)
 	{
 	WWDEBUG_SAY(("WOLWARNING: OnGameresSent() not implemented\n"));
 	return S_OK;
@@ -540,7 +540,7 @@ STDMETHODIMP NetUtilObserver::OnGameresSent(HRESULT)
 *
 ******************************************************************************/
 
-STDMETHODIMP NetUtilObserver::OnNewNick(HRESULT result, LPCSTR message, LPCSTR nickname, LPCSTR password)
+HRESULT STDMETHODCALLTYPE NetUtilObserver::OnNewNick(HRESULT result, LPCSTR message, LPCSTR nickname, LPCSTR password)
 	{
 	if (mOuter == NULL)
 		{
@@ -582,7 +582,7 @@ STDMETHODIMP NetUtilObserver::OnNewNick(HRESULT result, LPCSTR message, LPCSTR n
 *
 ******************************************************************************/
 
-STDMETHODIMP NetUtilObserver::OnAgeCheck(HRESULT result, int years, int consent)
+HRESULT STDMETHODCALLTYPE NetUtilObserver::OnAgeCheck(HRESULT result, int years, int consent)
 	{
 	if (mOuter == NULL)
 		{
@@ -617,7 +617,7 @@ STDMETHODIMP NetUtilObserver::OnAgeCheck(HRESULT result, int years, int consent)
 *
 ******************************************************************************/
 
-STDMETHODIMP NetUtilObserver::OnWDTState(HRESULT result, unsigned char* , int )
+HRESULT STDMETHODCALLTYPE NetUtilObserver::OnWDTState(HRESULT result, unsigned char* , int )
 	{
 	WWDEBUG_SAY(("WOLWARNING: OnWDTState not implemented\n"));
 	return S_OK;
@@ -637,7 +637,7 @@ STDMETHODIMP NetUtilObserver::OnWDTState(HRESULT result, unsigned char* , int )
 *
 ******************************************************************************/
 
-STDMETHODIMP NetUtilObserver::OnHighscore(HRESULT result, WOL::Highscore* list,
+HRESULT STDMETHODCALLTYPE NetUtilObserver::OnHighscore(HRESULT result, WOL::Highscore* list,
 		int count, long time, int keyRung)
 	{
 	WWDEBUG_SAY(("WOLWARNING: OnHighscore not implemented\n"));

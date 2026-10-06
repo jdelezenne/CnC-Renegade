@@ -36,6 +36,7 @@
 
 
 #include "dlgmainmenu.h"
+#include "Platform/Directory.h"
 #include "assetmgr.h"
 #include "rendobj.h"
 #include "hanim.h"
@@ -301,44 +302,14 @@ StringClass
 MainMenuDialogClass::Choose_Skirmish_Map (void)
 {
 	DynamicVectorClass<StringClass>	map_list;
-	WIN32_FIND_DATA find_info	= { 0 };
-	BOOL keep_going				= TRUE;
-	HANDLE file_find				= NULL;
-	StringClass file_filter;
-
-	//
-	// Look for any skirmish maps.
-	//
-	file_filter.Format("data\\skirmish*.mix");
-	keep_going = TRUE;
-	for (file_find = ::FindFirstFile (file_filter, &find_info);
-		 (file_find != INVALID_HANDLE_VALUE) && keep_going;
-		  keep_going = ::FindNextFile (file_find, &find_info))
-	{
-		map_list.Add (find_info.cFileName);
-	}
-
-	if (file_find != INVALID_HANDLE_VALUE) {
-		::FindClose (file_find);
-	}
-
-	if (map_list.Count() == 0) {
-		//
-		// No skirmish maps found. Look for a C&C map.
-		//
-		file_filter.Format("data\\c&c_*.mix");
-		keep_going = TRUE;
-		for (file_find = ::FindFirstFile (file_filter, &find_info);
-			 (file_find != INVALID_HANDLE_VALUE) && keep_going;
-			  keep_going = ::FindNextFile (file_find, &find_info))
-		{
-			map_list.Add (find_info.cFileName);
-		}
-
-		if (file_find != INVALID_HANDLE_VALUE) {
-			::FindClose (file_find);
-		}
-	}
+	for (const auto& entry : Platform::ListFiles("data/skirmish*.mix")) {
+        map_list.Add(entry.Name.c_str());
+    }
+    if (map_list.Count() == 0) {
+        for (const auto& entry : Platform::ListFiles("data/c&c_*.mix")) {
+            map_list.Add(entry.Name.c_str());
+        }
+    }
 
 	StringClass mapname;
 	if (map_list.Count() > 0) {
@@ -482,8 +453,8 @@ MainMenuDialogClass::Update_Version_Number (void)
 	//
 	// Version 1.0 by default
 	//
-	DWORD version_major = 1;
-	DWORD version_minor = 0;
+	unsigned long version_major = 1;
+	unsigned long version_minor = 0;
 	Get_Version_Number(&version_major, &version_minor);
 
 	//

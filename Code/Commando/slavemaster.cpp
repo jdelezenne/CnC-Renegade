@@ -36,7 +36,10 @@
 
 
 #include "always.h"
-#include <windows.h>
+#include "Platform/Platform.h"
+#include "Platform/SystemInfo.h"
+#include "Platform/Process.h"
+#include <SDL3/SDL_error.h>
 #include "slavemaster.h"
 #include "wwdebug.h"
 #include "Settings.h"
@@ -47,7 +50,7 @@
 #include "inisup.h"
 #include "natter.h"
 #include "gamesideservercontrol.h"
-#include "win.h"
+
 #include "gamedata.h"
 #include "serversettings.h"
 #include "bandwidth.h"
@@ -94,6 +97,7 @@ extern char DefaultSettingsModifier[1024];
 SlaveServerClass::SlaveServerClass(void)
 {
 	Enable = false;
+	IsRunning = false;
 	NickName[0] = 0;
 	Serial[0] = 0;
 	Port = 0;
@@ -158,7 +162,7 @@ void SlaveServerClass::Set(bool enable, const char *nick, const char *serial, un
 	}
 
 	if (settings_file) {
-		strncpy(SettingsFileName, settings_file, sizeof(SettingsFileName));
+		SettingsFileName = settings_file;
 	}
 
 }
@@ -182,7 +186,7 @@ void SlaveServerClass::Set(bool enable, const char *nick, const char *serial, un
  * HISTORY:                                                                                    *
  *   11/21/2001 3:49PM ST : Created                                                            *
  *=============================================================================================*/
-void SlaveServerClass::Get(bool &enable, char *nick, char *serial, unsigned short &port, char *settings_file, int &bandwidth, char *password)
+void SlaveServerClass::Get(bool &enable, char *nick, char *serial, unsigned short &port, StringClass& settings_file, int &bandwidth, char *password)
 {
 	enable = Enable;
 	port = Port;
@@ -200,9 +204,7 @@ void SlaveServerClass::Get(bool &enable, char *nick, char *serial, unsigned shor
 		strcpy(password, Password);
 	}
 
-	if (settings_file) {
-		strcpy(settings_file, SettingsFileName);
-	}
+	settings_file = SettingsFileName;
 }
 
 
@@ -271,76 +273,34 @@ SlaveMasterClass::~SlaveMasterClass(void)
  *=============================================================================================*/
 void SlaveMasterClass::Wait_For_Slave_Shutdown(void)
 {
-	if (!SlaveMode) {
-
-		unsigned long time = TIMEGETTIME();
+	if (SlaveMode) return;
+	const auto start = Platform::Ticks();
+	int last_num_running = 0;
+	bool forced = false;
+	while (Platform::Ticks() - start < 40000) {
 		int num_running = 0;
-		int last_num_running = 0;
-		bool forced = false;
-
-		/*
-		** Don't wait longer than 35 secs. It takes 15 secs for the slave to do it's intermission.
-		*/
-		while (TIMEGETTIME() - time < 40000) {
-
-			num_running = 0;
-
-			for (int i=0 ; i<NumSlaveServers ; i++) {
-				if (SlaveServers[i].IsRunning) {
-					if (SlaveServers[i].ProcessInfo.hProcess) {
-						unsigned long code;
-						int res = GetExitCodeProcess(SlaveServers[i].ProcessInfo.hProcess, &code);
-
-						if (res && code == STILL_ACTIVE) {
-							num_running++;
-						}
-					} else {
-						if (SlaveServers[i].ProcessInfo.dwProcessId) {
-							unsigned long ver = GetProcessVersion(SlaveServers[i].ProcessInfo.dwProcessId);
-							if (ver && ver == GetProcessVersion(GetCurrentProcessId())) {
-								num_running++;
-							}
-						}
-					}
-				}
-			}
-			if (num_running && num_running != last_num_running) {
-				ConsoleBox.Print("Waiting for %d slave(s) to shut down\n", num_running);
-				WWDEBUG_SAY(("Waiting for %d slave(s) to shut down\n", num_running));
-				last_num_running = num_running;
-			}
-			if (num_running == 0) {
-				break;
-			}
-
-			/*
-			** Force a shutdown if they are not cooperating.
-			*/
-			if (!forced && TIMEGETTIME() - time > 27000) {
-				forced = true;
-				for (int i=0 ; i<NumSlaveServers ; i++) {
-					if (SlaveServers[i].ProcessInfo.dwProcessId) {
-						unsigned long ver = GetProcessVersion(SlaveServers[i].ProcessInfo.dwProcessId);
-						if (ver && ver == GetProcessVersion(GetCurrentProcessId())) {
-
-							WWDEBUG_SAY(("Terminating process %d due to timeout\n", SlaveServers[i].ProcessInfo.dwProcessId));
-
-							/*
-							** Get a handle to the process.
-							*/
-							HANDLE proc_handle = OpenProcess(PROCESS_TERMINATE, false, SlaveServers[i].ProcessInfo.dwProcessId);
-							if (proc_handle != INVALID_HANDLE_VALUE) {
-								TerminateProcess(proc_handle, 0);
-								CloseHandle(proc_handle);
-							} else {
-								WWDEBUG_SAY(("Failed to get process handle for termination - error code %d\n", GetLastError()));
-							}
-							num_running++;
-						}
-					}
+		for (int i = 0; i < NumSlaveServers; ++i) {
+			auto& slave = SlaveServers[i];
+			if (slave.IsRunning && slave.Process && slave.Process->Running()) ++num_running;
+			else { slave.IsRunning = false; slave.Process.reset(); }
+		}
+		if (!num_running) break;
+		if (num_running != last_num_running) {
+			ConsoleBox.Print("Waiting for %d slave(s) to shut down\n", num_running);
+			WWDEBUG_SAY(("Waiting for %d slave(s) to shut down\n", num_running));
+			last_num_running = num_running;
+		}
+		if (!forced && Platform::Ticks() - start > 27000) {
+			forced = true;
+			for (int i = 0; i < NumSlaveServers; ++i) {
+				auto& process = SlaveServers[i].Process;
+				if (process && process->Running()) {
+					WWDEBUG_SAY(("Terminating process %u due to timeout\n", process->Id()));
+					if (!process->Terminate()) WWDEBUG_SAY(("Failed to terminate slave process %u\n", process->Id()));
 				}
 			}
 		}
+		Platform::Sleep(10);
 	}
 }
 
@@ -464,7 +424,7 @@ void SlaveMasterClass::Load(void)
 		SlaveServers[i].Bandwidth = reg.Get_Int(entry, false);
 
 		sprintf(entry, "%s%d", KEY_SLAVE_SETTINGS, i);
-		reg.Get_String(entry, SlaveServers[i].SettingsFileName, sizeof(SlaveServers[i].SettingsFileName), "");
+		reg.Get_String(entry, SlaveServers[i].SettingsFileName, "");
 
 		sprintf(entry, "%s%d", KEY_SLAVE_SERIAL, i);
 		reg.Get_String(entry, SlaveServers[i].Serial, sizeof(SlaveServers[i].Serial), "");
@@ -477,11 +437,11 @@ void SlaveMasterClass::Load(void)
 			strcpy(SlaveServers[i].Serial, decrypted_serial.Peek_Buffer());
 		}
 
-		char filename[MAX_PATH];
-		sprintf(filename, "data\\%s", SlaveServers[i].SettingsFileName);
+		StringClass filename;
+		filename.Format("data\\%s", SlaveServers[i].SettingsFileName.Peek_Buffer());
 		RawFileClass file(filename);
 		if (!file.Is_Available()) {
-			strcpy(SlaveServers[i].SettingsFileName, "svrcfg_cnc.ini");
+			SlaveServers[i].SettingsFileName = "svrcfg_cnc.ini";
 		}
 	}
 }
@@ -555,22 +515,12 @@ void SlaveMasterClass::Add_Slave(bool enable, const char *nick, const char *seri
 bool SlaveMasterClass::Aquire_Slave(int index)
 {
 	int proc_id = 0;
-
-	/*
-	** Try the slaves record of his process ID. If it's not there, it can't have run yet.
-	*/
 	char slave_name[64];
-	sprintf(slave_name, "/slave_%d", index);
-	strcpy(DefaultSettingsModifier, slave_name+1);
+	sprintf(slave_name, "slave_%d", index);
+	strcpy(DefaultSettingsModifier, slave_name);
 	SettingsClass slave_reg(APPLICATION_SETTINGS_SECTION);
 	DefaultSettingsModifier[0] = 0;
-	if (slave_reg.Is_Valid()) {
-		proc_id = slave_reg.Get_Int("ProcessId", proc_id);
-	}
-
-	/*
-	** Try our record of the slaves process ID.
-	*/
+	if (slave_reg.Is_Valid()) proc_id = slave_reg.Get_Int("ProcessId", 0);
 	if (proc_id == 0) {
 		SettingsClass reg(APPLICATION_SETTINGS_SECTION_NET_SLAVE);
 		if (reg.Is_Valid()) {
@@ -579,57 +529,24 @@ bool SlaveMasterClass::Aquire_Slave(int index)
 			proc_id = reg.Get_Int(entry, 0);
 		}
 	}
-
-	/*
-	** Search for the slave's console window if we are in console mode. This is a better test than just hoping the Process ID is
-	** correct.
-	*/
 	if (ConsoleBox.Is_Exclusive()) {
-		HWND slave_window = ConsoleBox.Get_Slave_Window_By_Title(SlaveServers[index].NickName, SlaveServers[index].SettingsFileName);
-		if (slave_window != NULL) {
-			/*
-			** Note the process ID for later.
-			*/
-			SlaveServers[index].ProcessInfo.hProcess = NULL;	// Don't know handle.
-			GetWindowThreadProcessId(slave_window, &SlaveServers[index].ProcessInfo.dwProcessId);
-			WWDEBUG_SAY(("Slave found by HWND with process ID %d\n", SlaveServers[index].ProcessInfo.dwProcessId));
-
-			SettingsClass reg(APPLICATION_SETTINGS_SECTION_NET_SLAVE);
-			if (reg.Is_Valid()) {
-				char entry[128];
-				sprintf(entry, "%s%d", KEY_SLAVE_RUNNING_ID, index);
-				reg.Set_Int(entry, SlaveServers[index].ProcessInfo.dwProcessId);
-			}
-			return(true);
-		}
+		const auto window = ConsoleBox.Get_Slave_Window_By_Title(SlaveServers[index].NickName, SlaveServers[index].SettingsFileName.Peek_Buffer());
+		const auto id = Platform::WindowProcessId(window);
+		if (id) proc_id = static_cast<int>(id);
 	}
-
-	/*
-	** See if the process is already running.
-	*/
-	if (proc_id) {
-
-		unsigned long ver = GetProcessVersion(proc_id);
-		if (ver && ver == GetProcessVersion(GetCurrentProcessId())) {
-
-			/*
-			** It looks like one of our slaves. See if we already know about it.
-			*/
-			if (SlaveServers[index].IsRunning && SlaveServers[index].ProcessInfo.dwProcessId == (unsigned) proc_id) {
-				return(true);
-			}
-
-			/*
-			** Note the process ID for later.
-			*/
-			SlaveServers[index].ProcessInfo.hProcess = NULL;	// Don't know handle.
-			SlaveServers[index].ProcessInfo.dwProcessId = proc_id;
-			WWDEBUG_SAY(("Slave found with process ID %d\n", SlaveServers[index].ProcessInfo.dwProcessId));
-			return(true);
-		}
+	auto& slave = SlaveServers[index];
+	if (proc_id > 0 && slave.Process && slave.Process->Id() == static_cast<unsigned>(proc_id) && slave.Process->Running()) return true;
+	auto process = Platform::AcquireGameProcess(static_cast<unsigned>(proc_id));
+	if (!process) return false;
+	slave.Process = std::move(process);
+	SettingsClass reg(APPLICATION_SETTINGS_SECTION_NET_SLAVE);
+	if (reg.Is_Valid()) {
+		char entry[128];
+		sprintf(entry, "%s%d", KEY_SLAVE_RUNNING_ID, index);
+		reg.Set_Int(entry, static_cast<int>(slave.Process->Id()));
 	}
-
-	return(false);
+	WWDEBUG_SAY(("Slave found with process ID %u\n", slave.Process->Id()));
+	return true;
 }
 
 
@@ -678,7 +595,6 @@ void SlaveMasterClass::Startup_Slaves(void)
 					/*
 					** Spawn the servers.
 					*/
-					char command_line[300];
 					for (int i=0 ; i<NumSlaveServers ; i++) {
 						if (SlaveServers[i].Enable) {
 
@@ -704,25 +620,8 @@ void SlaveMasterClass::Startup_Slaves(void)
 							/*
 							** Figure out the name of the .exe to run.
 							*/
-							char path_to_exe[256];
-							char drive[_MAX_DRIVE];
-							char dir[_MAX_DIR];
-							char path[_MAX_PATH];
-							GetModuleFileName(ProgramInstance, path_to_exe, sizeof(path_to_exe));
-							_splitpath(path_to_exe, drive, dir, NULL, NULL);
-#ifdef FREEDEDICATEDSERVER
-							_makepath(path, drive, dir, "renegadeserver", "exe");
-#else  //FREEDEDICATEDSERVER
-							_makepath(path, drive, dir, "renegade", "exe");
-#endif //FREEDEDICATEDSERVER
-
-							sprintf(command_line, "%s /MULTI /SLAVE /REGMOD=slave_%d", path, i);
-							if (ConsoleBox.Is_Exclusive()) {
-								strcat(command_line, " /NODX");
-							}
-							STARTUPINFO startup_info;
-							memset(&startup_info, 0, sizeof(startup_info));
-							startup_info.cb = sizeof(startup_info);
+							std::vector<std::string> arguments{Platform::ExecutablePath(), "/MULTI", "/SLAVE", "/REGMOD=slave_" + std::to_string(i)};
+							if (ConsoleBox.Is_Exclusive()) arguments.emplace_back("/NODX");
 
 							int result = 1;
 							if (!slave_running) {
@@ -730,15 +629,13 @@ void SlaveMasterClass::Startup_Slaves(void)
 								if (slave_reg.Is_Valid()) {
 									slave_reg.Set_Int("ProcessId", 0);
 								}
-								result = CreateProcess(path, command_line, NULL, NULL, false, 0, NULL, NULL, &startup_info, &SlaveServers[i].ProcessInfo);
+								SlaveServers[i].Process = Platform::StartProcess(arguments);
+								result = SlaveServers[i].Process != nullptr;
 							}
 							if (result) {
 								SlaveServers[i].IsRunning = true;
 
-								/*
-								** The process ID we have here is actually the ID of the slaves launcher. We need the ID of the actual
-								** game process. Wait a few seconds until the slave sets his ID into his settings location.
-								*/
+
 								if (!slave_running) {
 									unsigned long time = TIMEGETTIME();
 									while (TIMEGETTIME() - time < 10000) {
@@ -752,10 +649,9 @@ void SlaveMasterClass::Startup_Slaves(void)
 										*/
 										int process_id = slave_reg.Get_Int("ProcessId", 0);
 										if (process_id != 0) {
-											SlaveServers[i].ProcessInfo.dwProcessId = process_id;
 											break;
 										}
-										Sleep(250);
+										Platform::Sleep(250);
 									}
 								}
 
@@ -767,11 +663,11 @@ void SlaveMasterClass::Startup_Slaves(void)
 								if (reg.Is_Valid()) {
 									char entry[128];
 									sprintf(entry, "%s%d", KEY_SLAVE_RUNNING_ID, i);
-									reg.Set_Int(entry, SlaveServers[i].ProcessInfo.dwProcessId);
+									reg.Set_Int(entry, SlaveServers[i].Process->Id());
 								}
 
 							} else {
-								WWDEBUG_SAY(("Failed to start slave process - error code %d\n", GetLastError()));
+								WWDEBUG_SAY(("Failed to start slave process - error: %s\n", SDL_GetError()));
 								SlaveServers[i].IsRunning = false;
 							}
 						}
@@ -830,7 +726,7 @@ void SlaveMasterClass::Shutdown_Slaves(void)
 				** Send the password to the slave to authenticate the connection.
 				*/
 				GameSideServerControlClass::Send_Message(password, ntohl(INADDR_LOOPBACK), SlaveServers[i].ControlPort);
-				Sleep(10);
+				Platform::Sleep(10);
 				GameSideServerControlClass::Send_Message("quit", ntohl(INADDR_LOOPBACK), SlaveServers[i].ControlPort);
 
 				/*
@@ -895,7 +791,7 @@ bool SlaveMasterClass::Shutdown_Slave(char *slave_login)
 				** Send the password to the slave to authenticate the connection.
 				*/
 				GameSideServerControlClass::Send_Message(password, ntohl(INADDR_LOOPBACK), SlaveServers[i].ControlPort);
-				Sleep(10);
+				Platform::Sleep(10);
 				GameSideServerControlClass::Send_Message("quit", ntohl(INADDR_LOOPBACK), SlaveServers[i].ControlPort);
 
 				/*

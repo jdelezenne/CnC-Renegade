@@ -35,6 +35,7 @@
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 #include <filesystem>
+#include "Platform/Paths.h"
 #include "movie.h"
 #include "binkmovie.h"
 #include "campaign.h"
@@ -152,18 +153,14 @@ void	MovieGameModeClass::Start_Movie( const char * filename )
 	//	Play the movie (if it exists locally)
 	//
 	std::error_code file_error;
-	if ( std::filesystem::exists ( filename, file_error ) ) {
+	if ( std::filesystem::exists ( Platform::ReadPath(filename), file_error ) ) {
 		Play_Movie ( filename );
 	} else {
 
 		//
 		//	Strip any path information off the filename
 		//
-		StringClass filename_only( filename, true );
-		const char *delimiter = ::strrchr( filename, '\\' );
-		if ( delimiter != NULL ) {
-			filename_only = delimiter + 1;
-		}
+		StringClass filename_only(Platform::FileName(filename).c_str());
 
 		//
 		//	Try to find the CD...
@@ -174,11 +171,7 @@ void	MovieGameModeClass::Start_Movie( const char * filename )
 			//
 			//	Build a full-path to the movie on the CD
 			//
-			StringClass full_path = cd_path;
-			if ( cd_path[cd_path.Get_Length () - 1] != '\\' ) {
-				full_path += "\\";
-			}
-			full_path += filename_only;
+			StringClass full_path((std::filesystem::path(cd_path.Peek_Buffer()) / filename_only.Peek_Buffer()).string().c_str());
 			Play_Movie( full_path );
 
 		} else if ( force_cd ) {
@@ -218,11 +211,7 @@ void	MovieGameModeClass::HandleNotification (CDVerifyEvent &event)
 			//
 			//	Build a full-path to the movie on the CD
 			//
-			StringClass full_path = cd_path;
-			if ( cd_path[cd_path.Get_Length () - 1] != '\\' ) {
-				full_path += "\\";
-			}
-			full_path += PendingMovieFilename;
+			StringClass full_path((std::filesystem::path(cd_path.Peek_Buffer()) / PendingMovieFilename.Peek_Buffer()).string().c_str());
 			Play_Movie( full_path );
 		}		
 	} else if ( event.Event() == CDVerifyEvent::NOT_VERIFIED ) {			

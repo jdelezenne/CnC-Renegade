@@ -41,8 +41,6 @@ public:
 	enum					{MAX_NICS = 10};
 
 private:
-	static ULONG		Enumerate_Nics(ULONG * addresses, ULONG max_addresses);
-
 	static ULONG		NicList[MAX_NICS];
 	static ULONG		GSNicList[MAX_NICS];
 	static USHORT		NumNics;

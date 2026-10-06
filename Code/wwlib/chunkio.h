@@ -44,6 +44,8 @@
 #include <cstdint>
 #include <unordered_map>
 
+class WideStringClass;
+
 #ifndef ALWAYS_H
 #include "always.h"
 #endif
@@ -152,6 +154,7 @@ public:
 
 	// Write data into the file
 	uint32                Write(const void *buf, uint32 nbytes);
+    uint32 Write_Wide_String(const WideStringClass& string);
     uint32 Get_Pointer_ID(const void* pointer)
     {
         if (!pointer) return 0;
@@ -217,6 +220,7 @@ public:
 
 	// Read a block of bytes from the output stream.
 	uint32                Read(void *buf, uint32 nbytes);
+    uint32 Read_Wide_String(WideStringClass& string, uint32 nbytes);
     template<class T> uint32 Read(T** buffer, uint32 bytes)
     {
         if (bytes != sizeof(T*) && bytes != sizeof(uint32)) return Read(static_cast<void*>(buffer), bytes);
@@ -281,7 +285,7 @@ private:
 
 #define WRITE_WIDESTRING_CHUNK(csave,id,var) { \
 	csave.Begin_Chunk(id); \
-	csave.Write((const WCHAR *)var, (var.Get_Length () + 1) * 2); \
+	csave.Write_Wide_String(var); \
 	csave.End_Chunk(); }
 
 
@@ -304,7 +308,7 @@ private:
 	case (id):	cload.Read(var.Get_Buffer(cload.Cur_Chunk_Length()),cload.Cur_Chunk_Length()); break;	\
 
 #define READ_WIDESTRING_CHUNK(cload,id,var)		\
-	case (id):	cload.Read(var.Get_Buffer((cload.Cur_Chunk_Length()+1)/2),cload.Cur_Chunk_Length()); break;	\
+	case (id):	cload.Read_Wide_String(var,cload.Cur_Chunk_Length()); break;	\
 
 
 /*
@@ -341,7 +345,7 @@ private:
 
 #define WRITE_MICRO_CHUNK_WIDESTRING(csave,id,var) { \
 	csave.Begin_Micro_Chunk(id); \
-	csave.Write((const WCHAR *)var, (var.Get_Length () + 1) * 2); \
+	csave.Write_Wide_String(var); \
 	csave.End_Micro_Chunk(); }
 
 
@@ -380,7 +384,7 @@ private:
 	case (id):	cload.Read(var.Get_Buffer(cload.Cur_Micro_Chunk_Length()),cload.Cur_Micro_Chunk_Length()); break;	\
 
 #define READ_MICRO_CHUNK_WIDESTRING(cload,id,var)		\
-	case (id):	cload.Read(var.Get_Buffer((cload.Cur_Micro_Chunk_Length()+1)/2),cload.Cur_Micro_Chunk_Length()); break;	\
+	case (id):	cload.Read_Wide_String(var,cload.Cur_Micro_Chunk_Length()); break;	\
 
 /*
 ** These load macros make it easier to add extra code to a specifc case
@@ -392,7 +396,7 @@ private:
 	cload.Read(var.Get_Buffer(cload.Cur_Micro_Chunk_Length()),cload.Cur_Micro_Chunk_Length());	\
 
 #define LOAD_MICRO_CHUNK_WIDESTRING(cload,var)		\
-	cload.Read(var.Get_Buffer((cload.Cur_Micro_Chunk_Length()+1)/2),cload.Cur_Micro_Chunk_Length());	\
+	cload.Read_Wide_String(var,cload.Cur_Micro_Chunk_Length());	\
 
 
 /*

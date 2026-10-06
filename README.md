@@ -18,6 +18,14 @@ The game build requires:
 - DirectXTex CPU texture helpers and DXC shader compiler, fetched from pinned releases
 
 
+## Compiling on Linux
+
+Use the `linux-clang` configure preset and `linux-clang-debug` or
+`linux-clang-release` build preset. Setup and SDK requirements are documented in
+[Docs/LinuxBuild.md](Docs/LinuxBuild.md). Native game portability is still in
+progress; the phase status and validation gates are tracked in
+[Docs/LinuxPort.md](Docs/LinuxPort.md).
+
 ## Compiling on Windows
 
 Use Visual Studio 2026 with Desktop development with C++ and ATL, CMake 4.2
@@ -53,6 +61,10 @@ The game uses C++23 and the static MSVC runtime. MSVC 14.51 selects
 SDK locations can be set with `-DREN_<SDK>_ROOT=<path>` at configure time:
 `DIRECTX`, `GAMESPY`, and `REGEX`. Defaults use the paths listed above.
 GNU regex may use either `gnu_regex.c`/`gnu_regex.h` or `regex.c`/`regex.h`.
+
+Westwood debugging remains enabled in Debug and disabled in Release. Configure
+with `-DREN_ENABLE_WWDEBUG=OFF` to disable it in Debug as well. Existing logging
+and assertion behavior is preserved. AVI recording is removed.
 
 GameSpy services can be disabled with `-DREN_ENABLE_GAMESPY=OFF`.
 DirectX and GNU regex remain required. Game audio uses a Miles API compatibility

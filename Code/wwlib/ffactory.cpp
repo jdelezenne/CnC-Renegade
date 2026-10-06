@@ -36,6 +36,7 @@
 #include	"ffactory.h"
 #include	"rawfile.h"
 #include "bufffile.h"
+#include "Platform/Paths.h"
 #include "realcrc.h"
 #include	<stdio.h>
 #include <stdlib.h>
@@ -213,18 +214,7 @@ void SimpleFileFactoryClass::Append_Sub_Directory( const char * sub_directory )
 static bool
 Is_Full_Path (const char *path)
 {
-	bool retval = false;
-
-	if (path != NULL && path[0] != 0) {
-		
-		// Check for drive designation
-		retval = bool(path[1] == ':');
-
-		// Check for network path
-		retval |= bool((path[0] == '\\') && (path[1] == '\\'));
-	}
-
-	return retval;
+    return Platform::HasRootPath(path);
 }
 
 /*
@@ -237,14 +227,7 @@ FileClass * SimpleFileFactoryClass::Get_File( char const *filename )
 	// concatenated which may not produce reasonable results.
 	StringClass stripped_name(true);
 	if (IsStripPath) {
-		const char * ptr = ::strrchr( filename, '\\' );
-
-		if (ptr != 0) {
-			ptr++;
-			stripped_name = ptr;
-		} else {
-			stripped_name = filename;
-		}
+        stripped_name = Platform::FileName(filename).c_str();
 	} else {
 		stripped_name = filename;
 	}

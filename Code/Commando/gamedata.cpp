@@ -35,12 +35,13 @@
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 #include "Platform/Paths.h"
+#include "ffactory.h"
+#include <stdexcept>
 #include "gamedata.h"
 
 #include <stdio.h>
 #include <string.h>
 
-#include "win.h"
 #include "miscutil.h"
 #include "cnetwork.h"
 #include "chatshre.h"
@@ -755,13 +756,13 @@ bool cGameData::Is_Valid_Settings(WideStringClass& outMsg, bool check_as_server)
 			for (int i=0 ; i<MAX_MAPS ; i++) {
 				StringClass map_name = Get_Map_Cycle(i);
 				if (map_name.Get_Length()) {
-					char filename[_MAX_PATH];
-					sprintf(filename, "data\\%s", map_name.Peek_Buffer());
-					RawFileClass file(filename);
+					StringClass filename;
+					filename.Format("data\\%s", map_name.Peek_Buffer());
+					RawFileClass file(filename.Peek_Buffer());
 					if (!file.Is_Available()) {
 						PRINT_CONFIG_ERROR;
-						ConsoleBox.Print("Map file '%s' not found\n\n", filename);
-						outMsg.Format(TRANSLATE(IDS_HOPTERR_MAP_NOTFOUND), filename);
+						ConsoleBox.Print("Map file '%s' not found\n\n", filename.Peek_Buffer());
+						outMsg.Format(TRANSLATE(IDS_HOPTERR_MAP_NOTFOUND), filename.Peek_Buffer());
 						return(false);
 					}
 				}
@@ -1007,16 +1008,15 @@ void cGameData::Load_From_Server_Config(LPCSTR config_file)
    WWASSERT(cMiscUtil::Is_String_Different(config_file, ""));
 
    INIClass * p_ini = Get_INI(config_file);
-	StringClass full_filename(config_file, true);
 
 	if (p_ini == NULL) {
-      full_filename.Format("data\\%s", config_file);
-      FILE * file = Platform::OpenStream(full_filename, "w");
-	   fclose(file);
+        file_auto_ptr file(_TheWritingFileFactory, config_file);
+        if (!file.get() || !file->Create()) throw std::runtime_error("Unable to create server configuration");
+        file->Close();
 
 		p_ini = Get_INI(config_file);
    }
-	WWASSERT(p_ini != NULL);
+    if (!p_ini) throw std::runtime_error("Unable to read server configuration");
 
 	LastServerConfigModTime = Get_Config_File_Mod_Time();
 
@@ -1530,21 +1530,11 @@ bool cGameData::Has_Config_File_Changed(void)
 //-----------------------------------------------------------------------------
 unsigned long cGameData::Get_Config_File_Mod_Time(void)
 {
-	StringClass full_filename(IniFilename, true);
-	RawFileClass file(full_filename);
-
-	if (!file.Is_Available()) {
-      full_filename.Format("data\\%s", IniFilename.Peek_Buffer());
-		file.Set_Name(full_filename);
-   }
-
-	if (file.Is_Available()) {
-		file.Open();
-		unsigned long mod_time = file.Get_Date_Time();
-		file.Close();
-		return(mod_time);
-	}
-	return(0);
+    file_auto_ptr file(_TheFileFactory, IniFilename);
+    if (!file.get() || !file->Is_Available() || !file->Open()) return 0;
+    const unsigned long mod_time = file->Get_Date_Time();
+    file->Close();
+    return mod_time;
 }
 
 

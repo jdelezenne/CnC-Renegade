@@ -40,6 +40,7 @@
 #define _PACKETMGR_H
 
 #include "mutex.h"
+#include <cstdint>
 #include "wwdebug.h"
 #include "vector.h"
 
@@ -221,7 +222,7 @@ class PacketManagerClass
 		** Stats management.
 		*/
 		struct BandwidthStatsStruct {
-			unsigned long	IPAddress;
+			std::uint32_t	IPAddress;
 			unsigned short	Port;
 			unsigned long	UncompressedBytesIn;
 			unsigned long	UncompressedBytesOut;
@@ -235,7 +236,7 @@ class PacketManagerClass
 			bool operator == (BandwidthStatsStruct const &stats);
 			bool operator != (BandwidthStatsStruct const &stats);
 		};
-		int Get_Stats_Index(unsigned long ip_address, unsigned short port, bool can_create = true);
+		int Get_Stats_Index(std::uint32_t ip_address, unsigned short port, bool can_create = true);
 		void Register_Packet_In(unsigned char *ip_address, unsigned short port, unsigned long compressed_size, unsigned long uncompressed_size);
 		void Register_Packet_Out(unsigned char *ip_address, unsigned short port, unsigned long compressed_size, unsigned long uncompressed_size);
 

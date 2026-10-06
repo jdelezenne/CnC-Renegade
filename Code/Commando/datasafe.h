@@ -580,8 +580,8 @@ class GenericDataSafeClass
 		*/
 		static void Shuffle(bool forced = false);
 		static void Swap_Entries(DataSafeEntryClass *first, DataSafeEntryClass *second, int type);
-		static void Encrypt(void *data, int size, unsigned long key = SimpleKey, bool do_checksum = true);
-		static void Decrypt(void *data, int size, unsigned long key = SimpleKey, bool do_checksum = true);
+		static void Encrypt(void *data, int size, std::uint32_t key = SimpleKey, bool do_checksum = true);
+		static void Decrypt(void *data, int size, std::uint32_t key = SimpleKey, bool do_checksum = true);
 		static void Mem_Copy_Encrypt(void *dest, void *src, int size, bool do_checksum);
 		static void Mem_Copy_Decrypt(void *dest, void *src, int size, bool do_checksum);
 		static WWINLINE void Security_Check(void);
@@ -665,12 +665,12 @@ class GenericDataSafeClass
 		/*
 		** Simple key value used for xoring.
 		*/
-		static unsigned long SimpleKey;
+		static std::uint32_t SimpleKey;
 
 		/*
 		** Key used for encrypting handles.
 		*/
-		static unsigned long HandleKey;
+		static std::uint32_t HandleKey;
 
 		/*
 		** Number of valid entries in the Safe list.
@@ -687,7 +687,7 @@ class GenericDataSafeClass
 		/*
 		** Integrity check.
 		*/
-		static unsigned long Checksum;
+		static std::uint32_t Checksum;
 
 		/*
 		** Shuffle delay.
@@ -1131,7 +1131,7 @@ WWINLINE void GenericDataSafeClass::Security_Check(void)
 			_checking = true;
 			//WWDEBUG_SAY(("Data Safe: Performing security check\n"));
 			SecurityCheckDelay = time;
-			unsigned long checkey = ~SimpleKey;
+			std::uint32_t checkey = ~SimpleKey;
 
 			/*
 			** Loop through every list.
@@ -1144,7 +1144,7 @@ WWINLINE void GenericDataSafeClass::Security_Check(void)
 					** Dereference stuff - make sure the list makes sense.
 					*/
 					DataSafeEntryClass *entry_ptr = Safe[i]->SafeList;
-					unsigned long *data = NULL;
+					const unsigned char *data = NULL;
 					ds_assert(entry_ptr != NULL);
 					int data_size = entry_ptr->Size;
 					ds_assert((data_size & 3) == 0);
@@ -1172,9 +1172,11 @@ WWINLINE void GenericDataSafeClass::Security_Check(void)
 							/*
 							** Add in the data.
 							*/
-							data = (unsigned long *) (((char*)entry_ptr) + sizeof(*entry_ptr));
+							data = reinterpret_cast<const unsigned char*>(entry_ptr) + sizeof(*entry_ptr);
 							for (int z=0 ; z<data_size ; z++) {
-								checkey ^= *data++;
+								std::uint32_t word;
+                                memcpy(&word, data + z * 4, sizeof(word));
+                                checkey ^= word;
 							}
 
 							/*
@@ -4193,7 +4195,7 @@ inline SafeDataClass<T>::operator long (void) const
 template <class T>
 inline SafeDataClass<T>::operator unsigned long (void) const
 {
-	ds_assert(sizeof(T) == sizeof(unsigned long));
+	ds_assert(sizeof(T) == sizeof(std::uint32_t));
 
 	T *data_ptr = NULL;
 
@@ -4217,7 +4219,9 @@ inline SafeDataClass<T>::operator unsigned long (void) const
 			DataSafeClass<T>::Get(Handle, data_ptr);
 		ds_assert(ok);
 		if (data_ptr) {
-			return(*((unsigned long*)data_ptr));
+			std::uint32_t word;
+            memcpy(&word, data_ptr, sizeof(word));
+            return word;
 		}
 	}
 

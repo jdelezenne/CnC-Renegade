@@ -35,6 +35,8 @@
 
 #include "always.h"
 #include "FirewallWait.h"
+#include "Platform/Platform.h"
+#include <iterator>
 #include "nat.h"
 #include	"string_ids.h"
 #include "translatedb.h"
@@ -68,7 +70,7 @@ RefPtr<FirewallDetectWait> FirewallDetectWait::Create(void)
 
 FirewallDetectWait::FirewallDetectWait(void) :
 		SingleWait(TRANSLATION(IDS_FIREWALL_NEGOTIATING_FIREWALL), 60000),
-		mEvent(NULL),
+		mEvent(),
 		mPingsRemaining(UINT_MAX)
 	{
 	mWOLSession = WWOnline::Session::GetInstance(false);
@@ -82,10 +84,7 @@ FirewallDetectWait::~FirewallDetectWait()
 
 	mWOLSession->EnablePinging(true);
 
-	if (mEvent)
-		{
-		CloseHandle(mEvent);
-		}
+
 	}
 
 
@@ -93,9 +92,9 @@ void FirewallDetectWait::WaitBeginning(void)
 	{
 	WWDEBUG_SAY(("FirewallDetectWait: Beginning\n"));
 
-	mEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+	mEvent = Platform::MakeEvent();
 
-	if (mEvent == NULL)
+	if (!mEvent)
 		{
 		WWDEBUG_SAY(("FirewallDetectWait: Can't create event\n"));
 		EndWait(Error, TRANSLATION(IDS_FIREWALL_CREATE_EVENT_FAILED));
@@ -124,19 +123,13 @@ WaitCondition::WaitResult FirewallDetectWait::GetResult(void)
 
 		if (mPingsRemaining == 0)
 			{
-			DWORD result = WaitForSingleObject(mEvent, 0);
-
-			if (result == WAIT_OBJECT_0)
+			if (mEvent && mEvent->IsSignaled())
 				{
 				WWDEBUG_SAY(("FirewallDetectWait: ConditionMet\n"));
 				WOLNATInterface.Save_Firewall_Info_To_Settings();
 				EndWait(ConditionMet, TRANSLATION(IDS_FIREWALL_NEGOTIATION_COMPLETE));
 				}
-			else if (result == WAIT_FAILED)
-				{
-				WWDEBUG_SAY(("FirewallDetectWait: WAIT_FAILED\n"));
-				EndWait(Error, TRANSLATION(IDS_FIREWALL_NEGOTIATION_FAILED));
-				}
+
 			}
 		}
 
@@ -161,8 +154,8 @@ RefPtr<FirewallConnectWait> FirewallConnectWait::Create(void)
 
 FirewallConnectWait::FirewallConnectWait(void) :
 		SingleWait(TRANSLATION(IDS_FIREWALL_NEGOTIATING_WITH_SERVER)),
-		mEvent(NULL),
-		mCancelEvent(NULL),
+		mEvent(),
+		mCancelEvent(),
 		mSuccessFlag(FirewallHelperClass::FW_RESULT_UNKNOWN),
 		mQueueCount(0),
 		mLastQueueCount(0),
@@ -179,15 +172,9 @@ FirewallConnectWait::~FirewallConnectWait()
 
 	mWOLSession->EnablePinging(true);
 
-	if (mEvent)
-		{
-		CloseHandle(mEvent);
-		}
 
-	if (mCancelEvent)
-		{
-		CloseHandle(mCancelEvent);
-		}
+
+	FirewallHelper.Set_Client_Connect_Event({}, {}, nullptr, nullptr);
 	}
 
 
@@ -195,10 +182,10 @@ void FirewallConnectWait::WaitBeginning(void)
 	{
 	WWDEBUG_SAY(("FirewallConnectWait: Beginning\n"));
 
-	mEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-	mCancelEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+	mEvent = Platform::MakeEvent();
+	mCancelEvent = Platform::MakeEvent();
 
-	if (mEvent == NULL)
+	if (!mEvent || !mCancelEvent)
 		{
 		WWDEBUG_SAY(("FirewallConnectWait: Can't create event\n"));
 		EndWait(Error, TRANSLATION(IDS_FIREWALL_CREATE_EVENT_FAILED));
@@ -226,7 +213,7 @@ WaitCondition::WaitResult FirewallConnectWait::GetResult(void)
 
 			if (mPingsRemaining == 0)
 				{
-				FirewallHelper.Set_Client_Connect_Event(mEvent, mCancelEvent, &mSuccessFlag, (int*)&mQueueCount);
+				FirewallHelper.Set_Client_Connect_Event(mEvent, mCancelEvent, &mSuccessFlag, &mQueueCount);
 				mTimeout = 32000;
 				mStartTime = TIMEGETTIME();
 				}
@@ -241,20 +228,19 @@ WaitCondition::WaitResult FirewallConnectWait::GetResult(void)
 			else
 				{
 				// Maybe change the wait text if there are players queued in front of us.
-				if (mQueueCount != mLastQueueCount)
+				const auto queueCount = mQueueCount.load();
+				if (queueCount != mLastQueueCount)
 					{
 					wchar_t temp[256];
-					swprintf(temp, TRANSLATION(IDS_FIREWALL_QUEUE_NOTIFICATION), mQueueCount);
+					swprintf(temp, std::size(temp), TRANSLATION(IDS_FIREWALL_QUEUE_NOTIFICATION), queueCount);
 					WideStringClass text(temp, true);
 					SetWaitText(text);
-					mLastQueueCount = mQueueCount;
-					mTimeout = max((unsigned)32000, ((mQueueCount * 32000) + 32000));
+					mLastQueueCount = queueCount;
+					mTimeout = max((unsigned)32000, ((queueCount * 32000) + 32000));
 					mStartTime = TIMEGETTIME();
 					}
 
-				DWORD result = WaitForSingleObject(mEvent, 0);
-
-				if (result == WAIT_OBJECT_0)
+				if (mEvent && mEvent->IsSignaled())
 					{
 					if (mSuccessFlag == FirewallHelperClass::FW_RESULT_SUCCEEDED)
 						{
@@ -268,11 +254,7 @@ WaitCondition::WaitResult FirewallConnectWait::GetResult(void)
 						EndWait(Error, TRANSLATION(IDS_FIREWALL_PORT_NEGOTIATION_FAILED));
 						}
 					}
-				else if (result == WAIT_FAILED)
-					{
-					WWDEBUG_SAY(("FirewallConnectWait: WAIT_FAILED\n"));
-					EndWait(Error, TRANSLATION(IDS_FIREWALL_PORT_NEGOTIATION_FAILED));
-					}
+
 				}
 			}
 		}
@@ -297,7 +279,7 @@ void FirewallConnectWait::EndWait(WaitResult result, const wchar_t* endText)
 	if (result == UserCancel || result == TimeOut)
 		{
 		// Tell the firewall negotiation code to give up.
-		SetEvent(mCancelEvent);
+		if (mCancelEvent) mCancelEvent->Signal();
 		}
 
 		// Give the firewall code a little time to respond then remove it's cancel event anyway. It'll figure it out.
@@ -308,10 +290,10 @@ void FirewallConnectWait::EndWait(WaitResult result, const wchar_t* endText)
 				break;
 				}
 
-			Sleep(1);
+			Platform::Sleep(1);
 			}
 
-	FirewallHelper.Set_Client_Connect_Event(NULL, NULL, NULL, NULL);
+	FirewallHelper.Set_Client_Connect_Event({}, {}, nullptr, nullptr);
 
 	SingleWait::EndWait(result, endText);
 	}

@@ -46,7 +46,7 @@ class cUserOptions
 {
 	public:
 
-		static bool Parse_Command_Line(LPCSTR command);
+		static bool Parse_Command_Line(int argc, char** argv);
 
 		static void Set_Server_INI_File(char *cmd_line_entry);
 

@@ -37,6 +37,18 @@
 #include "packetmgr.h"
 #include "Platform/Network/Transport.h"
 #include <bit>
+#include <cstdint>
+#include <cstring>
+
+namespace {
+std::uint32_t Read_UInt32(const void* data)
+{
+    std::uint32_t value;
+    std::memcpy(&value, data, sizeof(value));
+    return value;
+}
+}
+
 
 #include <always.h>
 #include <memory.h>
@@ -747,7 +759,7 @@ WWPROFILE("PMgr Flush");
 						/*
 						** Is this packet for the same recipient?
 						*/
-						if (SendBuffers[base_index].Port == SendBuffers[index].Port && (*(unsigned long*)(&SendBuffers[index].IPAddress[0])) == (*(unsigned long*)(&SendBuffers[base_index].IPAddress[0]))) {
+						if (SendBuffers[base_index].Port == SendBuffers[index].Port && Read_UInt32(SendBuffers[index].IPAddress) == Read_UInt32(SendBuffers[base_index].IPAddress)) {
 
 							//WWDEBUG_SAY(("Found secondary packet %d\n", index));
 
@@ -852,7 +864,7 @@ WWPROFILE("PMgr Flush");
 				for (int j=i+1 ; j<NumSendBuffers ; j++) {
 					if (SendBuffers[j].PacketReady && SendBuffers[j].PacketSendSocket == socket) {
 						if (SendBuffers[i].PacketSendLength + SendBuffers[j].PacketSendLength < PACKET_MANAGER_MTU) {
-							if (SendBuffers[i].Port == SendBuffers[j].Port && (*(unsigned long*)(&SendBuffers[i].IPAddress[0])) == (*(unsigned long*)(&SendBuffers[j].IPAddress[0]))) {
+							if (SendBuffers[i].Port == SendBuffers[j].Port && Read_UInt32(SendBuffers[i].IPAddress) == Read_UInt32(SendBuffers[j].IPAddress)) {
 								unsigned char *dest_ptr = &SendBuffers[i].PacketBuffer->Buffer[current_len];
 								memcpy(dest_ptr, SendBuffers[j].PacketBuffer, SendBuffers[j].PacketSendLength);
 								current_header->MorePackets = 1;
@@ -896,7 +908,7 @@ WWPROFILE("PMgr Flush");
 
 #ifdef WRAPPER_CRC
 
-			unsigned long crc = CRC::Memory((unsigned char*)SendBuffers[i].PacketBuffer, SendBuffers[i].PacketSendLength);
+			std::uint32_t crc = static_cast<std::uint32_t>(CRC::Memory((unsigned char*)SendBuffers[i].PacketBuffer, SendBuffers[i].PacketSendLength));
 #if (1)
 			/*
 			** Reverse byte order to prevent the demo from having the same CRC as the game.
@@ -904,7 +916,7 @@ WWPROFILE("PMgr Flush");
 			crc = std::byteswap(crc);
 #endif //(0)
 			char *crc_and_buffer = (char*)_alloca(SendBuffers[i].PacketSendLength + sizeof(crc));
-			*((unsigned long*) crc_and_buffer) = crc;
+			std::memcpy(crc_and_buffer, &crc, sizeof(crc));
 			memcpy(crc_and_buffer + sizeof(crc), (const char*)SendBuffers[i].PacketBuffer, SendBuffers[i].PacketSendLength);
 
 			Register_Packet_Out(&SendBuffers[i].IPAddress[0], SendBuffers[i].Port, SendBuffers[i].PacketSendLength + UDP_HEADER_SIZE + sizeof(crc), 0);
@@ -1107,14 +1119,12 @@ bool PacketManagerClass::Break_Packet(unsigned char *packet, int original_packet
  *=============================================================================================*/
 void PacketManagerClass::Clear_Socket_Error(SOCKET socket)
 {
-	unsigned long error_code;
-	int length = 4;
-	assert(socket != INVALID_SOCKET);
+    int error_code = 0;
+    int length = sizeof(error_code);
+    if (socket != INVALID_SOCKET) {
+        Platform::SocketGetOption(socket, SOL_SOCKET, SO_ERROR, reinterpret_cast<char*>(&error_code), &length);
+    }
 
-	if (socket != INVALID_SOCKET) {
-		Platform::SocketGetOption(socket, SOL_SOCKET, SO_ERROR, (char*)&error_code, &length);
-		WWDEBUG_SAY(("Per socket error is %d - %s\n", error_code, cNetUtil::Winsock_Error_Text(error_code)));
-	}
 }
 
 
@@ -1148,25 +1158,27 @@ WWPROFILE("Pmgr Get");
 		sockaddr_in addr;
 		memset(&addr, 0, sizeof(addr));
 		pm_assert(packet_buffer_size >= PACKET_MANAGER_MTU);
-		int bytes;
-		int result = Platform::SocketPendingBytes(socket, bytes);
-		if (result == 0 && bytes != 0) {
-
-			bytes = Platform::SocketReceiveFrom(socket, (char*)packet_buffer, packet_buffer_size, 0, (LPSOCKADDR) &addr, &address_size);
+        {
+            int bytes = Platform::SocketReceiveFrom(socket, reinterpret_cast<char*>(packet_buffer), packet_buffer_size, 0,
+                reinterpret_cast<sockaddr*>(&addr), &address_size);
 			if (bytes > 0) {
 #ifndef WRAPPER_CRC
 				Register_Packet_In((unsigned char*) &addr.sin_addr.s_addr, addr.sin_port, bytes + UDP_HEADER_SIZE, 0);
 #endif //WRAPPER_CRC
 
 #ifdef WRAPPER_CRC
-				unsigned long crc = CRC::Memory((unsigned char*)packet_buffer + 4, bytes - sizeof(crc));
+                if (bytes < static_cast<int>(sizeof(std::uint32_t) + sizeof(PacketPackHeaderStruct))) {
+                    NumReceivePackets = 0;
+                    return 0;
+                }
+				std::uint32_t crc = static_cast<std::uint32_t>(CRC::Memory((unsigned char*)packet_buffer + 4, bytes - sizeof(crc)));
 #if (1)
 				/*
 				** Reverse byte order to prevent the demo from having the same CRC as the game.
 				*/
 				crc = std::byteswap(crc);
 #endif //(0)
-				if (crc != *((unsigned long*)packet_buffer)) {
+				if (crc != Read_UInt32(packet_buffer)) {
 					WWDEBUG_SAY(("PMC::Get_Packet: Socket %d, received packet %d bytes long from %s\n", socket, bytes, Addr_As_String(&addr)));
 					WWDEBUG_SAY(("PMC::Get_Packet: *** PACKET WRAPPER CRC ERROR ***"));
 					NumReceivePackets = 0;
@@ -1203,8 +1215,6 @@ WWPROFILE("Pmgr Get");
 						port = addr.sin_port;
 						return(-1);
 					}
-				} else {
-					WWDEBUG_SAY(("PacketManagerClass - recvfrom failed with error WSAEWOULDBLOCK\n", Platform::SocketLastError()));
 				}
 			}
 		}
@@ -1282,7 +1292,7 @@ void PacketManagerClass::Reset_Stats(void)
  * HISTORY:                                                                                    *
  *   10/9/2001 8:54AM ST : Created                                                             *
  *=============================================================================================*/
-int PacketManagerClass::Get_Stats_Index(unsigned long ip_address, unsigned short port, bool can_create)
+int PacketManagerClass::Get_Stats_Index(std::uint32_t ip_address, unsigned short port, bool can_create)
 {
 	/*
 	** Find the stats struct entry for this ip/port.
@@ -1335,10 +1345,10 @@ int PacketManagerClass::Get_Stats_Index(unsigned long ip_address, unsigned short
  *=============================================================================================*/
 void PacketManagerClass::Register_Packet_In(unsigned char *ip_address, unsigned short port, unsigned long compressed_size, unsigned long uncompressed_size)
 {
-	static unsigned long _last_ip = 0;
+	static std::uint32_t _last_ip = 0;
 	static unsigned short _last_port = 0;
 	static int _last_stats = -1;
-	unsigned long long_ip = *((unsigned long*)ip_address);
+	const std::uint32_t long_ip = Read_UInt32(ip_address);
 
 	if (ResetStatsIn) {
 		_last_ip = 0;
@@ -1386,10 +1396,10 @@ void PacketManagerClass::Register_Packet_In(unsigned char *ip_address, unsigned 
  *=============================================================================================*/
 void PacketManagerClass::Register_Packet_Out(unsigned char *ip_address, unsigned short port, unsigned long compressed_size, unsigned long uncompressed_size)
 {
-	static unsigned long _last_ip = 0;
+	static std::uint32_t _last_ip = 0;
 	static unsigned short _last_port = 0;
 	static int _last_stats = -1;
-	unsigned long long_ip = *((unsigned long*)ip_address);
+	const std::uint32_t long_ip = Read_UInt32(ip_address);
 
 	if (ResetStatsOut) {
 		_last_ip = 0;
@@ -1608,7 +1618,7 @@ unsigned long PacketManagerClass::Get_Total_Compressed_Bandwidth_Out(void)
 unsigned long PacketManagerClass::Get_Raw_Bandwidth_In(SOCKADDR_IN *address)
 {
 	CriticalSectionClass::LockClass lock(CriticalSection);
-	unsigned long ip = *((unsigned long*)&address->sin_addr.s_addr);
+	unsigned long ip = address->sin_addr.s_addr;
 	unsigned short port = address->sin_port;
 	int stats = Get_Stats_Index(ip, port, false);
 
@@ -1637,7 +1647,7 @@ unsigned long PacketManagerClass::Get_Raw_Bandwidth_In(SOCKADDR_IN *address)
 unsigned long PacketManagerClass::Get_Raw_Bandwidth_Out(SOCKADDR_IN *address)
 {
 	CriticalSectionClass::LockClass lock(CriticalSection);
-	unsigned long ip = *((unsigned long*)&address->sin_addr.s_addr);
+	unsigned long ip = address->sin_addr.s_addr;
 	unsigned short port = address->sin_port;
 	int stats = Get_Stats_Index(ip, port, false);
 
@@ -1667,7 +1677,7 @@ unsigned long PacketManagerClass::Get_Raw_Bandwidth_Out(SOCKADDR_IN *address)
 unsigned long PacketManagerClass::Get_Raw_Bytes_Out(SOCKADDR_IN *address)
 {
 	CriticalSectionClass::LockClass lock(CriticalSection);
-	unsigned long ip = *((unsigned long*)&address->sin_addr.s_addr);
+	unsigned long ip = address->sin_addr.s_addr;
 	unsigned short port = address->sin_port;
 	int stats = Get_Stats_Index(ip, port, false);
 
@@ -1698,7 +1708,7 @@ unsigned long PacketManagerClass::Get_Raw_Bytes_Out(SOCKADDR_IN *address)
 unsigned long PacketManagerClass::Get_Compressed_Bandwidth_In(SOCKADDR_IN *address)
 {
 	CriticalSectionClass::LockClass lock(CriticalSection);
-	unsigned long ip = *((unsigned long*)&address->sin_addr.s_addr);
+	unsigned long ip = address->sin_addr.s_addr;
 	unsigned short port = address->sin_port;
 	int stats = Get_Stats_Index(ip, port, false);
 
@@ -1727,7 +1737,7 @@ unsigned long PacketManagerClass::Get_Compressed_Bandwidth_In(SOCKADDR_IN *addre
 unsigned long PacketManagerClass::Get_Compressed_Bandwidth_Out(SOCKADDR_IN *address)
 {
 	CriticalSectionClass::LockClass lock(CriticalSection);
-	unsigned long ip = *((unsigned long*)&address->sin_addr.s_addr);
+	unsigned long ip = address->sin_addr.s_addr;
 	unsigned short port = address->sin_port;
 	int stats = Get_Stats_Index(ip, port, false);
 

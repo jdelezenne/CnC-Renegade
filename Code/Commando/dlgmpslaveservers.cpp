@@ -36,6 +36,7 @@
 
 #include "always.h"
 #include "dlgmpslaveservers.h"
+#include <cstdio>
 #include "menudialog.h"
 #include "_globals.h"
 #include "slavemaster.h"
@@ -113,7 +114,7 @@ unsigned long SlaveServerDialogClass::SettingsButtons[MAX_SLAVES] = {
 };
 
 
-char SlaveServerDialogClass::ServerSettingsFileNames[MAX_SLAVES][MAX_PATH];
+StringClass SlaveServerDialogClass::ServerSettingsFileNames[MAX_SLAVES];
 
 
 int SlaveServerDialogClass::SlaveNumber = 0;
@@ -148,7 +149,7 @@ SlaveServerDialogClass::On_Init_Dialog (void)
 	char pass[64];
 	bool enable;
 	unsigned short port;
-	char settings_file_name[MAX_PATH];
+	StringClass settings_file_name;
 	int bw;
 
 	/*
@@ -160,7 +161,7 @@ SlaveServerDialogClass::On_Init_Dialog (void)
 		serial[0] = 0;
 		enable = false;
 		port = 0;
-		settings_file_name[0] = 0;
+		settings_file_name = "";
 		bw = 0;
 
 		if (i < num_slaves) {
@@ -181,11 +182,11 @@ SlaveServerDialogClass::On_Init_Dialog (void)
 		Set_Dlg_Item_Text(SerialIDs[i], tempser.Peek_Buffer());
 
 		char temp[32];
-		_itoa((unsigned long)port, temp, 10);
+		std::snprintf(temp, sizeof(temp), "%u", static_cast<unsigned>(port));
 		WideStringClass tempport(temp, true);
 		Set_Dlg_Item_Text(PortIDs[i], tempport.Peek_Buffer());
 
-		strcpy(ServerSettingsFileNames[i], settings_file_name);
+		ServerSettingsFileNames[i] = settings_file_name;
 		Set_Slave_Button(i);
 	}
 
@@ -285,7 +286,7 @@ void SlaveServerDialogClass::Set_Slave_Settings(StringClass *file_name)
 {
 	if (SlaveNumber) {
 		int slave = SlaveNumber-1;
-		strcpy(ServerSettingsFileNames[slave], file_name->Peek_Buffer());
+		ServerSettingsFileNames[slave] = *file_name;
 		Set_Slave_Button(slave);
 	}
 }
@@ -296,9 +297,9 @@ void SlaveServerDialogClass::Set_Slave_Button(int slavenum)
 {
 	char char_description[256];
 	WideStringClass description;
-	char file_name[MAX_PATH];
+	StringClass file_name;
 
-	sprintf(file_name, "data\\%s", ServerSettingsFileNames[slavenum]);
+	file_name.Format("data\\%s", ServerSettingsFileNames[slavenum].Peek_Buffer());
 	RawFileClass file(file_name);
 
 	if (file.Is_Available()) {

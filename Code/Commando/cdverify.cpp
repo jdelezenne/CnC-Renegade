@@ -36,6 +36,7 @@
 
 #include "always.h"
 #include "cdverify.h"
+#include "Platform/Media.h"
 #include "wwstring.h"
 #include "popupdialog.h"
 #include "resource.h"
@@ -81,50 +82,14 @@ private:
 bool
 CDVerifyClass::Get_CD_Path (StringClass &drive_path)
 {
-	bool retval = false;
-
-	char buffer[1024] = { 0 };
-	::GetLogicalDriveStrings (sizeof (buffer), buffer);
-
-	//
-	//	Loop over all the drives
-	//
-	const char *drive_root_name = buffer;
-	while (drive_root_name[0] != 0) {
-
-		//
-		//	Only check CD drives
-		//
-		if (::GetDriveType (drive_root_name) == DRIVE_CDROM) {
-
-			//
-			//	Get the name of this volume
-			//
-			char volume_name[256] = { 0 };			
-			if (::GetVolumeInformation (drive_root_name, volume_name, sizeof (volume_name),
-						NULL, NULL, NULL, NULL, NULL))
-			{
-				int cmp_len	= ::lstrlen (volume_name);
-				cmp_len		= max (cmp_len, 11);
-
-				//
-				//	Is this the movies CD?
-				//
-				if (::strnicmp (volume_name, RENEGADE_MOVIES_VOLUME, cmp_len) == 0) {
-					retval		= true;
-					drive_path	= drive_root_name;
-					break;
-				}
-			}
-		}
-
-		//
-		//	Advance to the next drive
-		//
-		drive_root_name += ::lstrlen (drive_root_name) + 1;
-	}
-
-	return retval;
+    for (const auto& volume : Platform::OpticalMedia()) {
+        const auto length = volume.Label.size() > 11 ? volume.Label.size() : 11;
+        if (::strnicmp(volume.Label.c_str(), RENEGADE_MOVIES_VOLUME, length) == 0) {
+            drive_path = volume.Path.c_str();
+            return true;
+        }
+    }
+    return false;
 }
 
 

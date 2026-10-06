@@ -20,6 +20,8 @@
 #include "Except.h"
 #include <windows.h>
 
+Platform::ThreadExceptionHandler Platform::DefaultThreadExceptionHandler() { return &Exception_Handler; }
+
 void Platform::RunThreadFunction(void (*function)(void*), void* context, ThreadExceptionHandler handler,
     const char* name, std::uint32_t identifier)
 {

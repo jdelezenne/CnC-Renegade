@@ -66,6 +66,7 @@ public:
 
 	// Put current thread in sleep and switch to next one (Useful for balansing the thread switches with game update)
 	static void Switch_Thread();
+	[[noreturn]] static void Exit_Current_Thread(int status);
 
 	// Return calling thread's unique thread id
 	static unsigned _Get_Current_Thread_ID();

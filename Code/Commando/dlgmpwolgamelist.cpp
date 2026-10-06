@@ -35,6 +35,7 @@
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 #include "DlgMPWOLGameList.h"
+#include "Platform/Paths.h"
 #include "specialbuilds.h"
 #include "cNetwork.h"
 #include "BandwidthCheck.h"
@@ -646,16 +647,14 @@ void MPWolGameListMenuClass::UpdateChannels(ListCtrlClass* list, const ChannelLi
 						//
 						//	Strip off the extension for both the map and the mod package
 						//
-						char map_name[_MAX_FNAME] = { 0 };
-						char mod_name[_MAX_FNAME] = { 0 };
-						::_splitpath (gameInfo.MapName(), NULL, NULL, map_name, NULL);
-						::_splitpath (gameInfo.ModName(), NULL, NULL, mod_name, NULL);
+						const auto map_name = Platform::FileStem(gameInfo.MapName());
+						const auto mod_name = Platform::FileStem(gameInfo.ModName());
 
 						//
 						//	Create the map name from the aggregate of the mod and map
 						//
 						StringClass ascii_map_name;
-						ascii_map_name.Format ("%s\\%s", mod_name, map_name);
+						ascii_map_name.Format ("%s\\%s", mod_name.c_str(), map_name.c_str());
 						mapName.Convert_From (ascii_map_name);
 					} else {
 						mapName = gameInfo.MapName();
@@ -664,7 +663,7 @@ void MPWolGameListMenuClass::UpdateChannels(ListCtrlClass* list, const ChannelLi
 					list->Set_Entry_Text(itemIndex, COL_GAME_MAP, mapName);
 
 					// Show the number of current / max players
-					list->Set_Entry_Data(itemIndex, COL_PLAYERS, MAKELONG(gameInfo.NumPlayers(), gameInfo.MaxPlayers()));
+					list->Set_Entry_Data(itemIndex, COL_PLAYERS, ((uint32(gameInfo.NumPlayers()) & 0xffffu) | (uint32(gameInfo.MaxPlayers()) << 16)));
 
 					WideStringClass playersString(64, true);
 					playersString.Format(L"%u/%u", gameInfo.NumPlayers(), gameInfo.MaxPlayers());
@@ -695,7 +694,7 @@ void MPWolGameListMenuClass::UpdateChannels(ListCtrlClass* list, const ChannelLi
 						/*
 						WideStringClass diagnostic;
 						diagnostic.Format(L"Version Mismatch (v. %u.%u)",
-							HIWORD(gameInfo.Version()), LOWORD(gameInfo.Version()));
+							((uint32(gameInfo.Version()) >> 16) & 0xffffu), (uint32(gameInfo.Version()) & 0xffffu));
 						list->Set_Entry_Text(itemIndex, COL_GAME_TITLE, diagnostic);
 						*/
 
@@ -898,14 +897,14 @@ void MPWolGameListMenuClass::On_ListCtrl_Sel_Change(ListCtrlClass* list, int id,
 // Just show the EXE version until we can work this out.
 #if(0)
 					text.Format(TRANSLATE(IDS_MENU_HOST_INFO_FORMAT), (const WCHAR*)channel->GetName(),
-							mSelectedGame.Title(), HIWORD(mSelectedGame.Version()), LOWORD(mSelectedGame.Version()));
+							mSelectedGame.Title(), ((uint32(mSelectedGame.Version()) >> 16) & 0xffffu), (uint32(mSelectedGame.Version()) & 0xffffu));
 #else
 					unsigned long verMajor = 0;
 					unsigned long verMinor = 0;
 					Get_Version_Number(&verMajor,&verMinor);
 
 					text.Format(TRANSLATE(IDS_MENU_HOST_INFO_FORMAT), (const WCHAR*)channel->GetName(),
-							mSelectedGame.Title(), HIWORD(verMajor), LOWORD(verMajor));
+							mSelectedGame.Title(), ((uint32(verMajor) >> 16) & 0xffffu), (uint32(verMajor) & 0xffffu));
 #endif
 					detailsList->Insert_Entry(0, text);
 
@@ -1304,11 +1303,11 @@ void MPWolGameListMenuClass::SortGameChannels(int column, bool isAscending, unsi
 			}
 		else if (COL_PLAYERS == column || COL_PING == column)
 			{
-			list->Sort(NumericSortCallback, MAKELONG(column, sortDirection));
+			list->Sort(NumericSortCallback, ((uint32(column) & 0xffffu) | (uint32(sortDirection) << 16)));
 			}
 		else
 			{
-			list->Sort(AlphaSortCallback, MAKELONG(column, sortDirection));
+			list->Sort(AlphaSortCallback, ((uint32(column) & 0xffffu) | (uint32(sortDirection) << 16)));
 			}
 
 		list->Set_Sort_Designator(column, sortDirection);
@@ -1402,7 +1401,7 @@ int CALLBACK FlagsSortCallback(ListCtrlClass* list, int index1, int index2, uint
 int CALLBACK NumericSortCallback(ListCtrlClass* list, int index1, int index2, uint32 param)
 	{
 	// Sort by numeric value stored in entry data field
-	int	column = LOWORD(param);
+	int	column = (uint32(param) & 0xffffu);
 
 	uint32 data1 = list->Get_Entry_Data(index1, column);
 	uint32 data2 = list->Get_Entry_Data(index2, column);
@@ -1446,7 +1445,7 @@ int CALLBACK NumericSortCallback(ListCtrlClass* list, int index1, int index2, ui
 		}
 
 	// Invert the return value if we are sorting descendingly
-	ListCtrlClass::SORT_TYPE sortType = (ListCtrlClass::SORT_TYPE)HIWORD(param);
+	ListCtrlClass::SORT_TYPE sortType = (ListCtrlClass::SORT_TYPE)((uint32(param) >> 16) & 0xffffu);
 
 	if (ListCtrlClass::SORT_DESCENDING == sortType)
 		{
@@ -1480,7 +1479,7 @@ int CALLBACK NumericSortCallback(ListCtrlClass* list, int index1, int index2, ui
 int CALLBACK AlphaSortCallback(ListCtrlClass* list, int index1, int index2, uint32 param)
 	{
 	// Sort by numeric value stored in entry data field
-	int	column = LOWORD(param);
+	int	column = (uint32(param) & 0xffffu);
 
 	const WCHAR* text1 = list->Get_Entry_Text(index1, column);
 	const WCHAR* text2 = list->Get_Entry_Text(index2, column);
@@ -1505,7 +1504,7 @@ int CALLBACK AlphaSortCallback(ListCtrlClass* list, int index1, int index2, uint
 		}
 
 	// Invert the return value if we are sorting descendingly
-	ListCtrlClass::SORT_TYPE sortType = (ListCtrlClass::SORT_TYPE)HIWORD(param);
+	ListCtrlClass::SORT_TYPE sortType = (ListCtrlClass::SORT_TYPE)((uint32(param) >> 16) & 0xffffu);
 
 	if (ListCtrlClass::SORT_DESCENDING == sortType)
 		{

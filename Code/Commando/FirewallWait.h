@@ -37,7 +37,7 @@
 #define __FIREWALLWAIT_H__
 
 #include <WWOnline/WaitCondition.h>
-#include <windows.h>
+#include "Platform/Event.h"
 
 namespace WWOnline
 {
@@ -70,7 +70,7 @@ class FirewallDetectWait :
 		RefPtr<WWOnline::Session> mWOLSession;
 		unsigned int mPingsRemaining;
 
-		HANDLE mEvent;
+		Platform::EventPointer mEvent;
 	};
 
 
@@ -100,18 +100,18 @@ class FirewallConnectWait :
 		RefPtr<WWOnline::Session> mWOLSession;
 		unsigned int mPingsRemaining;
 
-		HANDLE mEvent;
-		HANDLE mCancelEvent;
+		Platform::EventPointer mEvent;
+		Platform::EventPointer mCancelEvent;
 
 		/*
 		** Did the port negotiation succeed?
 		*/
-		int mSuccessFlag;
+		std::atomic<int> mSuccessFlag;
 
 		/*
 		** How many players in the queue ahead of us?
 		*/
-		unsigned int mQueueCount;
+		std::atomic<unsigned int> mQueueCount;
 		unsigned int mLastQueueCount;
 		unsigned long mStartTime;
 	};

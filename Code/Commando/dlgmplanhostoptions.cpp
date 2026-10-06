@@ -35,6 +35,7 @@
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 #include "dlgmplanhostoptions.h"
+#include "Platform/Directory.h"
 #include "tabctrl.h"
 #include "gamedata.h"
 #include "netutil.h"
@@ -1539,9 +1540,6 @@ MPLanHostMapCycleOptionsTabClass::Build_Map_List (void)
 {
 	MapList.Delete_All ();
 
-	WIN32_FIND_DATA find_info	= { 0 };
-	BOOL keep_going				= TRUE;
-	HANDLE file_find				= NULL;
 
 	//
 	//	Build a list of all the maps we know about
@@ -1561,24 +1559,18 @@ MPLanHostMapCycleOptionsTabClass::Build_Map_List (void)
 	}
 #endif // WWDEBUG
 
-	for (file_find = ::FindFirstFile (file_filter, &find_info);
-		 (file_find != INVALID_HANDLE_VALUE) && keep_going;
-		  keep_going = ::FindNextFile (file_find, &find_info))
+	for (const auto& entry : Platform::ListFiles(file_filter))
 	{
 		//
 		//	Convert the string to a wide character format
 		//
 		WideStringClass map_name;
-		map_name.Convert_From (find_info.cFileName);
+		map_name.Convert_From (entry.Name.c_str());
 
 		//
 		//	Add this name to our list
 		//
 		MapList.Add (map_name);
-	}
-
-	if (file_find != INVALID_HANDLE_VALUE) {
-		::FindClose (file_find);
 	}
 
 	return ;

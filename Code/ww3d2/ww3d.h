@@ -54,7 +54,6 @@ class		ShaderClass;
 class		DX8Wrapper;
 
 struct	RenderStatistics;
-class		FrameGrabClass;
 class		VertexMaterialClass;
 class		ExtraMaterialPassClass;
 class		RenderInfoClass;
@@ -168,22 +167,7 @@ public:
 	static unsigned int		Get_Last_Frame_Poly_Count(void);
 	static unsigned int		Get_Last_Frame_Vertex_Count(void);
 
-	/*
-	** Screen/Movie capturing
-	** These functions allow you to create screenshots and movies.
-	*/
 	static void					Make_Screen_Shot( const char * filename = "ScreenShot");
-	static void					Start_Movie_Capture( const char * filename_base = "Movie", float frame_rate = 15);
-	static void					Stop_Movie_Capture( void);
-	static void					Toggle_Movie_Capture( const char * filename_base = "Movie", float frame_rate = 15);
-	static void					Start_Single_Frame_Movie_Capture(const char *filename_base = "Frames");
-	static void					Capture_Next_Movie_Frame();
-	static void					Update_Movie_Capture( void);
-	static float				Get_Movie_Capture_Frame_Rate( void);
-	static void					Pause_Movie(bool mode);
-	static bool					Is_Movie_Paused();
-	static bool					Is_Recording_Next_Frame();
-	static bool					Is_Movie_Ready();
 
    /*
 	** Set_Ext_Swap_Interval - how many vertical retraces to wait before flipping frames
@@ -315,7 +299,6 @@ private:
 
 	static bool							IsInitted;
 	static bool							IsRendering;
-	static bool							IsCapturing;
 	static bool							IsSortingEnabled;
 	static bool							IsScreenUVBiased;
 	static bool							IsBackfaceDebugEnabled;
@@ -326,9 +309,6 @@ private:
 	static bool							AreStaticSortListsEnabled;
 	static bool							MungeSortOnLoad;
 
-	static FrameGrabClass *			Movie;
-	static bool							PauseRecord;
-	static bool							RecordNextFrame;
 	static int							FrameCount;
 
 	static VertexMaterialClass *	DefaultDebugMaterial;

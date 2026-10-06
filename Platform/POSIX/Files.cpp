@@ -19,13 +19,21 @@ bool ValidFile(void* handle)
 
 void* Platform::OpenRawFile(const char* path, FileMode mode)
 {
-    if (mode != FileMode::Read && mode != FileMode::Write && mode != FileMode::ReadWrite) { errno = EINVAL; return InvalidFileHandle(); }
+    if (mode != FileMode::Read && mode != FileMode::Write && mode != FileMode::ReadWrite && mode != FileMode::CreateNew) { errno = EINVAL; return InvalidFileHandle(); }
     const bool write = mode != FileMode::Read;
     const std::string resolved = write ? WritePath(path) : ReadPath(path);
-    const int flags = mode == FileMode::Read ? O_RDONLY : mode == FileMode::Write ? O_WRONLY | O_CREAT | O_TRUNC : O_RDWR | O_CREAT;
+    const int flags = mode == FileMode::Read ? O_RDONLY : mode == FileMode::Write ? O_WRONLY | O_CREAT | O_TRUNC
+        : mode == FileMode::CreateNew ? O_WRONLY | O_CREAT | O_EXCL : O_RDWR | O_CREAT;
     const int descriptor = open(resolved.c_str(), flags | O_CLOEXEC, 0666);
     if (descriptor == -1) return InvalidFileHandle();
-    std::FILE* file = fdopen(descriptor, mode == FileMode::Read ? "rb" : mode == FileMode::Write ? "wb" : "r+b");
+    struct stat info{};
+    if (fstat(descriptor, &info) != 0 || S_ISDIR(info.st_mode)) {
+        const int error = S_ISDIR(info.st_mode) ? EISDIR : errno;
+        close(descriptor);
+        errno = error;
+        return InvalidFileHandle();
+    }
+    std::FILE* file = fdopen(descriptor, mode == FileMode::Read ? "rb" : mode == FileMode::ReadWrite ? "r+b" : "wb");
     if (!file) {
         const int error = errno;
         close(descriptor);

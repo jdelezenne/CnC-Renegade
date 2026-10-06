@@ -218,7 +218,7 @@ TDBObjClass::Load (ChunkLoadClass &cload)
 				//	Load the translated string from its chunk
 				//
 				WideStringClass string;
-				cload.Read (string.Get_Buffer((cload.Cur_Chunk_Length () + 1) / 2), cload.Cur_Chunk_Length ());
+				cload.Read_Wide_String(string, cload.Cur_Chunk_Length());
 
 				//
 				//	Add the translated string to our list
@@ -286,7 +286,7 @@ TDBObjClass::Load_Variables (ChunkLoadClass &cload)
 				//	Load the translated string from its chunk
 				//
 				WideStringClass string;
-				cload.Read (string.Get_Buffer((cload.Cur_Micro_Chunk_Length () + 1) / 2), cload.Cur_Micro_Chunk_Length ());
+				cload.Read_Wide_String(string, cload.Cur_Micro_Chunk_Length());
 
 				//
 				//	Add the translated string to our list

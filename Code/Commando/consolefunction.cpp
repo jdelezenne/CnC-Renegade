@@ -34,7 +34,11 @@
  * Functions:                                                                                  *
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
+#include "Platform/Debug.h"
+#include "Platform/Application.h"
 #include "Platform/Paths.h"
+#include "Platform/SystemInfo.h"
+#include "Platform/Network/Transport.h"
 #include "consolefunction.h"
 #include "console.h"
 #include "textdisplay.h"
@@ -884,11 +888,11 @@ public:
 class OpenConsoleFunctionClass : public ConsoleFunctionClass {
 public:
 	virtual	const char * Get_Name( void )	{ return "open"; }
-	virtual	const char * Get_Help( void )	{ return "OPEN [regedit|logfile|ini ininame] - open specified object."; }
+	virtual	const char * Get_Help( void )	{ return "OPEN [settings|logfile|ini ininame] - open specified object."; }
 	virtual	void Activate( const char * input ) {
 
-		if (!stricmp(input, "regedit")) {
-			cNetwork::Shell_Command("regedit");
+		if (!stricmp(input, "settings")) {
+			cNetwork::Shell_Command(Platform::UserPath("Settings.ini").c_str());
 		} else if (!stricmp(input, "logfile")) {
 			cNetwork::Shell_Command(DebugManager::Logfile_Name());
 		} else if (strstr(input, "ini")) {
@@ -2317,7 +2321,7 @@ public:
 	virtual	const char * Get_Help( void )	{ return "BREAK - break execution. Do not use this just for fun."; }
 	virtual	void Activate( const char * input ) {
 		Print("Breaking execution on demand.\n");
-		__debugbreak();
+		Platform::BreakDebugger();
 	}
 };
 
@@ -3456,16 +3460,13 @@ public:
 	virtual	const char * Get_Name( void )	{ return "debug_device"; }
    const char * Get_Alias( void ) { return "dd"; }
 	virtual	const char * Get_Help( void )	{ return
-		"DEBUG_DEVICE [device|on|off] - toggles the debug device (screen, mono, dbwin32, log, windows)"; }
+		"DEBUG_DEVICE [device|on|off] - toggles the debug device (screen, dbwin32, log, windows)"; }
 	virtual	void Activate( const char * input ) {
 		char str[128];
 		sprintf(str,"ERROR (%s)\n", input );
 		if (stricmp(input,"screen") == 0) {
 			DebugManager::Toggle_Device_Enabled( DebugManager::DEBUG_DEVICE_SCREEN );
 			sprintf(str, "Screen Debug %s\n", DebugManager::Is_Device_Enabled( DebugManager::DEBUG_DEVICE_SCREEN ) ? "Enabled" : "Disabled" );
-		} else if (stricmp(input,"mono") == 0) {
-			DebugManager::Toggle_Device_Enabled( DebugManager::DEBUG_DEVICE_MONO );
-			sprintf(str, "Mono Debug %s\n", DebugManager::Is_Device_Enabled( DebugManager::DEBUG_DEVICE_MONO ) ? "Enabled" : "Disabled" );
 		} else if (stricmp(input,"dbwin32") == 0) {
 			DebugManager::Toggle_Device_Enabled( DebugManager::DEBUG_DEVICE_DBWIN32 );
 			sprintf(str, "DBWin32 Debug %s\n", DebugManager::Is_Device_Enabled( DebugManager::DEBUG_DEVICE_DBWIN32 ) ? "Enabled" : "Disabled" );
@@ -3769,7 +3770,7 @@ public:
 		if (!IS_MISSION) {
 			if (AutoRestart.Is_Active()) {
 				AutoRestart.Set_Restart_Flag(false);
-				Set_Exit_On_Exception(true);
+				Platform::SetExitOnException(true);
          	cGameData::Set_Manual_Exit(true);
 			} else {
 				if (cNetwork::I_Am_Server()) {
@@ -3782,7 +3783,7 @@ public:
 
          			Print("Terminating game on demand...\n");
 						AutoRestart.Set_Restart_Flag(false);
-						Set_Exit_On_Exception(true);
+						Platform::SetExitOnException(true);
          			cGameData::Set_Manual_Exit(true);
 					} else {
          			Print("QUIT is for dedicated server only.\n");
@@ -3793,7 +3794,7 @@ public:
 					*/
 					if (ConsoleBox.Is_Exclusive()) {
 						AutoRestart.Set_Restart_Flag(false);
-						Set_Exit_On_Exception(true);
+						Platform::SetExitOnException(true);
          			cGameData::Set_Manual_Exit(true);
 					} else {
          			Print("QUIT is for dedicated server only.\n");
@@ -3876,25 +3877,8 @@ public:
 
 			if (The_Game() && The_Game()->IsDedicated.Is_True()) {
 
-				char upstring[256] = "?";
-				char timestr[256] = "?";
-				FILETIME creation;
-				FILETIME exit;
-				FILETIME kernel;
-				FILETIME user;
-				int ok = GetProcessTimes(GetCurrentProcess(), &creation, &exit, &kernel, &user);
-				if (ok) {
-					FILETIME local;
-					if (FileTimeToLocalFileTime(&creation, &local)) {
-						SYSTEMTIME time;
-						if (FileTimeToSystemTime(&local, &time)) {
-							GetDateFormat(LOCALE_SYSTEM_DEFAULT, 0, &time, NULL, upstring, 256);
-							GetTimeFormat(LOCALE_SYSTEM_DEFAULT, TIME_FORCE24HOURFORMAT, &time, NULL, timestr, 256);
-							strcat(upstring, " - ");
-							strcat(upstring, timestr);
-						}
-					}
-				}
+				const auto processStart = Platform::ProcessStartTimeString();
+				const char* upstring = processStart.empty() ? "?" : processStart.c_str();
 
 				GameModeClass* game = GameModeManager::Find("Combat");
 				if (game && game->Is_Active()) {
@@ -4008,11 +3992,11 @@ public:
 
 							char addr_string[128];
 							sockaddr_in *addr = &client->Get_Address();
-							sprintf(addr_string, "%d.%d.%d.%d;%d", 	(int)(addr->sin_addr.S_un.S_un_b.s_b1),
-																					(int)(addr->sin_addr.S_un.S_un_b.s_b2),
-																					(int)(addr->sin_addr.S_un.S_un_b.s_b3),
-																					(int)(addr->sin_addr.S_un.S_un_b.s_b4),
-																					static_cast<unsigned int>(ntohs(addr->sin_port)));
+							const auto address = ntohl(addr->sin_addr.s_addr);
+							snprintf(addr_string, sizeof(addr_string), "%u.%u.%u.%u;%u",
+								static_cast<unsigned>((address >> 24) & 255), static_cast<unsigned>((address >> 16) & 255),
+								static_cast<unsigned>((address >> 8) & 255), static_cast<unsigned>(address & 255),
+								static_cast<unsigned>(ntohs(addr->sin_port)));
 							int addr_string_len = strlen(addr_string);
 							char local_addr_string[128];
 							strcpy(local_addr_string, addr_string);
@@ -4287,7 +4271,7 @@ public:
 		if (!IS_MISSION) {
 			if (AutoRestart.Is_Active()) {
 				AutoRestart.Set_Restart_Flag(true);
-				Set_Exit_On_Exception(true);
+				Platform::SetExitOnException(true);
          	cGameData::Set_Manual_Exit(true);
 			} else {
 				if (cNetwork::I_Am_Server()) {
@@ -4300,7 +4284,7 @@ public:
 
          			Print("Restarting game on demand...\n");
 						AutoRestart.Set_Restart_Flag(true);
-						Set_Exit_On_Exception(true);
+						Platform::SetExitOnException(true);
          			cGameData::Set_Manual_Exit(true);
 					} else {
          			Print("RESTART is for dedicated server only.\n");
@@ -4701,14 +4685,11 @@ public:
 		} else {
 
 			ULONG ip = p_player->Get_Ip_Address();
-			HOSTENT * p_host = ::gethostbyaddr((char *) &ip, sizeof(ip), AF_INET);
-			char resolved_ip[100] = "";
-			if (p_host != NULL) {
-				::sprintf(resolved_ip, "(%s)", p_host->h_name);
-			}
+			const auto host_name = Platform::IPv4HostName(ip);
+			const auto resolved_ip = host_name.empty() ? std::string() : "(" + host_name + ")";
 
 			Print("%s is at ip %s %s\n",
-				input, cNetUtil::Address_To_String(ip), resolved_ip);
+				input, cNetUtil::Address_To_String(ip), resolved_ip.c_str());
 		}
 	}
 };

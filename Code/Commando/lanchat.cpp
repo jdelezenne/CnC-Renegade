@@ -71,8 +71,8 @@ cLanChat::cLanChat(void) :
 {
    WWDEBUG_SAY(("cLanChat::cLanChat\n"));
 
-	ZeroMemory(&Socket, sizeof(Socket));
-	ZeroMemory(&LocalAddress, sizeof(LocalAddress));
+	Socket = INVALID_SOCKET;
+	LocalAddress = {};
 
    Load_Lan_Settings_Keys();
    Save_Lan_Settings_Keys();

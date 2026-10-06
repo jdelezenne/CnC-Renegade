@@ -19,6 +19,45 @@
 #include "cpudetect.h"
 #include "Platform/SystemInfo.h"
 #include <windows.h>
+#include <lmcons.h>
+#include <vector>
+
+std::string Platform::ProcessStartTimeString()
+{
+    FILETIME creation{}, exit{}, kernel{}, user{}, local{};
+    SYSTEMTIME time{};
+    if (!GetProcessTimes(GetCurrentProcess(), &creation, &exit, &kernel, &user) ||
+        !FileTimeToLocalFileTime(&creation, &local) || !FileTimeToSystemTime(&local, &time)) return {};
+    char date[256]{}, clock[256]{};
+    if (!GetDateFormatA(LOCALE_SYSTEM_DEFAULT, 0, &time, nullptr, date, sizeof(date)) ||
+        !GetTimeFormatA(LOCALE_SYSTEM_DEFAULT, TIME_FORCE24HOURFORMAT, &time, nullptr, clock, sizeof(clock))) return {};
+    return std::string(date) + " - " + clock;
+}
+
+std::string Platform::ExecutablePath()
+{
+    std::vector<char> path(512);
+    for (;;) {
+        const auto size = GetModuleFileNameA(nullptr, path.data(), static_cast<DWORD>(path.size()));
+        if (!size) return {};
+        if (size < path.size()) return std::string(path.data(), size);
+        path.resize(path.size() * 2);
+    }
+}
+
+std::string Platform::ComputerName()
+{
+    char name[MAX_COMPUTERNAME_LENGTH + 1]{};
+    DWORD size = sizeof(name);
+    return GetComputerNameA(name, &size) ? std::string(name, size) : std::string();
+}
+
+std::string Platform::UserName()
+{
+    char name[UNLEN + 1]{};
+    DWORD size = sizeof(name);
+    return GetUserNameA(name, &size) ? std::string(name) : std::string();
+}
 
 struct OSInfoStruct {
 	const char* Code;

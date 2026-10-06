@@ -36,7 +36,7 @@
 
 #include "cnetwork.h"
 
-#include <shellapi.h>
+#include "Platform/Desktop.h"
 #include <stdio.h>
 
 #include "specialbuilds.h"
@@ -1084,11 +1084,12 @@ LPCSTR cNetwork::Get_Client_Enumeration_String(void)
    WWASSERT(I_Am_Server());
    WWASSERT(PServerConnection->Is_Established());
 
-   char temp_str[10];
+   char temp_str[12];
    strcpy(ClientEnumerationString, "");
    for (int rhost_id = PServerConnection->Get_Min_RHost(); rhost_id <= PServerConnection->Get_Max_RHost(); rhost_id++) {
 		if (Get_Server_Rhost(rhost_id) != NULL) {
-         strcat(ClientEnumerationString, itoa(rhost_id, temp_str, 10));
+         snprintf(temp_str, sizeof(temp_str), "%d", rhost_id);
+         strcat(ClientEnumerationString, temp_str);
          strcat(ClientEnumerationString, " ");
       }
 
@@ -1380,9 +1381,8 @@ void cNetwork::Shell_Command(LPCSTR command)
 {
 	WWASSERT(command != NULL);
 
-	HINSTANCE hinst = ShellExecute(NULL, NULL, command, NULL, "", SW_SHOW);
-	if ((uintptr_t) hinst <= 32) {
-      WWDEBUG_SAY(("Error: ShellExecute failed.\n"));
+	if (!Platform::OpenExternal(command)) {
+      WWDEBUG_SAY(("Error: opening external target failed.\n"));
 	}
 }
 

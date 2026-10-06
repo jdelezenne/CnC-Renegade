@@ -32,7 +32,6 @@
 *
 ******************************************************************************/
 
-#include "Platform/Windows/Files.h"
 #include "GameResSend.h"
 #include "GameData.h"
 #include "Player.h"
@@ -43,12 +42,16 @@
 #include <WWOnline/WOLProduct.h>
 #include <WWOnline/WOLUser.h>
 #include <wwlib/cpudetect.h>
-#include <wwlib/verchk.h>
+#include "GameVersion.h"
+#include "Platform/SystemInfo.h"
+#include "Platform/Calendar.h"
+#include <SDL3/SDL_filesystem.h>
+#include <SDL3/SDL_time.h>
+#include <cstdint>
 #include <wwlib/cpudetect.h>
 #include <wwlib/global.h>
 #include <wwlib/md5.h>
 #include <ww3d2/dx8wrapper.h>
-#include <windows.h>
 
 using namespace WWOnline;
 
@@ -98,22 +101,17 @@ void SendGameResults(unsigned long gameID, cGameData* theGame, SList<cPlayer>* p
 	stats.Add_Field("GSKU", gameSKU);
 
 	// Version of executable.
-	char filename[MAX_PATH];
-	GetModuleFileName(NULL, filename, sizeof(filename));
-	VS_FIXEDFILEINFO version;
-	GetVersionInfo(filename, &version);
-	stats.Add_Field("VERS", version.dwFileVersionMS);
+	stats.Add_Field("VERS", static_cast<unsigned long>((REN_FILE_VERSION_MAJOR << 16) | REN_FILE_VERSION_MINOR));
 
 	// Executable build date
-	FILETIME createTime;
-	GetFileCreationTime(filename, &createTime);
-
-	SYSTEMTIME time;
-	FileTimeToSystemTime(&createTime, &time);
+	SDL_PathInfo executableInfo{};
+	SDL_DateTime time{};
+	const auto filename = Platform::ExecutablePath();
+	if (SDL_GetPathInfo(filename.c_str(), &executableInfo)) SDL_TimeToDateTime(executableInfo.modify_time, &time, false);
 
 	char buildDate[20];
 	sprintf(buildDate, "%02d/%02d/%04d %02d:%02d:%02d",
-		time.wMonth, time.wDay, time.wYear, time.wHour, time.wMinute, time.wSecond);
+		time.month, time.day, time.year, time.hour, time.minute, time.second);
 	stats.Add_Field("DATE", buildDate);
 
 	// Proocessor information
@@ -121,12 +119,10 @@ void SendGameResults(unsigned long gameID, cGameData* theGame, SList<cPlayer>* p
 	stats.Add_Field("PSPD", (unsigned long)CPUDetectClass::Get_Processor_Speed());
 
 	// Amount of system memory on server
-	MEMORYSTATUS memStatus;
-	GlobalMemoryStatus(&memStatus);
-	stats.Add_Field("SMEM", (unsigned long)memStatus.dwTotalPhys);
+	stats.Add_Field("SMEM", static_cast<unsigned long>(CPUDetectClass::Get_Total_Physical_Memory()));
 
 	// Video card information
-	DWORD cardInfo[4];
+	std::uint32_t cardInfo[4]{};
 	if (ConsoleBox.Is_Exclusive()) {
 		strcpy((char*)&cardInfo[0], "ConsoleMode");
 	} else {
@@ -157,7 +153,7 @@ void SendGameResults(unsigned long gameID, cGameData* theGame, SList<cPlayer>* p
 	stats.Add_Field("DSVR", (char)dedicatedServer);
 
 	// Time game started
-	LPSYSTEMTIME gameTime = theGame->Get_Game_Start_Time();
+	const Platform::CalendarTime* gameTime = theGame->Get_Game_Start_Time();
 	char startTime[20];
 	sprintf(startTime, "%02d/%02d/%04d %02d:%02d:%02d",
 		gameTime->wMonth, gameTime->wDay, gameTime->wYear, gameTime->wHour, gameTime->wMinute, gameTime->wSecond);
@@ -295,25 +291,6 @@ void SendGameResults(unsigned long gameID, cGameData* theGame, SList<cPlayer>* p
 
 	WWDEBUG_SAY(("Sending game results packet. Size = %lu\n", packetSize));
 
-#if(0)
-#ifdef _DEBUG
-	HANDLE file = Platform::OpenFile("GameRes.dat", GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
-			FILE_ATTRIBUTE_NORMAL, NULL);
-
-	if (INVALID_HANDLE_VALUE != file)
-		{
-		// Write generic contents
-		DWORD written;
-		WriteFile(file, packet, packetSize, &written, NULL);
-		CloseHandle(file);
-		}
-	else
-		{
-		WWDEBUG_SAY(("Failed to create GameRes.dat file."));
-		}
-#endif
-#endif
-
 	session->SendGameResults(packet, packetSize);
 	}
 
@@ -407,8 +384,9 @@ void AddPlayerStats(GameResPacket& stats, cPlayer* player, WOL::Locale locale,
 
 		for (int wepIndex = 0; wepIndex < numWeapons; wepIndex++)
 			{
-			unsigned long weaponInfo[2] = {0,0};
-			player->Get_Weapon_Fired(wepIndex, weaponInfo[0], weaponInfo[1]);
+			unsigned long weapon = 0, fired = 0;
+			player->Get_Weapon_Fired(wepIndex, weapon, fired);
+			std::uint32_t weaponInfo[2] = {static_cast<std::uint32_t>(weapon), static_cast<std::uint32_t>(fired)};
 
 			char token[5];
 			sprintf(token, "WP%02X", wepIndex);

@@ -35,7 +35,7 @@
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 
-#include "Platform/Graphics/Types.h"
+
 
 class WideStringClass;
 class StringClass;
@@ -87,7 +87,7 @@ class ConsoleModeClass
 		*/
 		void Set_Exclusive(bool set) {IsExclusive = set;}
 		bool Is_Exclusive(void) {return(IsExclusive);}
-		Platform::GraphicsWindowHandle Get_Slave_Window_By_Title(char *name, char *settings);
+		void* Get_Slave_Window_By_Title(char *name, char *settings);
 		StringClass Compose_Window_Title(char *name, char *settings, bool slave);
 		void cprintf(char const * string, ...);
 
@@ -106,13 +106,12 @@ class ConsoleModeClass
 		/*
 		** Input and output handles.
 		*/
-		void *	ConsoleInputHandle;
-		void *	ConsoleOutputHandle;
+		bool TerminalOpen;
 
 		/*
 		** Window handle.
 		*/
-		Platform::GraphicsWindowHandle		ConsoleWindow;
+
 
 		/*
 		** Input parsing variables.

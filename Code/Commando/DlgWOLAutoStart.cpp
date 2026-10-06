@@ -37,7 +37,6 @@
 
 #include "always.h"
 #include "autostart.h"
-#include "win.h"
 #include "listctrl.h"
 #include "dlgwolautostart.h"
 #include "menubackdrop.h"

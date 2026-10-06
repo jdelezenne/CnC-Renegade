@@ -45,6 +45,9 @@
 #include	"natsock.h"
 #include "nataddr.h"
 #include "systimer.h"
+#include "Platform/Platform.h"
+#include "Code/wwnet/PacketCRC.h"
+#include <cstring>
 
 /*
 ** All instances are tracked here.
@@ -129,8 +132,8 @@ SocketHandlerClass::~SocketHandlerClass(void)
  *=============================================================================================*/
 bool SocketHandlerClass::Open(int inport, int outport)
 {
-	LINGER ling;
-	struct sockaddr_in addr;
+	linger ling;
+	struct sockaddr_in addr{};
 	static int socket_transmit_buffer_size = SOCKET_BUFFER_SIZE;
 	static int socket_receive_buffer_size = SOCKET_BUFFER_SIZE;
 
@@ -138,7 +141,7 @@ bool SocketHandlerClass::Open(int inport, int outport)
 	** Create our UDP socket
 	*/
 	DebugString(("SocketHandlerClass - About to open a UDP socket\n"));
-	Socket = socket(AF_INET, SOCK_DGRAM, 0);
+	Socket = Platform::SocketCreate(AF_INET, SOCK_DGRAM, 0);
 	if (Socket == INVALID_SOCKET) {
 		return(false);
 	}
@@ -152,8 +155,8 @@ bool SocketHandlerClass::Open(int inport, int outport)
 	addr.sin_addr.s_addr = htonl(INADDR_ANY);
 
 	DebugString(("SocketHandlerClass - About to bind the UDP socket to port %d\n", inport));
-	if (bind (Socket, (LPSOCKADDR)&addr, sizeof(addr) ) == SOCKET_ERROR) {
-		DebugString(("SocketHandlerClass - bind failed with error code %d\n", WSAGetLastError()));
+	if (Platform::SocketBind(Socket, (LPSOCKADDR)&addr, sizeof(addr) ) == SOCKET_ERROR) {
+		DebugString(("SocketHandlerClass - bind failed with error code %d\n", Platform::SocketLastError()));
 		Close();
 		return(false);
 	}
@@ -163,53 +166,20 @@ bool SocketHandlerClass::Open(int inport, int outport)
 	IncomingPort = inport;
 	OutgoingPort = outport;
 
-	/*
-	** Use gethostbyname to find the name of the local host. We will need this to look up
-	** the local ip address.
-	*/
-	DebugString(("SocketHandlerClass - About to query the host name\n"));
-	char hostname[128];
-	if (gethostname(hostname, 128) == 0) {
-		DebugString(("Host name is '%s'\n", hostname));
-	}
-
-	DebugString(("SocketHandlerClass - About to call gethostbyname\n"));
-	struct hostent *host_info = gethostbyname(hostname);
-
-	if (!host_info) {
-		DebugString(("SocketHandlerClass - gethostbyname failed! Error code %d\n", LAST_ERROR));
-	}
-
-	/*
-	** Clear out any old local addresses from the local address list.
-	*/
-	while (LocalAddresses.Count()) {
-		delete LocalAddresses[0];
-		LocalAddresses.Delete(0);
-	}
-
-	/*
-	** Add all local IP addresses to the list. This list will be used to discard any packets that
-	** we send to ourselves by mistake.
-	*/
-	unsigned long **addresses = (unsigned long**) (host_info->h_addr_list);
-
-	for ( ;; ) {
-		if ( !*addresses ) break;
-
-		/*
-		** Read the next address
-		*/
-		unsigned long address = **addresses++;
-		DebugString(("SocketHandlerClass - Found local address: %d.%d.%d.%d\n", address & 0xff, (address & 0xff00) >> 8, (address & 0xff0000) >> 16, (address & 0xff000000) >> 24));
-
-		/*
-		** Add it to the local address list.
-		*/
-		unsigned char *a = new unsigned char [4];
-		* ((unsigned long*) a) = address;
-		LocalAddresses.Add (a);
-	}
+    std::vector<std::uint32_t> addresses;
+    if (!Platform::LocalIPv4Addresses(addresses)) {
+        Close();
+        return false;
+    }
+    while (LocalAddresses.Count()) {
+        delete[] LocalAddresses[0];
+        LocalAddresses.Delete(0);
+    }
+    for (const auto address : addresses) {
+        auto* bytes = new unsigned char[4];
+        std::memcpy(bytes, &address, 4);
+        LocalAddresses.Add(bytes);
+    }
 
 
 	/*
@@ -217,12 +187,12 @@ bool SocketHandlerClass::Open(int inport, int outport)
 	*/
 	ling.l_onoff = 0;		// linger off
 	ling.l_linger = 0;	// timeout in seconds (ie close now)
-	setsockopt (Socket, SOL_SOCKET, SO_LINGER, (LPSTR)&ling, sizeof(ling));
+	Platform::SocketSetOption(Socket, SOL_SOCKET, SO_LINGER, reinterpret_cast<char*>(&ling), sizeof(ling));
 
 	/*
 	** Specify the size of the receive buffer.
 	*/
-	int err = setsockopt(Socket, SOL_SOCKET, SO_RCVBUF, (char*)&socket_receive_buffer_size, 4);
+	int err = Platform::SocketSetOption(Socket, SOL_SOCKET, SO_RCVBUF, (char*)&socket_receive_buffer_size, 4);
 	if (err == INVALID_SOCKET) {
 		DebugString(("SocketHandlerClass - Failed to set socket option SO_RCVBUF - error code %d.\n", LAST_ERROR));
 		fw_assert ( err != INVALID_SOCKET);
@@ -233,7 +203,7 @@ bool SocketHandlerClass::Open(int inport, int outport)
 	/*
 	** Specify the size of the send buffer.
 	*/
-	err = setsockopt ( Socket, SOL_SOCKET, SO_SNDBUF, (char*)&socket_transmit_buffer_size, 4);
+	err = Platform::SocketSetOption( Socket, SOL_SOCKET, SO_SNDBUF, (char*)&socket_transmit_buffer_size, 4);
 	if ( err == INVALID_SOCKET ) {
 		DebugString(("SocketHandlerClass - Failed to set socket option SO_SNDBUF - error code %d.\n", LAST_ERROR));
 		fw_assert ( err != INVALID_SOCKET );
@@ -244,10 +214,11 @@ bool SocketHandlerClass::Open(int inport, int outport)
 	/*
 	** Set the blocking mode of the socket to non-blocking.
 	*/
-	unsigned long nonblocking = true;
-	err = ioctlsocket(Socket, FIONBIO, &nonblocking);
+	err = Platform::SocketSetNonblocking(Socket);
 	if (err) {
 		DebugString(("SocketHandlerClass - Failed to set socket to non-blocking - error code %d.\n", LAST_ERROR));
+        Close();
+        return false;
 	}
 
 	DebugString(("SocketHandlerClass - UDP Socket init complete\n"));
@@ -278,13 +249,13 @@ void SocketHandlerClass::Close(void)
 	** Clear out any old local addresses from the local address list.
 	*/
 	while (LocalAddresses.Count()) {
-		delete LocalAddresses[0];
+		delete[] LocalAddresses[0];
 		LocalAddresses.Delete(0);
 	}
 
 	if (Socket != INVALID_SOCKET) {
 		DebugString(("SocketHandlerClass - Closing socket %d bound to port %d\n", Socket, IncomingPort));
-		if (closesocket(Socket) != 0) {
+		if (Platform::SocketClose(Socket) != 0) {
 			DebugString(("SocketHandlerClass - closesocket failed with error code %d\n", LAST_ERROR));
 		}
 		Socket = INVALID_SOCKET;
@@ -378,14 +349,12 @@ void SocketHandlerClass::Discard_Out_Buffers(void)
  *=============================================================================================*/
 void SocketHandlerClass::Clear_Socket_Error(void)
 {
-	unsigned long error_code;
-	int length = 4;
+    int error_code = 0;
+    int length = sizeof(error_code);
+    if (Socket != INVALID_SOCKET) {
+        Platform::SocketGetOption(Socket, SOL_SOCKET, SO_ERROR, reinterpret_cast<char*>(&error_code), &length);
+    }
 
-	if (Socket != INVALID_SOCKET) {
-		getsockopt (Socket, SOL_SOCKET, SO_ERROR, (char*)&error_code, &length);
-		error_code = 0;
-		setsockopt (Socket, SOL_SOCKET, SO_ERROR, (char*)&error_code, length);
-	}
 }
 
 
@@ -616,19 +585,8 @@ void SocketHandlerClass::Build_Packet_CRC(WinsockBufferType *packet)
 
 	packet->CRC = 0;
 
-	unsigned long *crc_ptr = &(packet->CRC);
-	unsigned long *packetptr = (unsigned long*) &(packet->Buffer[0]);
+	packet->CRC = Compute_Packet_CRC(packet->Buffer, packet->BufferLen);
 
-	for (int i=0 ; i<packet->BufferLen/4 ; i++) {
-		Add_CRC (crc_ptr, *packetptr++);
-	}
-
-	int leftover = packet->BufferLen & 3;
-	if (leftover) {
-		unsigned long val = *packetptr;
-		val = val & (0xffffffff >> ((4-leftover) << 3));
-		Add_CRC (crc_ptr, val);
-	}
 }
 
 
@@ -655,21 +613,7 @@ bool SocketHandlerClass::Passes_CRC_Check(WinsockBufferType *packet)
 		return (false);
 	}
 
-	unsigned long crc = 0;
-
-	unsigned long *crc_ptr = &crc;
-	unsigned long *packetptr = (unsigned long*) &(packet->Buffer[0]);
-
-	for (int i=0 ; i<packet->BufferLen/4 ; i++) {
-		Add_CRC (crc_ptr, *packetptr++);
-	}
-
-	int leftover = packet->BufferLen & 3;
-	if (leftover) {
-		unsigned long val = *packetptr;
-		val = val & (0xffffffff >> ((4-leftover) << 3));
-		Add_CRC (crc_ptr, val);
-	}
+	const auto crc = Compute_Packet_CRC(packet->Buffer, packet->BufferLen);
 
 	if (crc == packet->CRC) {
 		return (true);
@@ -833,8 +777,7 @@ void SocketHandlerClass::Service_All(void)
  *=============================================================================================*/
 void SocketHandlerClass::Service(void)
 {
-	unsigned long bytes;
-	struct sockaddr_in addr;
+	struct sockaddr_in addr{};
 	int addr_len;
 	WinsockBufferType *packet;
 	int result;
@@ -845,55 +788,22 @@ void SocketHandlerClass::Service(void)
 		return;
 	}
 
-	for (;;) {
+    for (;;) {
+        if (times > 5 && (TIMEGETTIME() - timeout_check) > (TIMER_SECOND * 5)) break;
+        ++times;
+        Platform::Sleep(0);
+        addr_len = sizeof(addr);
+        result = Platform::SocketReceiveFrom(Socket, reinterpret_cast<char*>(ReceiveBuffer), sizeof(ReceiveBuffer), 0,
+            reinterpret_cast<sockaddr*>(&addr), &addr_len);
+        if (result == SOCKET_ERROR) {
+            if (LAST_ERROR != Platform::SocketWouldBlockError()) {
+                DebugString(("SocketHandlerClass - recvfrom returned error code %d\n", LAST_ERROR));
+                Clear_Socket_Error();
+            }
+            break;
+        }
 
-		/*
-		** Some bail out code, just in case things get stuck.
-		*/
-		if (times > 5 && (TIMEGETTIME() - timeout_check) > (TIMER_SECOND*5)) {
-			break;
-		}
-		times++;
-		Sleep(0);
-
-		/*
-		**
-		** First, check to see if there is any data waiting to be read.
-		**
-		**
-		**
-		*/
-		result = ioctlsocket(Socket, FIONREAD, &bytes);
-
-		/*
-		** Result of 0 is success.
-		*/
-		if (result != 0) {
-			DebugString(("ioctlsocket returned error code %d\n", LAST_ERROR));
-			break;
-		} else {
-
-			/*
-			** If there is outstanding data, 'bytes' will contain the size of the next queued datagram.
-			*/
-			if (bytes == 0) {
-				break;
-			} else {
-
-				/*
-				** Call recvfrom function to get the outstanding packet.
-				*/
-				addr_len = sizeof(addr);
-				result = recvfrom(Socket, (char*)ReceiveBuffer, sizeof(ReceiveBuffer), 0, (LPSOCKADDR)&addr, &addr_len);
-
-				/*
-				** See if we got an error.
-				*/
-				if (result == SOCKET_ERROR) {
-					DebugString(("SocketHandlerClass - recvfrom returned error code %d\n", LAST_ERROR));
-					Clear_Socket_Error();
-					break;
-				} else {
+                    if (result <= static_cast<int>(sizeof(std::uint32_t))) continue;
 
 					/*
 					** Possibly throw away packet if loss testing is enabled.
@@ -924,7 +834,7 @@ void SocketHandlerClass::Service(void)
 					** result is the number of bytes read.
 					*/
 					packet->BufferLen = result - sizeof(packet->CRC);
-					packet->CRC = *((unsigned long*) (&ReceiveBuffer[0]));
+					std::memcpy(&packet->CRC, ReceiveBuffer, sizeof(packet->CRC));
 					memcpy (packet->Buffer, ReceiveBuffer + sizeof(packet->CRC), packet->BufferLen);
 
 					/*
@@ -967,10 +877,8 @@ void SocketHandlerClass::Service(void)
 						InBuffers.Add (packet);
 						DebugString(("SocketHandlerClass - InBuffers.Count() == %d\n", InBuffers.Count()));
 					}
-				}
-			}
-		}
-	}
+
+    }
 
 
 	//DebugString(("SocketHandlerClass - SocketHandler service\n"));
@@ -992,7 +900,7 @@ void SocketHandlerClass::Service(void)
 			break;
 		}
 		times++;
-		Sleep(0);
+		Platform::Sleep(0);
 
 		/*
 		** Get a pointer to the first packet.
@@ -1016,10 +924,10 @@ void SocketHandlerClass::Service(void)
 		/*
 		** Send it.
 		*/
-		result = sendto(Socket, ((char const *)packet->Buffer) - sizeof(packet->CRC), packet->BufferLen + sizeof(packet->CRC), 0, (LPSOCKADDR)&addr, sizeof (addr));
+		result = Platform::SocketSendTo(Socket, ((char const *)packet->Buffer) - sizeof(packet->CRC), packet->BufferLen + sizeof(packet->CRC), 0, (LPSOCKADDR)&addr, sizeof (addr));
 
 		if (result == SOCKET_ERROR){
-			if (LAST_ERROR != WSAEWOULDBLOCK) {
+			if (LAST_ERROR != Platform::SocketWouldBlockError()) {
 				DebugString(("SocketHandlerClass - sendto returned error code %d\n", LAST_ERROR));
 				Clear_Socket_Error();
 			} else {
@@ -1027,8 +935,8 @@ void SocketHandlerClass::Service(void)
 				/*
 				** No more room for outgoing packets.
 				*/
-				DebugString(("SocketHandlerClass - sendto returned WSAEWOULDBLOCK\n"));
-				Sleep(0);
+				DebugString(("SocketHandlerClass - sendto returned Platform::SocketWouldBlockError()\n"));
+				Platform::Sleep(0);
 			}
 			break;
 		}
@@ -1061,7 +969,7 @@ void SocketHandlerClass::Service(void)
  * HISTORY:                                                                                    *
  *   05/09/1995 BRR : Created                                                                  *
  *=============================================================================================*/
-void SocketHandlerClass::Add_CRC(unsigned long *crc, unsigned long val)
+void SocketHandlerClass::Add_CRC(std::uint32_t *crc, std::uint32_t val)
 {
 	int hibit;
 

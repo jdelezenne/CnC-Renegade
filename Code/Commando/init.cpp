@@ -36,7 +36,11 @@
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 #include "Platform/Paths.h"
-#include "Platform/Windows/Files.h"
+#include "Platform/Files.h"
+#include "Platform/SystemInfo.h"
+#include "Platform/Directory.h"
+#include "Platform/Threads.h"
+#include "Platform/Debug.h"
 #include "init.h"
 #include "Platform/Platform.h"
 #include "debug.h"
@@ -66,7 +70,8 @@
 #include "miscutil.h"
 #include "cnetwork.h"
 #include "mathutil.h"
-#include "win.h"
+#include "Platform/Application.h"
+#include <cstdlib>
 #include "Part_Ldr.H"
 #include "savegame.H"
 #include	"systemsettings.h"
@@ -224,19 +229,18 @@ void Append_To_Assert_History(const char * message)
 	//
 	// Full filename
 	//
-	char full_filename[MAX_PATH];
-	::GetModuleFileName(NULL, full_filename, sizeof(full_filename));
-	::sprintf(line, "Filename:   %s\n", full_filename);
+	const auto full_filename = Platform::ExecutablePath();
+	::sprintf(line, "Filename:   %s\n", full_filename.c_str());
 	::fwrite(line, 1, ::strlen(line), file);
 
 	//
 	// File size
 	//
-	HANDLE hfile = Platform::OpenFile(full_filename, 0, 0, NULL, OPEN_EXISTING, 0L, NULL);
-	if (hfile != INVALID_HANDLE_VALUE)
+	void* hfile = Platform::OpenRawFile(full_filename.c_str(), Platform::FileMode::Read);
+	if (hfile != Platform::InvalidFileHandle())
 	{
-		DWORD file_size = ::GetFileSize(hfile, NULL);
-		::CloseHandle(hfile);
+		int file_size = Platform::RawFileSize(hfile);
+		Platform::CloseRawFile(hfile);
 		::sprintf(line, "Filesize:   %d\n", file_size);
 		::fwrite(line, 1, ::strlen(line), file);
 	}
@@ -280,8 +284,8 @@ void Commando_Assert_Handler(const char * message)
 	//
 	// If the exception handler is try to quit the game then don't show an assert.
 	//
-	if (Is_Trying_To_Exit()) {
-		ExitProcess(0);
+	if (Platform::IsExitingAfterException()) {
+		std::_Exit(0);
 	}
 
 	//
@@ -352,11 +356,11 @@ void Commando_Assert_Handler(const char * message)
 			m$"               "m           "
                        																												*/
 
-		__debugbreak();
+		Platform::BreakDebugger();
 	}
 
 	if (cDevOptions::ExitThreadOnAssert.Is_True()) {
-      ExitThread(1);
+      ThreadClass::Exit_Current_Thread(1);
    }
 
 #endif // WWDEBUG
@@ -418,55 +422,16 @@ LoggingFileFactoryClass		LoggingFileFactory;
 /*
 **
 */
-void	Construct_Directory_Structure(void)
+void Construct_Directory_Structure(void)
 {
-	StringClass data_dir(Platform::UserPath("data").c_str(),true);
-
-	StringClass save_dir(data_dir + "\\save",true);
-	StringClass config_dir(data_dir + "\\config",true);
-
-	//
-	//	Create the data directory if necessary
-	//
-	if (GetFileAttributes (data_dir) == 0xFFFFFFFF) {
-		Platform::MakeDirectory(data_dir, NULL);
-	}
-
-	//
-	//	Create the save directory if necessary
-	//
-	if (GetFileAttributes (save_dir) == 0xFFFFFFFF) {
-		Platform::MakeDirectory(save_dir, NULL);
-	}
-
-	//
-	//	Create the config directory if necessary
-	//
-	if (GetFileAttributes (config_dir) == 0xFFFFFFFF) {
-		Platform::MakeDirectory(config_dir, NULL);
-	}
-
-
-	return ;
+    Platform::CreateUserDirectory("data");
+    Platform::CreateUserDirectory("data/save");
+    Platform::CreateUserDirectory("data/config");
 }
 
 static bool Verify_Log_Directory(const StringClass& folder)
 {
-	if (GetFileAttributes(folder)!=0xffffffff) return true;
-	//HANDLE file;
-	//file = Platform::OpenFile(folder, 0, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-	//if (file!=INVALID_HANDLE_VALUE) {
-	//	CloseHandle(file);
-	//	return true;
-	//}
-
-	if (Platform::MakeDirectory(folder,NULL)) {
-		return true;
-	}
-	if (GetLastError() == ERROR_ALREADY_EXISTS) {
-		return(true);
-	}
-	return false;
+    return Platform::CreateUserDirectory(folder);
 }
 
 static bool Create_Log_File_Name(const StringClass& folder, StringClass& filename,bool use_numbering)
@@ -477,11 +442,11 @@ static bool Create_Log_File_Name(const StringClass& folder, StringClass& filenam
 		return true;
 	}
 	for (int i=0;i<999;++i) {
-		HANDLE file;
+		void* file;
 		filename.Format("%s\\%3.3d%s",folder.Peek_Buffer(),i,original.Peek_Buffer());
-		file = Platform::OpenFile(filename, GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
-		if (file!=INVALID_HANDLE_VALUE) {
-			CloseHandle(file);
+		file = Platform::OpenRawFile(filename, Platform::FileMode::CreateNew);
+		if (file!=Platform::InvalidFileHandle()) {
+			Platform::CloseRawFile(file);
 			return true;
 		}
 	}
@@ -496,17 +461,17 @@ static void Copy_Log(const StringClass& folder,const char* filename,bool use_num
 		if (size) {
 			StringClass log_file_name(filename);
 			if (Create_Log_File_Name(folder,log_file_name,use_numbering)) {
-				DWORD written;
-				HANDLE file;
-				file = Platform::OpenFile(log_file_name, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-				if (INVALID_HANDLE_VALUE != file) {
+				std::uint32_t written;
+				void* file;
+				file = Platform::OpenRawFile(log_file_name, Platform::FileMode::Write);
+				if (Platform::InvalidFileHandle() != file) {
 					raw_log_file.Open();
 					unsigned char* memory=new unsigned char[size];
 					raw_log_file.Read(memory,size);
 					raw_log_file.Close();
-					WriteFile(file, memory, size, &written, NULL);
+					Platform::WriteRawFile(file, memory, size, written);
 					delete[] memory;
-					CloseHandle(file);
+					Platform::CloseRawFile(file);
 				}
 			}
 		}
@@ -521,7 +486,7 @@ public:
 	CopyThreadClass()
 		:
 		Version(0),
-		ThreadClass("LogCopyThread", &Exception_Handler) {}
+		ThreadClass("LogCopyThread", Platform::DefaultThreadExceptionHandler()) {}
 
 	~CopyThreadClass() { Stop(); }
 
@@ -529,20 +494,18 @@ public:
 	{
 		// Write log to network folder
 
-		char computer_name[MAX_COMPUTERNAME_LENGTH + 1];
-		DWORD size = sizeof(computer_name);
-		::GetComputerName(computer_name, &size);
+		const auto computer_name = Platform::ComputerName();
 
 		SettingsClass reg(APPLICATION_SETTINGS_SECTION_DEBUG);
-		char path[MAX_PATH];
-		reg.Get_String("LogPath", path, sizeof(path), Platform::UserPath("Logs").c_str());
-		strcat(path, "\\");
+		StringClass path;
+		reg.Get_String("LogPath", path, Platform::UserPath("Logs").c_str());
+		path += "\\";
 
 		StringClass folder_name(0,true);
-		folder_name.Format("%s%d.%d",path,Version>>16,Version&0xffff);
+		folder_name.Format("%s%d.%d",path.Peek_Buffer(),Version>>16,Version&0xffff);
 		if (!Verify_Log_Directory(folder_name)) return;
 		folder_name+="\\";
-		folder_name+=computer_name;
+		folder_name+=computer_name.c_str();
 		if (!Verify_Log_Directory(folder_name)) return;
 
 		Copy_Log(folder_name,DebugManager::Logfile_Name(),true);		//"_logfile.txt",true);
@@ -568,7 +531,7 @@ void Copy_Logs(unsigned version)
 		if (!CopyThread.Is_Running()) {
 			break;
 		}
-		Sleep(100);
+		Platform::Sleep(100);
 	}
 }
 
@@ -645,7 +608,7 @@ void CRC_Check( void )
 #define	MAX_STRING	10
 #define	GOAL_CRC		65729409
 
-	int start = timeGetTime();
+	const auto start = static_cast<unsigned>(Platform::Ticks());
 
 	unsigned char string[MAX_STRING+1];
 	for ( int length = 1; length <= MAX_STRING; length++ ) 
@@ -662,14 +625,14 @@ void CRC_Check( void )
 			}*/
 			int crc = CRC_String( (char *)string );
 			if ( crc == GOAL_CRC ) {
-				Debug_Say(( "CRC MATCH \"%s\" (count %d) at %d\n\n", string, count, timeGetTime()-start ));
+				Debug_Say(( "CRC MATCH \"%s\" (count %d) at %d\n\n", string, count, static_cast<unsigned>(Platform::Ticks())-start ));
 			}
 			count++;
 			if ( CRC_Next( &p, length-1 ) != 0 ) {
 				break;
 			}
 		}
-Debug_Say(( "End length %d (count %d) at %d\n", length, count, timeGetTime()-start ));
+Debug_Say(( "End length %d (count %d) at %d\n", length, count, static_cast<unsigned>(Platform::Ticks())-start ));
 	}
 
 //	strcpy( string, "miketheheadlesschickenisgod" );
@@ -734,25 +697,9 @@ bool Game_Init(void)
 	//
 	//	Search for all mix files in the data directory
 	//
-	WIN32_FIND_DATA find_info	= { 0 };
-	BOOL keep_going				= TRUE;
-	HANDLE file_find				= NULL;
-	for (file_find = ::FindFirstFile ("data\\*.mix", &find_info);
-		 (file_find != INVALID_HANDLE_VALUE) && keep_going;
-		  keep_going = ::FindNextFile (file_find, &find_info))
-	{
-		//
-		//	Add this mix file to our mix file factory list
-		//
-		_RenegadeFileFactory.Add_FileFactory( new MixFileFactoryClass (find_info.cFileName, &RenegadeBaseFileFactory ), find_info.cFileName );
-	}
-
-	//
-	//	Close the search handle
-	//
-	if (file_find != INVALID_HANDLE_VALUE) {
-		::FindClose (file_find);
-	}
+    for (const auto& entry : Platform::ListFiles("data/*.mix")) {
+        _RenegadeFileFactory.Add_FileFactory(new MixFileFactoryClass(entry.Name.c_str(), &RenegadeBaseFileFactory), entry.Name.c_str());
+    }
 
 	_TheFileFactory = &_RenegadeFileFactory;
 
@@ -815,16 +762,13 @@ bool Game_Init(void)
 	PathMgrClass::Initialize ();
 
 	// Initialize WW3D
-	switch ( WW3D::Init(MainWindow, NULL, ConsoleBox.Is_Exclusive() ? true : false)) {
+	switch ( WW3D::Init(Platform::GetWindow(), NULL, ConsoleBox.Is_Exclusive() ? true : false)) {
 	case WW3D_ERROR_OK:	// Success!
 		break;
 	case WW3D_ERROR_DIRECTX8_INITIALIZATION_FAILED:
 	default:
 		WWDEBUG_SAY(("WW3D::Init Failed!\r\n"));
-		::MessageBox(NULL,
-			"DirectX 8.0 or later is required to play C&C:Renegade.",
-			"Renegade Graphics Initialization Error.",
-			MB_OK);
+		Platform::ShowErrorDialog("Renegade Graphics Initialization Error.", "Unable to initialize the graphics renderer.");
 		return false;
 	}
 
@@ -926,10 +870,8 @@ bool Game_Init(void)
 	// table version
 	//
 	if (TranslateDBClass::Get_Version_Number () != STRINGS_VER) {
-		MessageBox( 0,
-			"This build of Renegade is out of sync with the strings database (strings.tdb).  Strings will be incorrect and may cause the game to crash.",
-			"Version Error",
-			MB_OK | MB_ICONEXCLAMATION | MB_SETFOREGROUND  );
+		Platform::ShowErrorDialog("Version Error",
+			"This build of Renegade is out of sync with the strings database (strings.tdb).  Strings will be incorrect and may cause the game to crash.");
 	}
 
 	//

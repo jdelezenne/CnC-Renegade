@@ -121,7 +121,7 @@ class Download :
 
 		WOL::Update mWOLUpdate;
 
-		CComPtr<WOL::IDownload> mDownloadObject;
+		Platform::OnlinePointer<WOL::IDownload> mDownloadObject;
 		unsigned long mDownloadCookie;
 
 		DLState mState;
@@ -149,11 +149,11 @@ class Download :
 	// IDownloadEvent Methods
 	//---------------------------------------------------------------------------
 	protected:
-		STDMETHOD(OnEnd)(void);
-		STDMETHOD(OnError)(int error);
-		STDMETHOD(OnProgressUpdate)(int bytesRead, int totalSize, int timeElapsed, int timeRemaining);
-		STDMETHOD(OnQueryResume)(void);
-		STDMETHOD(OnStatusUpdate)(int status);
+		virtual HRESULT STDMETHODCALLTYPE OnEnd(void);
+		virtual HRESULT STDMETHODCALLTYPE OnError(int error);
+		virtual HRESULT STDMETHODCALLTYPE OnProgressUpdate(int bytesRead, int totalSize, int timeElapsed, int timeRemaining);
+		virtual HRESULT STDMETHODCALLTYPE OnQueryResume(void);
+		virtual HRESULT STDMETHODCALLTYPE OnStatusUpdate(int status);
 	};
 
 

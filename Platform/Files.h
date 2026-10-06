@@ -3,7 +3,7 @@
 #include <cstdint>
 
 namespace Platform {
-enum class FileMode { Read, Write, ReadWrite };
+enum class FileMode { Read, Write, ReadWrite, CreateNew };
 
 inline void* InvalidFileHandle() { return reinterpret_cast<void*>(static_cast<std::intptr_t>(-1)); }
 void* OpenRawFile(const char* path, FileMode mode);

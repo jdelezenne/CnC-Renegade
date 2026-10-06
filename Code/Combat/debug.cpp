@@ -42,7 +42,6 @@
 #include "wwphystrig.h"
 #include "timemgr.h"
 #include "ww3d.h"
-#include "mono.h"
 #include "Settings.h"
 #include <stdio.h>
 #include "wwaudio.h"
@@ -74,7 +73,6 @@ DebugDisplayHandlerClass *	DebugManager::DisplayHandler		= NULL;
 LPCSTR DebugManager::LOGFILE = DEFAULT_LOGFILE_NAME;
 char DebugManager::LogfileNameBuffer[256];
 
-MonoClass			ScrollingScreen;
 
 /*
 ** local prototypes
@@ -92,8 +90,6 @@ char DefaultSettingsModifier[1024] = {""};
 */
 void	DebugManager::Init( void )
 {
-	// Enable Mono Screen
-	ScrollingScreen.Enable();
 
 	// Install message handler functions for the WWDebug messages
 	// and assertion failures.
@@ -139,8 +135,6 @@ void	DebugManager::Shutdown( void )
 	WWDebug_Install_Profile_Start_Handler(NULL);
 	WWDebug_Install_Profile_Stop_Handler(NULL);
 
-	// Disable mono screen
-	ScrollingScreen.Disable();
 }
 
 /*
@@ -154,19 +148,7 @@ void	DebugManager::Update( void )
 		WW3D::Make_Screen_Shot();
 	}
 
-	if ( Input::Get_State( INPUT_FUNCTION_TOGGLE_MOVIE_CAPTURE ) ) {
-#ifdef WWDEBUG
-		WW3D::Toggle_Movie_Capture();
-#endif
-	}
 
-#if 0
-	// Single Step code
-	if (WWDEBUG_TRIGGER(0x53 /*S*/)) {
-		while (!WWDEBUG_TRIGGER(0x20/*SPACE*/))		Input::Update();
-		while (WWDEBUG_TRIGGER(0x20/*SPACE*/))			Input::Update();
-	}
-#endif
 }
 
 void	DebugManager::Load_Settings( const char * sub_key )
@@ -213,9 +195,6 @@ void	DebugManager::Display( char const *buffer )
 		Display_Text( buffer );
 	}
 
-	if ( EnabledDevices & DEBUG_DEVICE_MONO ) {
-		ScrollingScreen.Printf( buffer );
-	}
 
 #ifdef WWDEBUG
    if ( EnabledDevices & DEBUG_DEVICE_DBWIN32 ) {

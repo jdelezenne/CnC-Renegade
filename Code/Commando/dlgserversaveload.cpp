@@ -699,8 +699,8 @@ ServerSettingsClass *ServerSettingsManagerClass::Get_Settings(int index)
  *=============================================================================================*/
 void ServerSettingsManagerClass::Scan(void)
 {
-	char file_name[MAX_PATH];
-	char whole_file_name[MAX_PATH];
+	StringClass file_name;
+	StringClass whole_file_name;
 	//char description[256];
 	WideStringClass description(128, true);
 	StringClass char_description(128, true);
@@ -724,8 +724,8 @@ void ServerSettingsManagerClass::Scan(void)
 
 	for (int i=2 ; i<MAX_SETTINGS_FILES ; i++) {
 
-		sprintf(file_name, DEFAULT_SERVER_SETTINGS_FILE_NAME, i);
-		sprintf(whole_file_name, "data\\%s", file_name);
+		file_name.Format(DEFAULT_SERVER_SETTINGS_FILE_NAME, i);
+		whole_file_name.Format("data\\%s", file_name.Peek_Buffer());
 		RawFileClass file(whole_file_name);
 		if (file.Is_Available()) {
 			INIClass *ini = Get_INI(file_name);
@@ -790,8 +790,8 @@ void ServerSettingsManagerClass::Load_Settings(ServerSettingsClass *settings)
 	WWASSERT(The_Game() != NULL);
 
 	if (settings && The_Game()) {
-		char filename[MAX_PATH];
-		sprintf(filename, "data\\%s", settings->RawFileName.Peek_Buffer());
+		StringClass filename;
+		filename.Format("data\\%s", settings->RawFileName.Peek_Buffer());
 		RawFileClass file(filename);
 		if (file.Is_Available()) {
 			The_Game()->Set_Ini_Filename(settings->RawFileName);
@@ -819,8 +819,8 @@ void ServerSettingsManagerClass::Load_Settings(ServerSettingsClass *settings)
 void ServerSettingsManagerClass::Delete_Configuration(ServerSettingsClass *settings)
 {
 	if (!settings->Is_Default()) {
-		char filename[MAX_PATH];
-		sprintf(filename, "data\\%s", settings->RawFileName.Peek_Buffer());
+		StringClass filename;
+		filename.Format("data\\%s", settings->RawFileName.Peek_Buffer());
 		Platform::RemoveRawFile(filename);
 		for (int i=0 ; i<ServerSettingsList.Count() ; i++) {
 			if (strcmp(settings->RawFileName, ServerSettingsList[i]->RawFileName) == 0) {
@@ -854,8 +854,8 @@ void ServerSettingsManagerClass::Save_Configuration(ServerSettingsClass *setting
 	WWASSERT(The_Game() != NULL);
 
 	if (settings && The_Game()) {
-		char filename[MAX_PATH];
-		sprintf(filename, "data\\%s", settings->RawFileName.Peek_Buffer());
+		StringClass filename;
+		filename.Format("data\\%s", settings->RawFileName.Peek_Buffer());
 		RawFileClass file(filename);
 		if (!file.Is_Available()) {
 			file.Create();
@@ -899,7 +899,7 @@ ServerSettingsClass *ServerSettingsManagerClass::Add_Configuration(WideStringCla
 			*/
 			char population[MAX_SETTINGS_FILES];
 			memset(population, 0, sizeof(population));
-			char filename[MAX_PATH];
+			StringClass filename;
 			int file_number = -1;
 
 			int i;
@@ -914,7 +914,7 @@ ServerSettingsClass *ServerSettingsManagerClass::Add_Configuration(WideStringCla
 
 			for (i=0 ; i<MAX_SETTINGS_FILES ; i++) {
 				if (population[i] == 0) {
-					sprintf(filename, DEFAULT_SERVER_SETTINGS_FILE_NAME, i);
+					filename.Format(DEFAULT_SERVER_SETTINGS_FILE_NAME, i);
 					file_number = i;
 					break;
 				}

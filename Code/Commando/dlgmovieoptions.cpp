@@ -43,6 +43,7 @@
 #include "string_ids.h"
 #include "wwaudio.h"
 #include <filesystem>
+#include "Platform/Paths.h"
 
 ////////////////////////////////////////////////////////////////
 //
@@ -228,18 +229,14 @@ MovieOptionsMenuClass::Begin_Play_Movie (void)
 		//	Play the movie (if it exists locally)
 		//
 		std::error_code file_error;
-		if (std::filesystem::exists (filename->Peek_Buffer (), file_error)) {
+		if (std::filesystem::exists (Platform::ReadPath(filename->Peek_Buffer()), file_error)) {
 			Play_Movie (filename->Peek_Buffer ());
 		} else {
 
 			//
 			//	Strip any path information off the filename
 			//
-			StringClass filename_only (filename->Peek_Buffer (), true);
-			const char *delimiter = ::strrchr (filename->Peek_Buffer (), '\\');
-			if (delimiter != NULL) {
-				filename_only = delimiter + 1;
-			}
+			StringClass filename_only(Platform::FileName(filename->Peek_Buffer()).c_str());
 
 			//
 			//	Try to find the CD...
@@ -250,11 +247,7 @@ MovieOptionsMenuClass::Begin_Play_Movie (void)
 				//
 				//	Build a full-path to the movie on the CD
 				//
-				StringClass full_path = cd_path;
-				if (cd_path[cd_path.Get_Length () - 1] != '\\') {
-					full_path += "\\";
-				}
-				full_path += filename_only;
+				StringClass full_path((std::filesystem::path(cd_path.Peek_Buffer()) / filename_only.Peek_Buffer()).string().c_str());
 				Play_Movie (full_path);
 			} else {
 				PendingMovieFilename = filename_only;
@@ -379,11 +372,7 @@ MovieOptionsMenuClass::HandleNotification (CDVerifyEvent &event)
 			//
 			//	Build a full-path to the movie on the CD
 			//
-			StringClass full_path = cd_path;
-			if (cd_path[cd_path.Get_Length () - 1] != '\\') {
-				full_path += "\\";
-			}
-			full_path += PendingMovieFilename;
+			StringClass full_path((std::filesystem::path(cd_path.Peek_Buffer()) / PendingMovieFilename.Peek_Buffer()).string().c_str());
 			Play_Movie (full_path);
 		}		
 	}

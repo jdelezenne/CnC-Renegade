@@ -35,7 +35,10 @@
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 
-#include "Platform/Windows/Files.h"
+#include "Platform/Files.h"
+#include "Platform/SystemInfo.h"
+#include "Platform/Threads.h"
+#include "Platform/Network/Transport.h"
 #include "Platform/Paths.h"
 #include "shutdown.h"
 #include "wwmath.h"
@@ -80,8 +83,6 @@
 #include "dx8caps.h"
 #include "Settings.h"
 #include "specialbuilds.h"
-#include <windows.h>
-#include <lmcons.h>	// UNLEN
 extern SimpleFileFactoryClass RenegadeBaseFileFactory;
 
 #define	SYSTEM_INFO_LOG_DISABLE "SystemInfoLogDisable"
@@ -263,18 +264,17 @@ public:
 
 	SysInfoCopyThreadClass()
 		:
-		ThreadClass("SysInfoCopyThread", &Exception_Handler) {}
+		ThreadClass("SysInfoCopyThread", Platform::DefaultThreadExceptionHandler()) {}
 
 	~SysInfoCopyThreadClass() { Stop(); }
 
 	void Thread_Function()
 	{
-		DWORD written;
-		HANDLE file = Platform::OpenFile(Filename, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
-				FILE_ATTRIBUTE_NORMAL, NULL);
-		if (INVALID_HANDLE_VALUE != file) {
-			WriteFile(file, String, strlen(String), &written, NULL);
-			CloseHandle(file);
+		std::uint32_t written;
+		void* file = Platform::OpenRawFile(Filename, Platform::FileMode::Write);
+		if (Platform::InvalidFileHandle() != file) {
+			Platform::WriteRawFile(file, String, strlen(String), written);
+			Platform::CloseRawFile(file);
 		}
 	}
 } SysInfoCopyThread;
@@ -289,16 +289,11 @@ static void Log_System_Information()
 		return;
 	}
 
-	char name[MAX_COMPUTERNAME_LENGTH + 1];
-	DWORD size = sizeof(name);
-	::GetComputerName(name, &size);
-
-	char user[UNLEN+1];
-	DWORD userlen=sizeof(user);
-	::GetUserName(user, &userlen);
+	const auto name = Platform::ComputerName();
+	const auto user = Platform::UserName();
 
 	StringClass string; // This will be a long string so don't allocate locally!
-	string.Format("Computer name: %s\r\nUser name: %s\r\n\r\n",name,user);
+	string.Format("Computer name: %s\r\nUser name: %s\r\n\r\n",name.c_str(),user.c_str());
 	string+=CPUDetectClass::Get_Processor_Log();
 	if (DX8Wrapper::Get_Current_Caps()) {
 		string+=DX8Wrapper::Get_Current_Caps()->Get_Log();
@@ -328,8 +323,8 @@ static void Log_System_Information()
 	string+=tmp;
 
 	// Write log to network folder
-	DWORD written;
-	HANDLE file;
+	std::uint32_t written;
+	void* file;
 
 #ifdef WWDEBUG
 	SettingsClass settings( APPLICATION_SETTINGS_SECTION_DEBUG );
@@ -342,7 +337,7 @@ static void Log_System_Information()
 				filename=Platform::UserPath("Logs/SystemInfo/").c_str();
 				tmp.Format("%d_%d_",DX8Wrapper::Get_Current_Caps()->Get_Vendor(),DX8Wrapper::Get_Current_Caps()->Get_Device());
 				filename+=tmp;
-				filename+=name;
+				filename+=name.c_str();
 				filename+=".txt";
 
 				SysInfoCopyThread.String=string;
@@ -354,11 +349,10 @@ static void Log_System_Information()
 #endif
 
 	// Write log to local work folder
-	file = Platform::OpenFile("sysinfo.txt", GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
-			FILE_ATTRIBUTE_NORMAL, NULL);
-	if (INVALID_HANDLE_VALUE != file) {
-		WriteFile(file, string, strlen(string), &written, NULL);
-		CloseHandle(file);
+	file = Platform::OpenRawFile("sysinfo.txt", Platform::FileMode::Write);
+	if (Platform::InvalidFileHandle() != file) {
+		Platform::WriteRawFile(file, string, strlen(string), written);
+		Platform::CloseRawFile(file);
 	}
 }
 
@@ -446,7 +440,7 @@ void Game_Shutdown(void)
 	DebugManager::Save_Settings( APPLICATION_SETTINGS_SECTION_DEBUG );
 	DebugManager::Shutdown();
 
-	WSA_CHECK(WSACleanup());
+	WSA_CHECK(Platform::SocketCleanup());
 
 	/*
 	** Remove any old file factories still lying around.

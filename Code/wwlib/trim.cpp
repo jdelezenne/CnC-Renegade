@@ -68,7 +68,7 @@ char* strtrim(char* buffer)
 		}
 
 		if (source != buffer) {
-			strcpy(buffer, source);
+			memmove(buffer, source, strlen(source) + 1);
 		}
 
 		/* Clip trailing white space from the string. */
@@ -96,7 +96,7 @@ wchar_t* wcstrim(wchar_t* buffer)
 		}
 		
 		if (source != buffer) {
-			wcscpy(buffer, source);
+			wmemmove(buffer, source, wcslen(source) + 1);
 		}
 
 		/* Clip trailing white space from the string. */

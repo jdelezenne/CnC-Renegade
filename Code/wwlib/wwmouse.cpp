@@ -61,7 +61,6 @@
 
 #include	"always.h"
 #include	"_convert.h"
-#include	"_mono.h"
 #include	"blit.h"
 #include	"bsurface.h"
 #include	"draw.h"

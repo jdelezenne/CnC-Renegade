@@ -48,6 +48,8 @@ void* Platform::OpenRawFile(const char* path, FileMode mode)
         return OpenFile(path, GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
     case FileMode::ReadWrite:
         return OpenFile(path, GENERIC_READ | GENERIC_WRITE, 0, nullptr, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
+    case FileMode::CreateNew:
+        return OpenFile(path, GENERIC_WRITE, 0, nullptr, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, nullptr);
     }
     SetLastError(ERROR_INVALID_PARAMETER);
     return InvalidFileHandle();

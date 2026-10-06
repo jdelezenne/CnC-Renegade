@@ -68,7 +68,7 @@ class SlaveServerDialogClass : public MenuDialogClass
 		static unsigned long PortIDs[MAX_SLAVES];
 		static unsigned long SettingsButtons[MAX_SLAVES];
 
-		static char ServerSettingsFileNames[MAX_SLAVES][MAX_PATH];
+		static StringClass ServerSettingsFileNames[MAX_SLAVES];
 
 		static int SlaveNumber;
 

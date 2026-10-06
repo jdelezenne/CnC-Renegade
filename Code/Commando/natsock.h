@@ -60,16 +60,7 @@
 #define fw_assert assert
 #endif //WWASSERT
 
-#ifdef _WIN32
-#ifdef errno
-#undef errno
-#endif	//errno
-
-#define errno (WSAGetLastError())
-#define LAST_ERROR errno
-#else
 #define LAST_ERROR Platform::SocketLastError()
-#endif
 
 #define TIMER_SECOND 1000
 
@@ -177,7 +168,7 @@ class SocketHandlerClass
 			bool					InUse;			// Useage state of buffer
 			bool					IsAllocated;	// false means statically allocated.
 			unsigned short		Port;				// Override port. Send to this port if not 0. Save incoming port number.
-			unsigned long		CRC;				// CRC of packet for extra sanity.
+			std::uint32_t		CRC;				// CRC of packet for extra sanity.
 			unsigned char		Buffer[RECEIVE_BUFFER_LEN];	// Buffer to store packet in.
 		};
 
@@ -190,7 +181,7 @@ class SocketHandlerClass
 		/*
 		** Packet CRCs.
 		*/
-		void Add_CRC(unsigned long *crc, unsigned long val);
+		void Add_CRC(std::uint32_t *crc, std::uint32_t val);
 		virtual void Build_Packet_CRC(WinsockBufferType *packet);
 		virtual bool Passes_CRC_Check(WinsockBufferType *packet);
 

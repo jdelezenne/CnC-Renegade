@@ -44,7 +44,8 @@
 #include "cnetwork.h"
 //#include "gamesettings.h"
 #include "multihud.h"
-#include <win.h>
+#include <algorithm>
+#include <iterator>
 #include "player.h"
 #include "font3d.h"
 #include "gamedata.h"
@@ -316,7 +317,7 @@ void cTeamManager::Sort_Teams(void)
 {
 	WWPROFILE("cTeamManager::Sort_Teams");
 
-   ZeroMemory(Team_Array, sizeof(Team_Array));
+   std::fill(std::begin(Team_Array), std::end(Team_Array), nullptr);
 
    int num_teams = 0;
    cTeam * p_team;

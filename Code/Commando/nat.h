@@ -45,7 +45,10 @@
 #define NAT_H
 
 #include	"always.h"
-#include	"win.h"
+#include "thread.h"
+#include "Platform/Event.h"
+#include "Platform/Synchronization.h"
+#include <stdexcept>
 
 #ifdef WWASSERT
 #ifndef fw_assert
@@ -81,7 +84,7 @@ class SocketHandlerClass;
 **
 **		 In Renegade it also does the firewall port negotiation between server and client.
 */
-class FirewallHelperClass {
+class FirewallHelperClass : private ThreadClass {
 
 	public:
 
@@ -156,7 +159,7 @@ class FirewallHelperClass {
 		/*
 		** Detection.
 		*/
-		void Detect_Firewall(HANDLE event = INVALID_HANDLE_VALUE);
+		void Detect_Firewall(Platform::EventPointer event = {});
 		unsigned short Get_Raw_Firewall_Behavior(void);	// {return((unsigned short)Behavior);};
 		short Get_Source_Port_Allocation_Delta(void) {return(SourcePortAllocationDelta);}
 
@@ -202,7 +205,7 @@ class FirewallHelperClass {
 		void Connected_To_WWOnline_Server(void);
 		void Talk_To_New_Player(WOL::User *user);
 		void Send_My_Port(unsigned short port);
-		void Set_Client_Connect_Event(HANDLE thread_event, HANDLE cancel_event, int *flag_ptr, int *queue_ptr);
+		void Set_Client_Connect_Event(Platform::EventPointer thread_event, Platform::EventPointer cancel_event, std::atomic<int>* flag_ptr, std::atomic<unsigned int>* queue_ptr);
 		bool Remove_Player_From_Negotiation_Queue(char *player_name);
 		bool Remove_Player_From_Negotiation_Queue_If_Mutex_Available(char *player_name);
 		void Cleanup_Client_Queue(void);
@@ -300,9 +303,9 @@ class FirewallHelperClass {
 		/*
 		** Threading.
 		*/
-		static unsigned int __stdcall NAT_Thread_Start(void *param);
+		void Thread_Function() override;
 		unsigned long NAT_Thread_Main_Loop(void);
-		void Add_Thread_Action(int thread_action, HANDLE thread_event);
+		void Add_Thread_Action(int thread_action, Platform::EventPointer thread_event);
 		void Set_Thread_Event(void);
 
 		/*
@@ -505,10 +508,10 @@ class FirewallHelperClass {
 		/*
 		** Client connect event notification.
 		*/
-		int		*SuccessFlagPtr;
-		HANDLE	ClientConnectEvent;
-		HANDLE	ClientCancelEvent;
-		int		*QueueNotifyPtr;
+		std::atomic<int>* SuccessFlagPtr;
+		Platform::EventPointer ClientConnectEvent;
+		Platform::EventPointer ClientCancelEvent;
+		std::atomic<unsigned int>* QueueNotifyPtr;
 
 
 
@@ -522,11 +525,7 @@ class FirewallHelperClass {
 		**		It also means that the clients join dialog is serviced while connecting, allowing him to cancel at any time.
 		**
 		*/
-		HANDLE ThreadHandle;
-		unsigned long ThreadID;
-		HANDLE NATThreadMutex;
-		HANDLE NATDataMutex;
-		bool ThreadActive;
+		void* NATDataMutex;
 
 		/*
 		** Thread actions.
@@ -544,12 +543,12 @@ class FirewallHelperClass {
 		/*
 		** Thread state i.e. what it's doing.
 		*/
-		int ThreadState;
+		std::atomic<int> ThreadState;
 
 		/*
 		** Event to be signalled when the current thread action completes.
 		*/
-		HANDLE ThreadEvent;
+		Platform::EventPointer ThreadEvent;
 
 		/*
 		** Thread action FIFO
@@ -558,14 +557,14 @@ class FirewallHelperClass {
 
 			public:
 				inline bool operator == (ThreadActionClass const &data) {
-					return(memcmp((void*)this, &data, sizeof(*this)) == 0);
+					return ThreadAction == data.ThreadAction && ThreadEvent == data.ThreadEvent;
 				};
 				inline bool operator != (ThreadActionClass const &data) {
-					return(memcmp((void*)this, &data, sizeof(*this)) != 0);
+					return !(*this == data);
 				};
 
 				int		ThreadAction;
-				HANDLE	ThreadEvent;
+				Platform::EventPointer ThreadEvent;
 		};
 
 		DynamicVectorClass<ThreadActionClass> ThreadQueue;
@@ -586,22 +585,22 @@ class FirewallHelperClass {
 					/*
 					** Just test the mutex if timeout is 0.
 					*/
-					WaitResult = WaitForSingleObject(fwptr->NATDataMutex, timeout);
-					if (timeout != 0 && WaitResult == WAIT_TIMEOUT) {
+					Acquired = Platform::LockMutex(fwptr->NATDataMutex, static_cast<int>(timeout));
+					if (timeout != 0 && !Acquired) {
 						WWDEBUG_SAY(("FirewallHelper - Timeout waiting for firewall helper data mutex\n"));
-						fw_assert(WaitResult != WAIT_TIMEOUT);
+						throw std::runtime_error("Timeout waiting for firewall data mutex");
 					}
 				};
 
 				FirewallHelperClass *FWPtr;
 
-				int WaitResult;
+				bool Acquired;
 
 				/*
 				** Destructor, releases the mutex.
 				*/
 				inline ~ThreadLockClass(void) {
-					ReleaseMutex(FWPtr->NATDataMutex);
+					if (Acquired) Platform::UnlockMutex(FWPtr->NATDataMutex);
 				};
 		};
 		friend ThreadLockClass;

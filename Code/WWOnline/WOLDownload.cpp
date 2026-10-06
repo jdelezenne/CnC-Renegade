@@ -35,7 +35,7 @@
 
 #include "Platform/Paths.h"
 #include <filesystem>
-#include "WWCOMUtil.h"
+#include "Platform/Online/Provider.h"
 #include <wwlib/always.h>
 #include "WOLDownload.h"
 #include "WOLProduct.h"
@@ -163,7 +163,7 @@ bool Download::CreateDownloadObject(void)
 	mDownloadObject.Attach(downloadObject);
 
 	// Register this download as an event sink for download events
-	hr = AtlAdvise(mDownloadObject, this, WOL::IID_IDownloadEvent, &mDownloadCookie);
+	hr = Platform::AdviseOnlineEvents(mDownloadObject, this, WOL::IID_IDownloadEvent, &mDownloadCookie);
 
 	if (FAILED(hr))
 		{
@@ -197,7 +197,7 @@ void Download::ReleaseDownloadObject(void)
 	// No longer listen to download events.
 	if (mDownloadObject && mDownloadCookie != 0)
 		{
-		HRESULT hr = AtlUnadvise(mDownloadObject, WOL::IID_IDownloadEvent, mDownloadCookie);
+		HRESULT hr = Platform::UnadviseOnlineEvents(mDownloadObject, WOL::IID_IDownloadEvent, mDownloadCookie);
 		mDownloadCookie = 0;
 
 		if (FAILED(hr))
@@ -289,7 +289,7 @@ bool Download::Start(void)
 	if (FAILED(hr))
 		{
 		WWDEBUG_SAY(("WOLERROR: DownloadFile() HRESULT = %s\n", GetDownloadErrorString(hr)));
-		AtlUnadvise(mDownloadObject, WOL::IID_IDownloadEvent, mDownloadCookie);
+		Platform::UnadviseOnlineEvents(mDownloadObject, WOL::IID_IDownloadEvent, mDownloadCookie);
 		SetError(DOWNLOADEVENT_COULDNOTCONNECT, GetOnErrorText(DOWNLOADEVENT_COULDNOTCONNECT));
 		return false;
 		}
@@ -567,9 +567,9 @@ void Download::GetProgress(int& bytesRead, int& totalSize, int& timeElapsed, int
 *
 ****************************************************************************/
 
-STDMETHODIMP Download::QueryInterface(const IID& iid, void** ppv)
+HRESULT STDMETHODCALLTYPE Download::QueryInterface(const IID& iid, void** ppv)
 	{
-	if ((iid == IID_IUnknown) || (iid == WOL::IID_IDownloadEvent))
+	if ((iid == Platform::IID_OnlineInterface) || (iid == WOL::IID_IDownloadEvent))
 		{
 		*ppv = static_cast<WOL::IDownloadEvent*>(this);
 		}
@@ -579,7 +579,7 @@ STDMETHODIMP Download::QueryInterface(const IID& iid, void** ppv)
 		return E_NOINTERFACE;
 		}
 
-	static_cast<IUnknown*>(*ppv)->AddRef();
+	static_cast<Platform::OnlineInterface*>(*ppv)->AddRef();
 	return S_OK;
 	}
 
@@ -642,7 +642,7 @@ ULONG STDMETHODCALLTYPE Download::Release(void)
 *
 ******************************************************************************/
 
-STDMETHODIMP Download::OnEnd(void)
+HRESULT STDMETHODCALLTYPE Download::OnEnd(void)
 	{
 	WWDEBUG_SAY(("WOL: Download End '%s'\n", GetFilename()));
 
@@ -670,7 +670,7 @@ STDMETHODIMP Download::OnEnd(void)
 *
 ******************************************************************************/
 
-STDMETHODIMP Download::OnError(int error)
+HRESULT STDMETHODCALLTYPE Download::OnError(int error)
 	{
 	WWDEBUG_SAY(("WOLERROR: Download '%s'\n", GetFilename()));
 
@@ -712,7 +712,7 @@ STDMETHODIMP Download::OnError(int error)
 *
 ******************************************************************************/
 
-STDMETHODIMP Download::OnProgressUpdate(int bytesRead, int totalSize,
+HRESULT STDMETHODCALLTYPE Download::OnProgressUpdate(int bytesRead, int totalSize,
 		int timeElapsed, int timeRemaining)
 	{
 	mBytesRead = bytesRead;
@@ -740,7 +740,7 @@ STDMETHODIMP Download::OnProgressUpdate(int bytesRead, int totalSize,
 *
 ******************************************************************************/
 
-STDMETHODIMP Download::OnQueryResume(void)
+HRESULT STDMETHODCALLTYPE Download::OnQueryResume(void)
 	{
 	WWDEBUG_SAY(("WOL: Download QueryResume '%s'\n", GetFilename()));
 	
@@ -765,7 +765,7 @@ STDMETHODIMP Download::OnQueryResume(void)
 *
 ******************************************************************************/
 
-STDMETHODIMP Download::OnStatusUpdate(int status)
+HRESULT STDMETHODCALLTYPE Download::OnStatusUpdate(int status)
 	{
 	#ifdef WWDEBUG
 	static const char* _status[] =

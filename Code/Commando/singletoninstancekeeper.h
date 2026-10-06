@@ -89,7 +89,6 @@ private:
 	//	Private member data
 	///////////////////////////////////////////////////////////////////
 	void *	AppMutex;
-	void *	AutoPlayMutex;
 
 	static bool AllowMultipleInstances;
 

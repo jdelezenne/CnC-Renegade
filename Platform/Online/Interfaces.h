@@ -189,7 +189,7 @@ typedef struct Highscore Highscore;
 
 typedef struct Squad Squad;
 
-struct IRTPatcher : IUnknown {
+struct IRTPatcher : Platform::OnlineInterface {
 public:
         virtual  HRESULT STDMETHODCALLTYPE ApplyPatch( 
              LPCSTR destpath,
@@ -198,7 +198,7 @@ public:
         virtual  HRESULT STDMETHODCALLTYPE PumpMessages( void) = 0;
 };
 
-struct IRTPatcherEvent : IUnknown {
+struct IRTPatcherEvent : Platform::OnlineInterface {
 public:
         virtual  HRESULT STDMETHODCALLTYPE OnProgress( 
              LPCSTR filename,
@@ -208,7 +208,7 @@ public:
              BOOL success) = 0;
 };
 
-struct IChat : IUnknown {
+struct IChat : Platform::OnlineInterface {
 public:
         virtual  HRESULT STDMETHODCALLTYPE PumpMessages( void) = 0;
         
@@ -430,7 +430,7 @@ public:
             LPCSTR name) = 0;
 };
 
-struct IChatEvent : IUnknown {
+struct IChatEvent : Platform::OnlineInterface {
 public:
         virtual  HRESULT STDMETHODCALLTYPE OnServerList( 
              HRESULT res,
@@ -650,7 +650,7 @@ public:
              HRESULT res) = 0;
 };
 
-struct IDownload : IUnknown {
+struct IDownload : Platform::OnlineInterface {
 public:
         virtual  HRESULT STDMETHODCALLTYPE DownloadFile( 
             LPCSTR server,
@@ -665,7 +665,7 @@ public:
         virtual  HRESULT STDMETHODCALLTYPE PumpMessages( void) = 0;
 };
 
-struct IDownloadEvent : IUnknown {
+struct IDownloadEvent : Platform::OnlineInterface {
 public:
         virtual  HRESULT STDMETHODCALLTYPE OnEnd( void) = 0;
         
@@ -684,7 +684,7 @@ public:
             int status) = 0;
 };
 
-struct INetUtil : IUnknown {
+struct INetUtil : Platform::OnlineInterface {
 public:
         virtual  HRESULT STDMETHODCALLTYPE RequestGameresSend( 
             LPCSTR host,
@@ -780,7 +780,7 @@ public:
             unsigned long length) = 0;
 };
 
-struct INetUtilEvent : IUnknown {
+struct INetUtilEvent : Platform::OnlineInterface {
 public:
         virtual  HRESULT STDMETHODCALLTYPE OnPing( 
             HRESULT res,
@@ -842,7 +842,7 @@ typedef enum CHAN_CTYPE_ CHAN_CTYPE;
 
 
 
-struct IChat2 : IUnknown {
+struct IChat2 : Platform::OnlineInterface {
 public:
         virtual  HRESULT STDMETHODCALLTYPE PumpMessages( void) = 0;
         
@@ -878,7 +878,7 @@ public:
             LPCSTR cmd) = 0;
 };
 
-struct IChat2Event : IUnknown {
+struct IChat2Event : Platform::OnlineInterface {
 public:
         virtual  HRESULT STDMETHODCALLTYPE OnNetStatus( 
             HRESULT res) = 0;
@@ -919,7 +919,7 @@ public:
             LPCSTR line) = 0;
 };
 
-struct IIGROptions : IUnknown {
+struct IIGROptions : Platform::OnlineInterface {
 public:
         virtual  HRESULT STDMETHODCALLTYPE Init( void) = 0;
         

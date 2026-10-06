@@ -25,6 +25,7 @@
 #include "subtitlemanager.h"
 #include "wwaudio.h"
 #include "Platform/Platform.h"
+#include "Platform/Paths.h"
 #include <SDL3/SDL.h>
 #include <algorithm>
 #include <vector>
@@ -89,7 +90,7 @@ bool BINKMovie::Is_Complete() { return !CurrentMovie || CurrentMovie->Is_Complet
 
 BINKMovieClass::BINKMovieClass(const char* filename, const char* subtitlename, FontCharsClass* font)
 {
-	if (!filename || !Decoder.Open(filename)) return;
+	if (!filename || !Decoder.Open(Platform::ReadPath(filename))) return;
 	TotalFrames = Decoder.GetNumFrames();
 	FrameRate = Decoder.GetFrameRate();
 	if (!TotalFrames || FrameRate <= 0 || !Decoder.frameWidth || !Decoder.frameHeight) return;

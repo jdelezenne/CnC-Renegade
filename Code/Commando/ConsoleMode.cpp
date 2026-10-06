@@ -35,11 +35,16 @@
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 #include "Platform/Paths.h"
-#include "Platform/Windows/Files.h"
+#include "Platform/Files.h"
+#include "Platform/Directory.h"
+#include "Platform/Calendar.h"
+#include "Platform/Terminal.h"
+#include <SDL3/SDL_time.h>
+#include <limits>
 #include "consolemode.h"
 #include "consolefunction.h"
 #include "wwdebug.h"
-#include "conio.h"
+
 #include "slavemaster.h"
 #include <stdio.h>
 #include "systimer.h"
@@ -66,8 +71,8 @@ ConsoleModeClass ConsoleBox;
 #define MASTER_TITLE_BASE "Renegade Master Server"
 #define SLAVE_TITLE_BASE "Renegade Slave Server"
 
-#define MASTER_COLORS (FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY | BACKGROUND_BLUE)
-#define SLAVE_COLORS	 (BACKGROUND_GREEN | BACKGROUND_RED | BACKGROUND_BLUE)
+#define MASTER_COLORS (Platform::TerminalGreen | Platform::TerminalBlue | Platform::TerminalBright | Platform::TerminalBackgroundBlue)
+#define SLAVE_COLORS	 (Platform::TerminalBackgroundGreen | Platform::TerminalBackgroundRed | Platform::TerminalBackgroundBlue)
 
 /***********************************************************************************************
  * ConsoleModeClass::ConsoleModeClass -- Class constructor                                     *
@@ -85,8 +90,7 @@ ConsoleModeClass ConsoleBox;
  *=============================================================================================*/
 ConsoleModeClass::ConsoleModeClass(void)
 {
-	ConsoleOutputHandle = INVALID_HANDLE_VALUE;
-	ConsoleInputHandle = INVALID_HANDLE_VALUE;
+	TerminalOpen = false;
 	LastKeypressTime = 0;
 	Pos = 1;
 	IsExclusive = false;
@@ -112,10 +116,7 @@ ConsoleModeClass::ConsoleModeClass(void)
  *=============================================================================================*/
 ConsoleModeClass::~ConsoleModeClass(void)
 {
-	if (ConsoleOutputHandle != INVALID_HANDLE_VALUE) {
-		FreeConsole();
-		ConsoleOutputHandle = INVALID_HANDLE_VALUE;
-	}
+	if (TerminalOpen) Platform::CloseTerminal();
 }
 
 
@@ -135,77 +136,21 @@ ConsoleModeClass::~ConsoleModeClass(void)
  *=============================================================================================*/
 void ConsoleModeClass::Init(void)
 {
-	if (ConsoleOutputHandle == INVALID_HANDLE_VALUE) {
-
-		/*
-		** Create a console.
-		*/
-		if (AllocConsole()) {
-
-			/*
-			** Get the input and output handles.
-			*/
-			ConsoleOutputHandle = GetStdHandle(STD_OUTPUT_HANDLE);
-			WWASSERT(ConsoleOutputHandle != INVALID_HANDLE_VALUE);
-
-			ConsoleInputHandle = GetStdHandle(STD_INPUT_HANDLE);
-			WWASSERT(ConsoleInputHandle != INVALID_HANDLE_VALUE);
-
-
-			/*
-			** Set the size of the console buffer.
-			*/
-			COORD coord;
-			coord.X=80;
-			coord.Y=4192;
-			SetConsoleScreenBufferSize(ConsoleOutputHandle, coord);
-			unsigned long written = 0;
-			coord.X=0;
-			coord.Y=0;
-
-			/*
-			** Use different colors for master and slaves.
-			*/
-			if (!SlaveMaster.Am_I_Slave()) {
-				FillConsoleOutputAttribute(ConsoleOutputHandle, MASTER_COLORS, 4192*50, coord, &written);
-				SetConsoleTextAttribute(ConsoleOutputHandle, MASTER_COLORS);
-			} else {
-				FillConsoleOutputAttribute(ConsoleOutputHandle, SLAVE_COLORS, 4192*50, coord, &written);
-				SetConsoleTextAttribute(ConsoleOutputHandle, SLAVE_COLORS);
-			}
-
-			/*
-			** Set the text in the console title bar.
-			*/
-			Set_Title(NULL, NULL);
-
-			/*
-			** Get an HWND for the console window.
-			*/
-			ConsoleWindow = FindWindow("ConsoleWindowClass", Title);
-
-			/*
-			** Bring up the console window to the foreground.
-			*/
-			SetForegroundWindow(ConsoleWindow);
-
-			/*
-			** Print up version info.
-			*/
-			DWORD version_major = 1;
-			DWORD version_minor = 0;
-			Get_Version_Number(&version_major, &version_minor);
+	if (TerminalOpen) return;
+	TerminalOpen = Platform::OpenTerminal(SlaveMaster.Am_I_Slave() ? SLAVE_COLORS : MASTER_COLORS);
+	if (!TerminalOpen) return;
+	Set_Title(NULL, NULL);
+	Platform::RaiseTerminal();
+	unsigned long version_major = 1, version_minor = 0;
+	Get_Version_Number(&version_major, &version_minor);
 #ifdef FREEDEDICATEDSERVER
-			Print("Renegade Free Dedicated Server ");
-#else  //FREEDEDICATEDSERVER
-			Print("Renegade ");
-#endif //FREEDEDICATEDSERVER
-			Print("v%d.%.3d %s-%s %s\n", (version_major >> 16), (version_major & 0xFFFF), BuildInfoClass::Get_Builder_Initials(), BuildInfoClass::Get_Build_Number_String(), BuildInfoClass::Get_Build_Date_String());
-			Print("Console mode active\n");
-
-			LastKeypressTime = 0;
-		}
-	}
+	Print("Renegade Free Dedicated Server ");
+#else
+	Print("Renegade ");
+#endif
+	Print("v%lu.%.3lu %s-%s %s\n", version_major >> 16, version_major & 0xFFFF, BuildInfoClass::Get_Builder_Initials(), BuildInfoClass::Get_Build_Number_String(), BuildInfoClass::Get_Build_Date_String());
+	Print("Console mode active\n");
+	LastKeypressTime = 0;
 }
 
 
@@ -227,10 +172,10 @@ void ConsoleModeClass::Init(void)
  * HISTORY:                                                                                    *
  *   2/4/2002 1:21PM ST : Created                                                              *
  *=============================================================================================*/
-HWND ConsoleModeClass::Get_Slave_Window_By_Title(char *name, char *settings)
+void* ConsoleModeClass::Get_Slave_Window_By_Title(char *name, char *settings)
 {
 	StringClass title = Compose_Window_Title(name, settings, true);
-	HWND window = FindWindow("ConsoleWindowClass", title.Peek_Buffer());
+	const auto window = Platform::FindTerminalWindow(title.Peek_Buffer());
 	return(window);
 }
 
@@ -290,10 +235,10 @@ StringClass ConsoleModeClass::Compose_Window_Title(char *name, char *settings, b
  *=============================================================================================*/
 void ConsoleModeClass::Set_Title(char *name, char *settings)
 {
-	if (ConsoleOutputHandle) {
+	if (TerminalOpen) {
 		StringClass title = Compose_Window_Title(name, settings, SlaveMaster.Am_I_Slave());
 		strcpy(Title, title.Peek_Buffer());
-		SetConsoleTitle(Title);
+		Platform::SetTerminalTitle(Title);
 	}
 }
 
@@ -317,7 +262,7 @@ void ConsoleModeClass::Set_Title(char *name, char *settings)
  *=============================================================================================*/
 void ConsoleModeClass::Print(char const * string, ...)
 {
-	if (ConsoleOutputHandle != INVALID_HANDLE_VALUE) {
+	if (TerminalOpen) {
 		char buffer[8192];
 
 		va_list va;
@@ -363,7 +308,7 @@ void ConsoleModeClass::Print_Maybe(char const * string, ...)
 		va_end(va);
 		Log_To_Disk(buffer);
 
-		if (Pos == 1 && (TIMEGETTIME() - LastKeypressTime > 5 * 1000) && ConsoleOutputHandle != INVALID_HANDLE_VALUE) {
+		if (Pos == 1 && (TIMEGETTIME() - LastKeypressTime > 5 * 1000) && TerminalOpen) {
 
 			/*
 			** Have to use '%s' here or we end up doing the formatting twice.
@@ -427,7 +372,7 @@ void ConsoleModeClass::cprintf(char const * string, ...)
 		/*
 		** Have to use '%s' here or we end up doing the formatting twice.
 		*/
-		::cprintf("%s", buffer);
+		Platform::WriteTerminal(buffer);
 		GameSideServerControlClass::Print("%s", buffer);
 	}
 }
@@ -450,42 +395,26 @@ void ConsoleModeClass::cprintf(char const * string, ...)
  *=============================================================================================*/
 const char *ConsoleModeClass::Get_Log_File_Name(void)
 {
-	static char _log_file_name[256];
-	static int _last_day = -1;
-
-	SYSTEMTIME time;
-	GetLocalTime(&time);
-	sprintf(_log_file_name, "renlog_%d-%d-%02d.txt", time.wMonth, time.wDay, time.wYear);
-
-	if (_last_day != time.wDay && ServerSettingsClass::Get_Disk_Log_Size() != -1) {
-		_last_day = time.wDay;
-
-		FILETIME file_time;
-		if (SystemTimeToFileTime(&time, &file_time)) {
-			_int64 int_file_time;
-			memcpy(&int_file_time, &file_time, sizeof(int_file_time));
-			_int64 time_diff = ((_int64)10000000) * ((_int64)60*60*24*ServerSettingsClass::Get_Disk_Log_Size());
-			int_file_time -= time_diff;
-			memcpy(&file_time, &int_file_time, sizeof(file_time));
-
-			/*
-			** Find all log files.
-			*/
-  			WIN32_FIND_DATA find_data;
-			HANDLE find_handle = FindFirstFile("renlog_*.txt", &find_data);
-			while (find_handle != INVALID_HANDLE_VALUE) {
-				if (CompareFileTime(&find_data.ftLastWriteTime, &file_time) == -1) {
-					Platform::RemoveFile(find_data.cFileName);
-				}
-				if (!FindNextFile(find_handle, &find_data)) {
-					break;
-				}
-			}
-			FindClose(find_handle);
+	static std::string log_file_name;
+	static int last_day = -1;
+	Platform::CalendarTime time{};
+	Platform::LocalCalendarTime(time);
+	char name[64];
+	snprintf(name, sizeof(name), "renlog_%d-%d-%02d.txt", time.wMonth, time.wDay, time.wYear);
+	log_file_name = Platform::UserPath(name);
+	const int days = ServerSettingsClass::Get_Disk_Log_Size();
+	if (last_day != time.wDay && days >= 0) {
+		last_day = time.wDay;
+		SDL_Time now;
+		constexpr SDL_Time day = 86400LL * 1'000'000'000;
+		if (SDL_GetCurrentTime(&now) && days <= std::numeric_limits<SDL_Time>::max() / day &&
+			now >= std::numeric_limits<SDL_Time>::min() + days * day) {
+			const auto cutoff = now - days * day;
+			for (const auto& file : Platform::ListFiles(Platform::UserPath("renlog_*.txt").c_str()))
+				if (file.ModifiedTime < cutoff) Platform::RemoveRawFile(file.Path.c_str());
 		}
 	}
-
-	return(_log_file_name);
+	return log_file_name.c_str();
 }
 
 
@@ -506,12 +435,14 @@ const char *ConsoleModeClass::Get_Log_File_Name(void)
  *=============================================================================================*/
 void ConsoleModeClass::Log_To_Disk(const char *string)
 {
-	if (ConsoleOutputHandle != INVALID_HANDLE_VALUE) {
+	if (TerminalOpen) {
 		if (ServerSettingsClass::Get_Disk_Log_Size() > 0) {
 		FILE *log_file = Platform::OpenStream(Get_Log_File_Name(), "at");
    		if (log_file != NULL) {
 				char timestr[256] = "?";
-				GetTimeFormat(LOCALE_SYSTEM_DEFAULT, TIME_FORCE24HOURFORMAT, NULL, "'['HH':'mm':'ss'] '", timestr, 255);
+				Platform::CalendarTime time{};
+				Platform::LocalCalendarTime(time);
+				snprintf(timestr, sizeof(timestr), "[%02d:%02d:%02d] ", time.wHour, time.wMinute, time.wSecond);
 			   fwrite(timestr, 1, strlen(timestr), log_file);
 			   fwrite(string, 1, strlen(string), log_file);
 			   fclose(log_file);
@@ -540,7 +471,7 @@ void ConsoleModeClass::Log_To_Disk(const char *string)
 void ConsoleModeClass::Think(void)
 {
 	static char string[256] = ">";
-	char key = 0;
+	int key = 0;
 	static char suggestion[256] = "";
 	static char last_suggestion[256] = "";
 	static char help[256] = "";
@@ -550,20 +481,21 @@ void ConsoleModeClass::Think(void)
 
 	static int delay = 100;
 
-	if (ConsoleInputHandle != INVALID_HANDLE_VALUE) {
+	if (TerminalOpen) {
 
 		/*
 		** See if there is a key waiting in the queue.
 		*/
-		if (_kbhit()) {
+		if (Platform::TerminalKeyAvailable()) {
 
 			/*
 			** Get the key from the queue.
 			*/
-			key = _getche();
+			key = Platform::ReadTerminalKey(true);
+			if (key < 0) return;
 
 			if (key == 0 || key == 0xE0) {
-				key = _getche();
+				key = Platform::ReadTerminalKey(true);
 			}
 
 			/*
@@ -588,8 +520,8 @@ void ConsoleModeClass::Think(void)
 					/*
 					** Save the cursor position.
 					*/
-					CONSOLE_SCREEN_BUFFER_INFO info;
-					int ok = GetConsoleScreenBufferInfo(ConsoleOutputHandle, &info);
+					const auto cursor = Platform::SaveTerminalCursor();
+					bool ok = cursor.Valid;
 
 					/*
 					** Clear out the two lines below.
@@ -601,9 +533,7 @@ void ConsoleModeClass::Think(void)
 					** Move the cursor back up one line to the current command prompt line.
 					*/
 					if (ok) {
-						COORD new_pos = info.dwCursorPosition;
-						new_pos.X = 0;
-						SetConsoleCursorPosition(ConsoleOutputHandle, new_pos);
+						Platform::RestoreTerminalCursor(cursor, true);
 					}
 
 					/*
@@ -615,9 +545,7 @@ void ConsoleModeClass::Think(void)
 					** Move the cursor back up one line to the current command prompt line.
 					*/
 					if (ok) {
-						COORD new_pos = info.dwCursorPosition;
-						new_pos.X = 0;
-						SetConsoleCursorPosition(ConsoleOutputHandle, new_pos);
+						Platform::RestoreTerminalCursor(cursor, true);
 					}
 
 					/*
@@ -762,30 +690,30 @@ void ConsoleModeClass::Add_Message(WideStringClass *formatted_text, Vector3 *tex
 		** Convert the Vector3 RGB to text attribute colors.
 		*/
 		if (text_color->X != 0.0f) {
-			color |= FOREGROUND_RED;
+			color |= Platform::TerminalRed;
 			if (text_color->X > 0.4f) {
-				color |= FOREGROUND_INTENSITY;
+				color |= Platform::TerminalBright;
 			}
 		}
 
 		if (text_color->Y != 0.0f) {
-			color |= FOREGROUND_GREEN;
+			color |= Platform::TerminalGreen;
 			if (text_color->Y > 0.4f) {
-				color |= FOREGROUND_INTENSITY;
+				color |= Platform::TerminalBright;
 			}
 		}
 
 		if (text_color->Z != 0.0f) {
-			color |= FOREGROUND_BLUE;
+			color |= Platform::TerminalBlue;
 			if (text_color->Z > 0.4f) {
-				color |= FOREGROUND_INTENSITY;
+				color |= Platform::TerminalBright;
 			}
 		}
 
 		if (!SlaveMaster.Am_I_Slave()) {
-			SetConsoleTextAttribute(ConsoleOutputHandle, color | BACKGROUND_BLUE);
+			Platform::SetTerminalColors( color | Platform::TerminalBackgroundBlue);
 		} else {
-			SetConsoleTextAttribute(ConsoleOutputHandle, color | BACKGROUND_GREEN | BACKGROUND_RED | BACKGROUND_BLUE);
+			Platform::SetTerminalColors( color | Platform::TerminalBackgroundGreen | Platform::TerminalBackgroundRed | Platform::TerminalBackgroundBlue);
 		}
 
 		StringClass string(128, true);
@@ -794,9 +722,9 @@ void ConsoleModeClass::Add_Message(WideStringClass *formatted_text, Vector3 *tex
 		Log_To_Disk(string.Peek_Buffer());
 
 		if (!SlaveMaster.Am_I_Slave()) {
-			SetConsoleTextAttribute(ConsoleOutputHandle, MASTER_COLORS);
+			Platform::SetTerminalColors( MASTER_COLORS);
 		} else {
-			SetConsoleTextAttribute(ConsoleOutputHandle, SLAVE_COLORS);
+			Platform::SetTerminalColors( SLAVE_COLORS);
 		}
 
 		/*
@@ -827,20 +755,7 @@ void ConsoleModeClass::Add_Message(WideStringClass *formatted_text, Vector3 *tex
  *=============================================================================================*/
 void ConsoleModeClass::Apply_Attributes(void)
 {
-
-	CONSOLE_SCREEN_BUFFER_INFO info;
-	int ok = GetConsoleScreenBufferInfo(ConsoleOutputHandle, &info);
-
-	if (ok) {
-		COORD pos = info.dwCursorPosition;
-		unsigned long written = 0;
-
-		if (!SlaveMaster.Am_I_Slave()) {
-			FillConsoleOutputAttribute(ConsoleOutputHandle, MASTER_COLORS, 5*80, pos, &written);
-		} else {
-			FillConsoleOutputAttribute(ConsoleOutputHandle, SLAVE_COLORS, 5*80, pos, &written);
-		}
-	}
+	Platform::ApplyTerminalColors(5 * 80, SlaveMaster.Am_I_Slave() ? SLAVE_COLORS : MASTER_COLORS);
 }
 
 
@@ -901,40 +816,12 @@ void ConsoleModeClass::Update_Profile(StringClass profile_string)
 			/*
 			** Save the cursor position.
 			*/
-			CONSOLE_SCREEN_BUFFER_INFO info;
-			int ok = GetConsoleScreenBufferInfo(ConsoleOutputHandle, &info);
-			COORD pos = info.dwCursorPosition;
-
-			/*
-			** Fill the console with spaces.
-			*/
-			if (ok) {
-				unsigned long num_written = 0;
-				FillConsoleOutputCharacter(ConsoleOutputHandle, ' ', 206*80, pos, &num_written);
-
-				/*
-				** Fill the attributes too, the first time.
-				*/
-				if (LastProfileCRC == 0) {
-					if (!SlaveMaster.Am_I_Slave()) {
-						FillConsoleOutputAttribute(ConsoleOutputHandle, MASTER_COLORS, 20*80, pos, &num_written);
-					} else {
-						FillConsoleOutputAttribute(ConsoleOutputHandle, SLAVE_COLORS, 20*80, pos, &num_written);
-					}
-				}
-			}
-
-			/*
-			** Print out the profile info.
-			*/
+			const auto cursor = Platform::SaveTerminalCursor();
+			Platform::ClearTerminalFromCursor(cursor, 206 * 80);
+			if (LastProfileCRC == 0)
+				Platform::FillTerminalColors(cursor, 20 * 80, SlaveMaster.Am_I_Slave() ? SLAVE_COLORS : MASTER_COLORS);
 			Print(str);
-
-			/*
-			** Move the cursor back up to the original position.
-			*/
-			if (ok) {
-				SetConsoleCursorPosition(ConsoleOutputHandle, pos);
-			}
+			Platform::RestoreTerminalCursor(cursor);
 
 			LastProfileCRC = crc;
 		}
@@ -1006,9 +893,9 @@ void ConsoleModeClass::Handle_Profile_Key(int key)
 void ConsoleModeClass::Wait_For_Keypress(void)
 {
 	if (Get_Console()) {
-		if (ConsoleInputHandle != INVALID_HANDLE_VALUE) {
+		if (TerminalOpen) {
 			Print("** Press any key to continue **\n");
 		}
-		_getch();
+		Platform::ReadTerminalKey(false);
 	}
 }

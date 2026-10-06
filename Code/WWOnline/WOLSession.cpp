@@ -36,7 +36,7 @@
 *
 ******************************************************************************/
 
-#include "WWCOMUtil.h"
+#include "Platform/Online/Provider.h"
 #include "Platform/Online/Pointer.h"
 #include "WOLSession.h"
 #include "WOLChatObserver.h"
@@ -173,7 +173,7 @@ bool Session::FinalizeCreate(void)
 
 		// Create chat events observer
 		WWDEBUG_SAY(("WOL: Creating chat events observer\n"));
-		CComPtr<ChatObserver> chatEvents;
+		Platform::OnlinePointer<ChatObserver> chatEvents;
 		chatEvents.Attach(new ChatObserver);
 
 		if (chatEvents == NULL)
@@ -216,7 +216,7 @@ bool Session::FinalizeCreate(void)
 
 		// Create net utility events observer
 		WWDEBUG_SAY(("WOL: Creating netutil events observer\n"));
-		CComPtr<NetUtilObserver> utilEvents;
+		Platform::OnlinePointer<NetUtilObserver> utilEvents;
 		utilEvents.Attach(new NetUtilObserver);
 
 		if (utilEvents == NULL)
@@ -305,14 +305,14 @@ Session::~Session()
 	if (mNetUtil)
 		{
 		WWDEBUG_SAY(("WOL: Releasing IID_INetUtil object\n"));
-		AtlUnadvise(mNetUtil, WOL::IID_INetUtilEvent, mNetUtilCookie);
+		Platform::UnadviseOnlineEvents(mNetUtil, WOL::IID_INetUtilEvent, mNetUtilCookie);
 		mNetUtil.Release();
 		}
 
 	if (mChat)
 		{
 		WWDEBUG_SAY(("WOL: Releasing IID_IChat object\n"));
-		AtlUnadvise(mChat, WOL::IID_IChatEvent, mChatCookie);
+		Platform::UnadviseOnlineEvents(mChat, WOL::IID_IChatEvent, mChatCookie);
 		mChat.Release();
 		}
 
@@ -3259,7 +3259,7 @@ void Session::RequestServerTime(void)
 *
 ******************************************************************************/
 
-const CComPtr<WOL::IIGROptions>& Session::GetIGRObject(void)
+const Platform::OnlinePointer<WOL::IIGROptions>& Session::GetIGRObject(void)
 	{
 	if (mIGRObject == NULL)
 		{
@@ -3308,7 +3308,7 @@ const CComPtr<WOL::IIGROptions>& Session::GetIGRObject(void)
 
 bool Session::IsStoreLoginAllowed(void)
 	{
-	const CComPtr<WOL::IIGROptions>& igr = GetIGRObject();
+	const Platform::OnlinePointer<WOL::IIGROptions>& igr = GetIGRObject();
 
 	if (igr)
 		{
@@ -3338,7 +3338,7 @@ bool Session::IsStoreLoginAllowed(void)
 
 bool Session::IsAutoLoginAllowed(void)
 	{
-	const CComPtr<WOL::IIGROptions>& igr = GetIGRObject();
+	const Platform::OnlinePointer<WOL::IIGROptions>& igr = GetIGRObject();
 
 	if (igr)
 		{
@@ -3367,7 +3367,7 @@ bool Session::IsAutoLoginAllowed(void)
 
 bool Session::IsRunRegAppAllowed(void)
 	{
-	const CComPtr<WOL::IIGROptions>& igr = GetIGRObject();
+	const Platform::OnlinePointer<WOL::IIGROptions>& igr = GetIGRObject();
 
 	if (igr)
 		{
@@ -3396,8 +3396,8 @@ bool Session::IsRunRegAppAllowed(void)
 *
 ******************************************************************************/
 
-RefPtr<ChatAdvisement> ChatAdvisement::Create(const CComPtr<WOL::IChat>& chat,
-		const CComPtr<WOL::IChatEvent>& sink)
+RefPtr<ChatAdvisement> ChatAdvisement::Create(const Platform::OnlinePointer<WOL::IChat>& chat,
+		const Platform::OnlinePointer<WOL::IChatEvent>& sink)
 	{
 	return new ChatAdvisement(chat, sink);
 	}
@@ -3420,13 +3420,13 @@ RefPtr<ChatAdvisement> ChatAdvisement::Create(const CComPtr<WOL::IChat>& chat,
 *
 ******************************************************************************/
 
-ChatAdvisement::ChatAdvisement(const CComPtr<WOL::IChat>& chat, const CComPtr<WOL::IChatEvent>& sink) :
+ChatAdvisement::ChatAdvisement(const Platform::OnlinePointer<WOL::IChat>& chat, const Platform::OnlinePointer<WOL::IChatEvent>& sink) :
 		mChat(chat),
 		mChatCookie(0)
 	{
 	if (mChat && sink)
 		{
-		AtlAdvise(mChat, sink, WOL::IID_IChatEvent, &mChatCookie);
+		Platform::AdviseOnlineEvents(mChat, sink, WOL::IID_IChatEvent, &mChatCookie);
 		}
 	}
 
@@ -3451,7 +3451,7 @@ ChatAdvisement::~ChatAdvisement()
 	{
 	if (mChat)
 		{
-		AtlUnadvise(mChat, WOL::IID_IChatEvent, mChatCookie);
+		Platform::UnadviseOnlineEvents(mChat, WOL::IID_IChatEvent, mChatCookie);
 		}
 	}
 

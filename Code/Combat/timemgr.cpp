@@ -174,9 +174,6 @@ void	TimeManager::Update_Frame_Time()
 
 	FrameTicks = MIN( FrameTicks, (TICKS_PER_SECOND / SLOWEST_FPS) );
 
-	if ( WW3D::Get_Movie_Capture_Frame_Rate() != 0.0f ) {
-		FrameTicks = TICKS_PER_SECOND / WW3D::Get_Movie_Capture_Frame_Rate();
-	}
 
 #if	TIME_STABILIZING_TECHNOLOGY_ENABLED
 	FrameTicks = TICKS_PER_SECOND / 30;

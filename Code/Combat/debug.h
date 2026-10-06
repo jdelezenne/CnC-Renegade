@@ -106,8 +106,6 @@ public:
 	*/
 	enum DebugDevice {
 		DEBUG_DEVICE_SCREEN		= 1<<0,
-		DEBUG_DEVICE_MONO			= 1<<1,
-		DEBUG_DEVICE_SRDEBUG		= 1<<2,		// OBSOLETE!
 		DEBUG_DEVICE_DBWIN32		= 1<<3,
 		DEBUG_DEVICE_LOG			= 1<<4,
 		DEBUG_DEVICE_WINDOWS		= 1<<5,

@@ -45,15 +45,14 @@
 #pragma warning(disable : 4530)
 
 #include	"always.h"
-#include	<windows.h>
+#include "Platform/Platform.h"
+#include "Platform/Threads.h"
 #include "systimer.h"
-#include <snmp.h>
+#include "Platform/Network/Transport.h"
 #include	<stddef.h>
-#include <process.h>
 
 
 #include "crandom.h"
-#include "except.h"
 #include	"nat.h"
 #include	"natsock.h"
 #include	"nataddr.h"
@@ -87,6 +86,7 @@ FirewallHelperClass FirewallHelper;
  *   3/15/01 5:03PM ST : Created                                                               *
  *=============================================================================================*/
 FirewallHelperClass::FirewallHelperClass(void)
+    : ThreadClass("Firewall thread", Platform::DefaultThreadExceptionHandler())
 {
 	Behavior = FIREWALL_TYPE_UNKNOWN;
 	LastBehavior = FIREWALL_TYPE_UNKNOWN;
@@ -95,12 +95,9 @@ FirewallHelperClass::FirewallHelperClass(void)
 	NumManglerServers = 0;
 	CurrentManglerServer = -1;
 	SourcePortPool = 0;
-	ThreadActive = false;
 	ThreadState = THREAD_IDLE;
-	ThreadEvent = INVALID_HANDLE_VALUE;
-	NATThreadMutex = CreateMutex(NULL, false, NULL);
-	NATDataMutex = CreateMutex(NULL, false, NULL);
-	ThreadHandle = INVALID_HANDLE_VALUE;
+	ThreadEvent.reset();
+	NATDataMutex = Platform::CreateMutexHandle(nullptr);
 	QueueNotifyPtr = NULL;
 	SuccessFlagPtr = NULL;
 	CancelPlayer[0] = 0;
@@ -132,11 +129,8 @@ void FirewallHelperClass::Startup(void)
 	*/
 	WWDEBUG_SAY(("FirewallHelper: Starting firewall thread\n"));
 	ThreadState = THREAD_IDLE;
-	ThreadEvent = INVALID_HANDLE_VALUE;
-	ThreadActive = true;
-	//ThreadHandle = CreateThread(NULL, 128*1024, &NAT_Thread_Start, this, 0, &ThreadID);
-	ThreadHandle = (HANDLE)_beginthreadex(NULL, 128*1024, &NAT_Thread_Start, this, 0, (unsigned int*)&ThreadID);
-	fw_assert(ThreadHandle != NULL);
+	ThreadEvent.reset();
+	Execute();
 }
 
 
@@ -158,31 +152,7 @@ void FirewallHelperClass::Startup(void)
  *=============================================================================================*/
 void FirewallHelperClass::Shutdown(void)
 {
-	if (ThreadActive) {
-		WWDEBUG_SAY(("FirewallHelper: Stopping firewall thread\n"));
-
-		/*
-		** Signal the thread to go away.
-		*/
-		ThreadActive = false;
-
-		/*
-		** Wait for the thread to go away.
-		*/
-		int deadlock = WaitForSingleObject(NATThreadMutex, 5 * 1000);
-		if (deadlock == WAIT_TIMEOUT) {
-			WWDEBUG_SAY(("FirewallHelperClass - Timeout waiting for firewall thread mutex\n"));
-			fw_assert(deadlock != WAIT_TIMEOUT);
-		} else {
-			ReleaseMutex(NATThreadMutex);
-		}
-	}
-
-	// Release the thread
-	if (INVALID_HANDLE_VALUE != ThreadHandle) {
-		CloseHandle(ThreadHandle);
-		ThreadHandle = INVALID_HANDLE_VALUE;
-	}
+    Stop(5000);
 }
 
 
@@ -269,8 +239,7 @@ FirewallHelperClass::~FirewallHelperClass(void)
 {
 	Shutdown();
 
-	CloseHandle(NATThreadMutex);
-	CloseHandle(NATDataMutex);
+	Platform::DestroyMutex(NATDataMutex);
 }
 
 
@@ -289,19 +258,9 @@ FirewallHelperClass::~FirewallHelperClass(void)
  * HISTORY:                                                                                    *
  *   8/7/2001 2:39PM ST : Created                                                              *
  *=============================================================================================*/
-unsigned int __stdcall FirewallHelperClass::NAT_Thread_Start(void *thisptr)
+void FirewallHelperClass::Thread_Function()
 {
-	unsigned int thread_exit_code = 0;
-
-	Register_Thread_ID(GetCurrentThreadId(), "Firewall thread");
-
-	__try {
-		thread_exit_code = ((FirewallHelperClass*)thisptr)->NAT_Thread_Main_Loop();
-	} __except(Exception_Handler(GetExceptionCode(), GetExceptionInformation())) {};
-
-	Unregister_Thread_ID(GetCurrentThreadId(), "Firewall thread");
-
-	return(thread_exit_code);
+    NAT_Thread_Main_Loop();
 }
 
 
@@ -322,28 +281,24 @@ unsigned int __stdcall FirewallHelperClass::NAT_Thread_Start(void *thisptr)
 unsigned long FirewallHelperClass::NAT_Thread_Main_Loop(void)
 {
 	/*
-	** Take ownership of the thread mutex.
-	*/
-	int deadlock = WaitForSingleObject(NATThreadMutex, 10 * 1000);
-	if (deadlock == WAIT_TIMEOUT) {
-		WWDEBUG_SAY(("FirewallHelperClass - Timeout waiting for thread mutex\n"));
-		fw_assert(deadlock != WAIT_TIMEOUT);
-	}
-
-	/*
 	** Thread main loop.
 	*/
-	while (ThreadActive) {
+	while (running) {
 
 		/*
 		** Always do some sleeping here since this thread is a relatively low priority compared to stuff like running the
 		** game engine.
 		** If we are not doing anything much then sleep for longer.
 		*/
-		if (ThreadState == THREAD_IDLE && ThreadQueue.Count() == 0) {
-			Sleep(50);
+		bool idle;
+		{
+			ThreadLockClass locker(this);
+			idle = ThreadState == THREAD_IDLE && ThreadQueue.Count() == 0;
+		}
+		if (idle) {
+			Platform::Sleep(50);
 		} else {
-			Sleep(0);
+			Platform::Sleep(0);
 		}
 
 		/*
@@ -374,7 +329,7 @@ unsigned long FirewallHelperClass::NAT_Thread_Main_Loop(void)
 					if (WOLNATInterface.Am_I_Server()) {
 						if (ClientQueue.Count()) {
 							WWDEBUG_SAY(("Client with no thread action!\n"));
-							Add_Thread_Action(THREAD_CONNECT_FIREWALL, INVALID_HANDLE_VALUE);
+							Add_Thread_Action(THREAD_CONNECT_FIREWALL, {});
 						}
 					}
 				}
@@ -444,7 +399,6 @@ unsigned long FirewallHelperClass::NAT_Thread_Main_Loop(void)
 
 	}
 
-	ReleaseMutex(NATThreadMutex);
 	return(0);
 }
 
@@ -510,14 +464,14 @@ void FirewallHelperClass::Reset_Server(void)
  * HISTORY:                                                                                    *
  *   3/15/01 6:47PM ST : Created                                                               *
  *=============================================================================================*/
-void FirewallHelperClass::Detect_Firewall(HANDLE event)
+void FirewallHelperClass::Detect_Firewall(Platform::EventPointer event)
 {
 	ThreadLockClass locker(this);
 
 	if (Behavior == FIREWALL_TYPE_UNKNOWN) {
 		Add_Thread_Action(THREAD_DETECT_FIREWALL, event);
 	} else {
-		SetEvent(event);
+		if (event) event->Signal();
 	}
 }
 
@@ -548,7 +502,7 @@ void FirewallHelperClass::Connected_To_WWOnline_Server(void)
 		** Get the local chat connection address.
 		*/
 		ThreadLockClass locker(this);
-		Add_Thread_Action(THREAD_GET_LOCAL_ADDRESS, INVALID_HANDLE_VALUE);
+		Add_Thread_Action(THREAD_GET_LOCAL_ADDRESS, {});
 	}
 }
 
@@ -749,7 +703,7 @@ unsigned short FirewallHelperClass::Get_Mangler_Response(unsigned long packet_id
 			peek_packet = 0;
 		}
 
-		Sleep(0);
+		Platform::Sleep(0);
 	}
 	return(0);
 }
@@ -1907,7 +1861,7 @@ int FirewallHelperClass::Build_Mangler_Packet(unsigned char *buffer, unsigned sh
  * HISTORY:                                                                                    *
  *   8/9/2001 9:06PM ST : Created                                                              *
  *=============================================================================================*/
-void FirewallHelperClass::Add_Thread_Action(int thread_action, HANDLE thread_event)
+void FirewallHelperClass::Add_Thread_Action(int thread_action, Platform::EventPointer thread_event)
 {
 	ThreadLockClass locker(this);
 	ThreadActionClass thread;
@@ -1935,9 +1889,9 @@ void FirewallHelperClass::Add_Thread_Action(int thread_action, HANDLE thread_eve
 void FirewallHelperClass::Set_Thread_Event(void)
 {
 	ThreadLockClass locker(this);
-	if (ThreadEvent != INVALID_HANDLE_VALUE) {
-		SetEvent(ThreadEvent);
-		ThreadEvent = INVALID_HANDLE_VALUE;
+	if (ThreadEvent) {
+		ThreadEvent->Signal();
+		ThreadEvent.reset();
 	}
 }
 
@@ -2086,7 +2040,7 @@ void FirewallHelperClass::Process_Game_Options(void)
 					** Go into connect mode.
 					** Don't do this until we get a confirmation of our queue position.
 					*/
-					Add_Thread_Action(THREAD_CONNECT_FIREWALL, INVALID_HANDLE_VALUE);
+					Add_Thread_Action(THREAD_CONNECT_FIREWALL, {});
 				}
 				break;
 
@@ -2137,7 +2091,7 @@ void FirewallHelperClass::Process_Game_Options(void)
 					WWDEBUG_SAY(("FirewallHelper - Got client accept from %s. Local addr = %s,", client->Name, client->LocalAddress.As_String()));
 					WWDEBUG_SAY((" external addr = %s, firewall = %08x\n", client->ExternalAddress.As_String(), (unsigned long) firewall));
 
-					Add_Thread_Action(THREAD_CONNECT_FIREWALL, INVALID_HANDLE_VALUE);
+					Add_Thread_Action(THREAD_CONNECT_FIREWALL, {});
 				}
 				break;
 
@@ -2200,7 +2154,7 @@ void FirewallHelperClass::Process_Game_Options(void)
 				}
 				//if (QueuedPlayers == 0) {
 				//	if (ThreadState != THREAD_DETECT_FIREWALL) {
-				//		Add_Thread_Action(THREAD_CONNECT_FIREWALL, INVALID_HANDLE_VALUE);
+				//		Add_Thread_Action(THREAD_CONNECT_FIREWALL, {});
 				//	}
 				//}
 				break;
@@ -2271,7 +2225,7 @@ void FirewallHelperClass::Cleanup_Client_Queue(void)
 	** This is the main thread removing entries from the client queue that it wasn't able to remove before due to thread
 	** contention.
 	*/
-	fw_assert(Get_Main_Thread_ID() == GetCurrentThreadId());
+	fw_assert(Get_Main_Thread_ID() == Platform::CurrentThreadId());
 
 	while (ClientQueueRemoveList.Count()) {
 		if (Remove_Player_From_Negotiation_Queue_If_Mutex_Available(ClientQueueRemoveList[0]->Name)) {
@@ -2305,7 +2259,7 @@ bool FirewallHelperClass::Remove_Player_From_Negotiation_Queue_If_Mutex_Availabl
 	/*
 	** If we can grab the mutex then remove the item immediately, otherwise add it to a list and return.
 	*/
-	if (locker.WaitResult == WAIT_OBJECT_0) {
+	if (locker.Acquired) {
 		Remove_Player_From_Negotiation_Queue(player_name);
 		return(true);
 	} else {
@@ -2314,7 +2268,7 @@ bool FirewallHelperClass::Remove_Player_From_Negotiation_Queue_If_Mutex_Availabl
 		** Just add the name to a list that will be checked later when it's safe to remove stuff from the client queue.
 		** This list must only ever be accessed from the main thread.
 		*/
-		fw_assert(Get_Main_Thread_ID() == GetCurrentThreadId());
+		fw_assert(Get_Main_Thread_ID() == Platform::CurrentThreadId());
 		for (int i=0 ; i<ClientQueueRemoveList.Count() ; i++) {
 			if (stricmp(ClientQueueRemoveList[i]->Name, player_name) == 0) {
 				return(false);
@@ -2521,7 +2475,7 @@ void FirewallHelperClass::Send_Queue_States(void)
  * HISTORY:                                                                                    *
  *   8/14/2001 10:56PM ST : Created                                                            *
  *=============================================================================================*/
-void FirewallHelperClass::Set_Client_Connect_Event(HANDLE thread_event, HANDLE cancel_event, int *flag_ptr, int *queue_ptr)
+void FirewallHelperClass::Set_Client_Connect_Event(Platform::EventPointer thread_event, Platform::EventPointer cancel_event, std::atomic<int>* flag_ptr, std::atomic<unsigned int>* queue_ptr)
 {
 	ThreadLockClass locker(this);
 
@@ -2562,11 +2516,11 @@ void FirewallHelperClass::Set_Client_Success(int success)
 			*QueueNotifyPtr = 0;
 		}
 		QueueNotifyPtr = NULL;
-		if (ClientConnectEvent != INVALID_HANDLE_VALUE) {
-			SetEvent(ClientConnectEvent);
+		if (ClientConnectEvent) {
+			ClientConnectEvent->Signal();
 		}
-		ClientConnectEvent = INVALID_HANDLE_VALUE;
-		ClientCancelEvent = INVALID_HANDLE_VALUE;
+		ClientConnectEvent.reset();
+		ClientCancelEvent.reset();
 	}
 }
 
@@ -2591,10 +2545,8 @@ bool FirewallHelperClass::Client_Cancelled(void)
 {
 	if (!WOLNATInterface.Am_I_Server()) {
 		ThreadLockClass locker(this);
-		if (ClientCancelEvent != INVALID_HANDLE_VALUE) {
-			int result = WaitForSingleObject(ClientCancelEvent, 0);
-
-			if (result == WAIT_OBJECT_0) {
+		if (ClientCancelEvent) {
+			if (ClientCancelEvent->IsSignaled()) {
 				WWDEBUG_SAY(("FirewallHelper - Client cancelled\n"));
 				return(true);
 			}
@@ -2775,7 +2727,7 @@ int FirewallHelperClass::Negotiate_Port(void)
 			timeout = TIMEGETTIME() + (8 * TIMER_SECOND);
 			while (TIMEGETTIME() < timeout && QueuedPlayers == -1) {
 				Process_Game_Options();
-				Sleep(5);
+				Platform::Sleep(5);
 
 				/*
 				** See if the user cancelled.
@@ -2807,7 +2759,7 @@ int FirewallHelperClass::Negotiate_Port(void)
 		timeout = TIMEGETTIME() + (QueuedPlayers * 32 * TIMER_SECOND);
 		while (TIMEGETTIME() < timeout && QueuedPlayers != 0) {
 			Process_Game_Options();
-			Sleep(5);
+			Platform::Sleep(5);
 
 			/*
 			** See if the user cancelled.
@@ -2863,7 +2815,7 @@ int FirewallHelperClass::Negotiate_Port(void)
 
 	do {
 
-		Sleep(0);
+		Platform::Sleep(0);
 
 		/*
 		** See if the user cancelled.
@@ -2949,7 +2901,7 @@ int FirewallHelperClass::Negotiate_Port(void)
 					*/
 					if (trying > 0) {
 						WOLNATInterface.Set_Service_Socket_Handler(NULL);
-						Sleep(100);
+						Platform::Sleep(100);
 						socket->Close();
 						for (int cp=0 ; cp < 2048 ; cp++) {
 							ClientPort = WOLNATInterface.Get_Next_Client_Port();
@@ -2994,7 +2946,7 @@ int FirewallHelperClass::Negotiate_Port(void)
 		}
 		while (TIMEGETTIME() < timeout && ((mangling == true && PlayersMangledPort == last_send_port) || (mangling == false && PlayersMangledPort == 0))) {
 			Process_Game_Options();
-			Sleep(5);
+			Platform::Sleep(5);
 
 			/*
 			** See if the user cancelled.
@@ -3048,7 +3000,7 @@ int FirewallHelperClass::Negotiate_Port(void)
 			*/
 			if (Is_Netgear() && !Is_Netgear(PlayersFirewallType)) {
 				WWDEBUG_SAY(("FirewallHelper: Doing the netgear sleep thing\n"));
-				Sleep(TIMER_SECOND * 4);
+				Platform::Sleep(TIMER_SECOND * 4);
 			}
 
 			/*
@@ -3066,7 +3018,7 @@ int FirewallHelperClass::Negotiate_Port(void)
 					resend_timer = TIMEGETTIME() + (TIMER_SECOND / 2);
 				}
 
-				Sleep(5);
+				Platform::Sleep(5);
 				Process_Game_Options();
 
 				/*
@@ -3223,23 +3175,6 @@ int FirewallHelperClass::Negotiate_Port(void)
 
 
 
-/*
-** Function definitions for the MIB-II entry points.
-*/
-BOOL (__stdcall *SnmpExtensionInitPtr)(IN DWORD dwUpTimeReference, OUT HANDLE *phSubagentTrapEvent, OUT AsnObjectIdentifier *pFirstSupportedRegion);
-BOOL (__stdcall *SnmpExtensionQueryPtr)(IN BYTE bPduType, IN OUT RFC1157VarBindList *pVarBindList, OUT AsnInteger32 *pErrorStatus, OUT AsnInteger32 *pErrorIndex);
-LPVOID (__stdcall *SnmpUtilMemAllocPtr)(IN DWORD bytes);
-VOID (__stdcall *SnmpUtilMemFreePtr)(IN LPVOID pMem);
-
-typedef struct tConnInfoStruct {
-	unsigned int State;
-	unsigned long LocalIP;
-	unsigned short LocalPort;
-	unsigned long RemoteIP;
-	unsigned short RemotePort;
-} ConnInfoStruct;
-
-
 /***********************************************************************************************
  * Get_Local_Chat_Connection_Address -- Which address are we using to talk to the chat server? *
  *                                                                                             *
@@ -3256,384 +3191,24 @@ typedef struct tConnInfoStruct {
  *=============================================================================================*/
 bool FirewallHelperClass::Get_Local_Chat_Connection_Address(void)
 {
-	/*
-	** Local defines.
-	*/
-	enum {
-		CLOSED = 1,
-		LISTENING,
-		SYN_SENT,
-		SEN_RECEIVED,
-		ESTABLISHED,
-		FIN_WAIT,
-		FIN_WAIT2,
-		CLOSE_WAIT,
-		LAST_ACK,
-		CLOSING,
-		TIME_WAIT,
-		DELETE_TCB
-	};
-
-	enum {
-		tcpConnState = 1,
-		tcpConnLocalAddress,
-		tcpConnLocalPort,
-		tcpConnRemAddress,
-		tcpConnRemPort
-	};
-
-
-	/*
-	** Locals.
-	*/
-	char server_name[128];
-	unsigned char server_address[4];
-	unsigned char remote_address[4];
-	HANDLE trap_handle;
-	AsnObjectIdentifier first_supported_region;
-	DynamicVectorClass<ConnInfoStruct*> connection_list;
-	int last_field;
-	int index;
-	AsnInteger error_status;
-	AsnInteger error_index;
-	int conn_entry_type_index;
-	int conn_entry_type;
-	bool found;
-	unsigned int server_port = 0;
-	IPAddressClass my_address;
-
-	/*
-	** Statics.
-	*/
-	static char _conn_state[][32] = {
-		"?",
-		"CLOSED",
-		"LISTENING",
-		"SYN_SENT",
-		"SEN_RECEIVED",
-		"ESTABLISHED",
-		"FIN_WAIT",
-		"FIN_WAIT2",
-		"CLOSE_WAIT",
-		"LAST_ACK",
-		"CLOSING",
-		"TIME_WAIT",
-		"DELETE_TCB"
-	};
-
-	/*
-	** If we already did this then there's no need to do it again.
-	*/
-	if (LocalChatConnectionAddress.Is_Valid()) {
-		return(true);
-	}
-
-
-	WWDEBUG_SAY(("FirewallHelper - Finding local address used to talk to the chat server\n"));
-
-	/*
-	** Get the name of the current server.
-	*/
-	WOLNATInterface.Get_Current_Server_ConnData(server_name, sizeof(server_name));
-
-	if (strlen(server_name) == 0) {
-		return(false);
-	}
-
-	/*
-	** the conndata field will look something like
-	**
-	** 	TCP;ra2chat.westwood.com;7000
-	*/
-	fw_assert(strnicmp((char*)server_name, "TCP;", 4) == 0);
-	char *server_name_ptr = &server_name[4];
-	char *semi_colon_ptr = strchr(server_name_ptr, ';');
-
-	if (semi_colon_ptr) {
-		*semi_colon_ptr = 0;
-		sscanf(semi_colon_ptr+1, "%d", &server_port);
-	} else {
-		WWDEBUG_SAY(("FirewallHelper - Failed to parse server name\n"));
-		return(false);
-	}
-	WWDEBUG_SAY(("FirewallHelper - Current chat server name is %s\n", server_name_ptr));
-	WWDEBUG_SAY(("FirewallHelper - Chat server port is %d\n", server_port));
-
-	/*
-	** Get the address of the chat server.
-	*/
-	WWDEBUG_SAY(("FirewallHelper - About to call gethostbyname\n"));
-	struct hostent *host_info = gethostbyname(server_name_ptr);
-
-	if (!host_info) {
-		WWDEBUG_SAY(("FirewallHelper - gethostbyname failed! Error code %d\n", WSAGetLastError()));
-		return(false);
-	}
-
-	memcpy(server_address, &host_info->h_addr_list[0][0], 4);
-	unsigned long temp = *((unsigned long*)(&server_address[0]));
-	temp = ntohl(temp);
-	*((unsigned long*)(&server_address[0])) = temp;
-
-	WWDEBUG_SAY(("FirewallHelper - Host address is %d.%d.%d.%d\n", server_address[3], server_address[2], server_address[1], server_address[0]));
-
-	/*
-	** Load the MIB-II SNMP DLL.
-	*/
-	WWDEBUG_SAY(("FirewallHelper - About to load INETMIB1.DLL\n"));
-
-	HINSTANCE mib_ii_dll = LoadLibrary("inetmib1.dll");
-	if (mib_ii_dll == NULL) {
-		WWDEBUG_SAY(("FirewallHelper - Failed to load INETMIB1.DLL\n"));
-		return(false);
-	}
-
-	WWDEBUG_SAY(("FirewallHelper - About to load SNMPAPI.DLL\n"));
-
-	HINSTANCE snmpapi_dll = LoadLibrary("snmpapi.dll");
-	if (snmpapi_dll == NULL) {
-		WWDEBUG_SAY(("FirewallHelper - Failed to load SNMPAPI.DLL\n"));
-		FreeLibrary(mib_ii_dll);
-		return(false);
-	}
-
-	/*
-	** Get the function pointers into the .dll
-	*/
-	SnmpExtensionInitPtr = (int (__stdcall *)(unsigned long,void ** ,AsnObjectIdentifier *)) GetProcAddress(mib_ii_dll, "SnmpExtensionInit");
-	SnmpExtensionQueryPtr = (int (__stdcall *)(unsigned char,SnmpVarBindList *,long *,long *)) GetProcAddress(mib_ii_dll, "SnmpExtensionQuery");
-	SnmpUtilMemAllocPtr = (void *(__stdcall *)(unsigned long)) GetProcAddress(snmpapi_dll, "SnmpUtilMemAlloc");
-	SnmpUtilMemFreePtr = (void (__stdcall *)(void *)) GetProcAddress(snmpapi_dll, "SnmpUtilMemFree");
-	if (SnmpExtensionInitPtr == NULL || SnmpExtensionQueryPtr == NULL || SnmpUtilMemAllocPtr == NULL || SnmpUtilMemFreePtr == NULL) {
-		WWDEBUG_SAY(("FirewallHelper - Failed to get proc addresses for linked functions\n"));
-		FreeLibrary(snmpapi_dll);
-		FreeLibrary(mib_ii_dll);
-		return(false);
-	}
-
-
-	RFC1157VarBindList *bind_list_ptr = (RFC1157VarBindList *) SnmpUtilMemAllocPtr(sizeof(RFC1157VarBindList) + 8192);
-	RFC1157VarBind *bind_ptr = (RFC1157VarBind *) SnmpUtilMemAllocPtr(sizeof(RFC1157VarBind) + 128);
-
-	/*
-	** OK, here we go. Try to initialise the .dll
-	*/
-	WWDEBUG_SAY(("FirewallHelper - About to init INETMIB1.DLL\n"));
-	int ok = SnmpExtensionInitPtr(GetCurrentTime(), &trap_handle, &first_supported_region);
-
-	if (!ok) {
-		/*
-		** Aw crap.
-		*/
-		WWDEBUG_SAY(("FirewallHelper - Failed to init the .dll\n"));
-		SnmpUtilMemFreePtr(bind_list_ptr);
-		SnmpUtilMemFreePtr(bind_ptr);
-		FreeLibrary(snmpapi_dll);
-		FreeLibrary(mib_ii_dll);
-		return(false);
-	}
-
-	/*
-	** Name of mib_ii object we want to query. See RFC 1213.
-	**
-	** iso.org.dod.internet.mgmt.mib-2.tcp.tcpConnTable.TcpConnEntry.tcpConnState
-	**  1   3   6      1      2     1   6        13          1             1
-	*/
-	unsigned int mib_ii_name[] = {1,3,6,1,2,1,6,13,1,1};
-	unsigned int *mib_ii_name_ptr = (unsigned int *) SnmpUtilMemAllocPtr(sizeof(mib_ii_name) + 1024);
-	memcpy(mib_ii_name_ptr, mib_ii_name, sizeof(mib_ii_name));
-
-	/*
-	** Get the index of the conn entry data.
-	*/
-	conn_entry_type_index = ARRAY_SIZE(mib_ii_name) - 1;
-
-	/*
-	** Set up the bind list.
-	*/
-	bind_ptr->name.idLength = ARRAY_SIZE(mib_ii_name);
-	bind_ptr->name.ids = mib_ii_name_ptr;
-	bind_list_ptr->list = bind_ptr;
-	bind_list_ptr->len = 1;
-
-
-	/*
-	** We start with the tcpConnLocalAddress field.
-	*/
-	last_field = 1;
-
-	/*
-	** First connection.
-	*/
-	index = 0;
-
-	/*
-	** Suck out that tcp connection info....
-	*/
-	while (true) {
-
-		if (!SnmpExtensionQueryPtr(ASN_RFC1157_GETNEXTREQUEST, bind_list_ptr, &error_status, &error_index)) {
-			WWDEBUG_SAY(("FirewallHelper - SnmpExtensionQuery returned false\n"));
-			SnmpUtilMemFreePtr(bind_list_ptr);
-			SnmpUtilMemFreePtr(bind_ptr);
-			FreeLibrary(snmpapi_dll);
-			FreeLibrary(mib_ii_dll);
-			return(false);
-		}
-
-		/*
-		** If this is something new we aren't looking for then we are done.
-		*/
-		if (bind_ptr->name.idLength < ARRAY_SIZE(mib_ii_name)) {
-			break;
-		}
-
-		/*
-		** Get the type of info we are looking at. See RFC1213.
-		**
-		** 1 = tcpConnState
-		** 2 = tcpConnLocalAddress
-		** 3 = tcpConnLocalPort
-		** 4 = tcpConnRemAddress
-		** 5 = tcpConnRemPort
-		**
-		** tcpConnState is one of the following...
-		**
-		**   1  closed
-		**   2  listen
-		**   3  synSent
-		**   4  synReceived
-		**   5  established
-		**   6  finWait1
-		**   7  finWait2
-		**   8  closeWait
-		**   9  lastAck
-		**   10 closing
-		**   11 timeWait
-		**   12 deleteTCB
-		*/
-		conn_entry_type = bind_ptr->name.ids[conn_entry_type_index];
-
-		if (last_field != conn_entry_type) {
-			index = 0;
-			last_field = conn_entry_type;
-		}
-
-		switch (conn_entry_type) {
-
-			/*
-			** 1. First field in the entry. Need to create a new connection info struct
-			** here to store this connection in.
-			*/
-			case tcpConnState:
-			{
-				ConnInfoStruct *new_conn = new ConnInfoStruct;
-				new_conn->State = bind_ptr->value.asnValue.number;
-				connection_list.Add(new_conn);
-				break;
-			}
-
-			/*
-			** 2. Local address field.
-			*/
-			case tcpConnLocalAddress:
-				fw_assert(index < connection_list.Count());
-				connection_list[index]->LocalIP = *((unsigned long*)bind_ptr->value.asnValue.address.stream);
-				index++;
-				break;
-
-			/*
-			** 3. Local port field.
-			*/
-			case tcpConnLocalPort:
-				fw_assert(index < connection_list.Count());
-				connection_list[index]->LocalPort = bind_ptr->value.asnValue.number;
-				index++;
-				break;
-
-			/*
-			** 4. Remote address field.
-			*/
-			case tcpConnRemAddress:
-				fw_assert(index < connection_list.Count());
-				connection_list[index]->RemoteIP = *((unsigned long*)bind_ptr->value.asnValue.address.stream);
-				index++;
-				break;
-
-			/*
-			** 5. Remote port field.
-			*/
-			case tcpConnRemPort:
-				fw_assert(index < connection_list.Count());
-				connection_list[index]->RemotePort = bind_ptr->value.asnValue.number;
-				index++;
-				break;
-		}
-	}
-
-	SnmpUtilMemFreePtr(bind_list_ptr);
-	SnmpUtilMemFreePtr(bind_ptr);
-	//SnmpUtilMemFreePtr(mib_ii_name_ptr);		// Don't free this - the SnmpExtensionQueryPtr call frees it apparently
-
-	WWDEBUG_SAY(("FirewallHelper - Got %d connections in list, parsing...\n", connection_list.Count()));
-
-	/*
-	** Right, we got the lot. Lets see if any of them have the same address as the chat
-	** server we think we are talking to.
-	*/
-	found = false;
-	while (connection_list.Count()) {
-		ConnInfoStruct *connection = connection_list[0];
-
-		temp = ntohl(connection->RemoteIP);
-		memcpy(remote_address, (unsigned char*)&temp, 4);
-
-		/*
-		** See if this connection has the same address as our server.
-		*/
-		if (!found && memcmp(remote_address, server_address, 4) == 0) {
-			WWDEBUG_SAY(("FirewallHelper - Found connection with same remote address as server\n"));
-
-			if (server_port == 0 || server_port == (unsigned int)connection->RemotePort) {
-
-				WWDEBUG_SAY(("FirewallHelper - Connection has same port\n"));
-				/*
-				** Make sure the connection is current.
-				*/
-				if (connection->State == ESTABLISHED) {
-					WWDEBUG_SAY(("FirewallHelper - Connection is ESTABLISHED\n"));
-					my_address.Set_Address((unsigned char*)&connection->LocalIP, connection->LocalPort);
-					found = true;
-				} else {
-					WWDEBUG_SAY(("FirewallHelper - Connection is not ESTABLISHED - skipping\n"));
-				}
-			} else {
-				WWDEBUG_SAY(("FirewallHelper - Connection has different port. Port is %d, looking for %d\n", connection->RemotePort, server_port));
-			}
-		}
-
-		/*
-		** Free the memory.
-		*/
-		delete connection_list[0];
-		connection_list.Delete(0);
-	}
-
-	if (found) {
-		WWDEBUG_SAY(("FirewallHelper - Using address %s to talk to chat server\n", my_address.As_String()));
-		LocalChatConnectionAddress = my_address;
-	}
-
-	FreeLibrary(snmpapi_dll);
-	FreeLibrary(mib_ii_dll);
-
-	ThreadLockClass locker(this);
-	ThreadState = THREAD_GET_LOCAL_ADDRESS_DONE;
-
-	return(found);
+    if (LocalChatConnectionAddress.Is_Valid()) return true;
+    char connection[128]{};
+    WOLNATInterface.Get_Current_Server_ConnData(connection, sizeof(connection));
+    if (strnicmp(connection, "TCP;", 4) != 0) return false;
+    char* hostname = connection + 4;
+    char* separator = strchr(hostname, ';');
+    if (!separator) return false;
+    *separator = 0;
+    unsigned remotePort;
+    if (sscanf(separator + 1, "%u", &remotePort) != 1 || remotePort > 65535) return false;
+    std::uint32_t address;
+    std::uint16_t port;
+    const bool found = Platform::LocalTcpEndpoint(hostname, static_cast<std::uint16_t>(remotePort), address, port);
+    ThreadLockClass locker(this);
+    if (found) LocalChatConnectionAddress.Set_Address(reinterpret_cast<unsigned char*>(&address), port);
+    ThreadState = THREAD_GET_LOCAL_ADDRESS_DONE;
+    return found;
 }
-
-
 
 
 /***********************************************************************************************

@@ -38,7 +38,9 @@
 #include "buildnum.h"
 #include "wwdebug.h"
 #include <stdio.h>
-#include "win.h"
+#include <chrono>
+#include <cstdint>
+#include <cstring>
 
 /*
 **
@@ -70,7 +72,9 @@ char BuildInfoClass::BuildDate   [64] = {"Insert1Build2Date3Here4     xxxx      
  *=============================================================================================*/
 unsigned long BuildInfoClass::Get_Build_Number(void)
 {
-	return (*(unsigned long*)(&BuildNumber[28]));
+	std::uint32_t number;
+	std::memcpy(&number, &BuildNumber[28], sizeof(number));
+	return number;
 }
 
 
@@ -93,7 +97,7 @@ unsigned long BuildInfoClass::Get_Build_Number(void)
 char *BuildInfoClass::Get_Build_Number_String(void)
 {
 	static char _buffer[16];
-	sprintf (_buffer, "%d", *(unsigned long*)(&BuildNumber[28]));
+	snprintf(_buffer, sizeof(_buffer), "%lu", Get_Build_Number());
 	return (_buffer);
 }
 
@@ -138,12 +142,19 @@ char *BuildInfoClass::Get_Builder_Name(void)
 char *BuildInfoClass::Get_Build_Date_String(void)
 {
 	static char _buffer[64];
-	SYSTEMTIME systime;
-
-	if (FileTimeToSystemTime ((LPFILETIME)(&BuildDate[28]), &systime) ) {
-		sprintf(_buffer, "%02d/%02d/%04d - %02d:%02d:%02d", systime.wMonth, systime.wDay, systime.wYear, systime.wHour, systime.wMinute, systime.wSecond);
-	} else {
-		_buffer[0] = 0;
+	std::uint64_t ticks;
+	std::memcpy(&ticks, &BuildDate[28], sizeof(ticks));
+	_buffer[0] = 0;
+	if (ticks < (std::uint64_t{1} << 63)) {
+		using namespace std::chrono;
+		const auto time = sys_days{year{1601}/January/1} + seconds{static_cast<std::int64_t>(ticks / 10000000)};
+		const auto day = floor<days>(time);
+		const year_month_day date{day};
+		const hh_mm_ss clock{time - day};
+		snprintf(_buffer, sizeof(_buffer), "%02u/%02u/%04d - %02lld:%02lld:%02lld",
+			static_cast<unsigned>(date.month()), static_cast<unsigned>(date.day()), static_cast<int>(date.year()),
+			static_cast<long long>(clock.hours().count()), static_cast<long long>(clock.minutes().count()),
+			static_cast<long long>(clock.seconds().count()));
 	}
 
 	return(_buffer);
@@ -286,7 +297,7 @@ const char *BuildInfoClass::Get_Build_Type_String(void)
 char *BuildInfoClass::Composite_Build_Info(void)
 {
 	static char _buffer[256];
-	sprintf(_buffer, "%s Build %d by %s - Build time %s", Get_Build_Type_String(), Get_Build_Number(), Get_Builder_Name(), Get_Build_Date_String());
+	snprintf(_buffer, sizeof(_buffer), "%s Build %lu by %s - Build time %s", Get_Build_Type_String(), Get_Build_Number(), Get_Builder_Name(), Get_Build_Date_String());
 	return(_buffer);
 }
 

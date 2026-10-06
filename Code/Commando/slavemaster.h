@@ -41,11 +41,10 @@
 #ifndef _SLAVEMASTER_H
 #define _SLAVEMASTER_H
 
-#ifdef _WIN32
-#include "win.h"
-#endif
+#include "Platform/Process.h"
 
 #define MAX_SLAVES	7
+#include "wwstring.h"
 
 class SlaveMasterClass;
 
@@ -64,7 +63,7 @@ class SlaveServerClass
 		~SlaveServerClass(void);
 
 		void Set(bool enable, const char *nick, const char *serial, unsigned short port, const char *settings_file, int bandwidth, const char *password);
-		void Get(bool &enable, char *nick, char *serial, unsigned short &port, char *settings_file, int &bandwidth, char *password);
+		void Get(bool &enable, char *nick, char *serial, unsigned short &port, StringClass& settings_file, int &bandwidth, char *password);
 
 
 	private:
@@ -73,16 +72,14 @@ class SlaveServerClass
 		char	Serial[64];
 		char	Password[64];
 		unsigned short Port;
-		char	SettingsFileName[260];
+		StringClass SettingsFileName;
 
 		bool	Enable;
 		bool	IsRunning;
 		unsigned short ControlPort;
 		int	Bandwidth;
 
-#ifdef _WIN32
-		PROCESS_INFORMATION ProcessInfo;
-#endif
+		Platform::ProcessPointer Process;
 };
 
 

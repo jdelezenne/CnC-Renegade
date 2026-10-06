@@ -56,17 +56,6 @@
  *   WW3D::Normalize_Coordinates -- Convert pixel coords to normalized screen coords 0..1      *
  *   WW3D::Update_Render_Device_Description -- updates the description of the current render d *
  *   WW3D::Make_Screen_Shot -- saves a screenshot with the given base filename                 *
- *   WW3D::Start_Movie_Capture -- begins dumping frames to a movie                             *
- *   WW3D::Stop_Movie_Capture -- ends dumping frames to a movie                                *
- *   WW3D::Toggle_Movie_Capture -- toggles movie capture...                                    *
- *   WW3D::Start_Single_Frame_Movie_Capture -- starts capturing a single frame movie           *
- *   WW3D::Capture_Next_Movie_Frame -- tells ww3d to grab another frame for the movie          *
- *   WW3D::Pause_Movie -- pauses/unpauses movie capturing                                      *
- *   WW3D::Is_Movie_Paused -- returns whether the movie capture system is paused               *
- *   WW3D::Is_Recording_Next_Frame -- returns whether the next frame will be dumped to a movie *
- *   WW3D::Is_Movie_Ready -- returns whether the movie capture system is ready                 *
- *   WW3D::Update_Movie_Capture -- dumps the current frame into the movie                      *
- *   WW3D::Get_Movie_Capture_Frame_Rate -- returns the framerate at which the movie is being c *
  *   WW3D::Set_Texture_Reduction -- sets the (hacky) texture reduction factor                  *
  *   WW3D::Get_Texture_Reduction -- gets the (hacky) texture reduction factor                  *
  *   WW3D::Flush_Texture_Cache -- dump all textures from the texture cache                     *
@@ -116,11 +105,6 @@
 #include "animatedsoundmgr.h"
 
 
-#ifndef _UNIX
-#ifdef _WIN32
-#include "Platform/Windows/FrameGrab.h"
-#endif
-#endif
 
 
 const char* DAZZLE_INI_FILENAME="DAZZLE.INI";
@@ -173,7 +157,6 @@ float														WW3D::PixelCenterY = 0.0f;
 
 bool														WW3D::IsInitted = false;
 bool														WW3D::IsRendering = false;
-bool														WW3D::IsCapturing = false;
 bool														WW3D::IsScreenUVBiased = false;
 
 bool														WW3D::AreDecalsEnabled = true;
@@ -182,9 +165,6 @@ float														WW3D::DecalRejectionDistance = 1000000.0f;
 bool														WW3D::AreStaticSortListsEnabled = false;
 bool														WW3D::MungeSortOnLoad = false;
 
-FrameGrabClass *										WW3D::Movie = NULL;
-bool														WW3D::PauseRecord;
-bool														WW3D::RecordNextFrame;
 
 int														WW3D::FrameCount = 0;
 long														WW3D::UserStat0 = 0;
@@ -325,11 +305,6 @@ WW3DErrorType WW3D::Shutdown(void)
 	assert(Lite || IsInitted == true);
 //	WWDEBUG_SAY(("WW3D::Shutdown\n"));
 
-#ifdef WW3D_DX8
-	if (IsCapturing) {
-		Stop_Movie_Capture();
-	}
-#endif //WW3D_DX8
 
 	/*
 	** Free memory in predictive LOD optimizer
@@ -799,10 +774,6 @@ WW3DErrorType WW3D::Begin_Render(bool clear,bool clearz,const Vector3 & color, v
 #endif //WW3D_DX8
 	Debug_Statistics::Begin_Statistics();
 
-	if (IsCapturing && (!PauseRecord || RecordNextFrame)) {
-		Update_Movie_Capture();
-		RecordNextFrame = false;
-	}
 
 	WWASSERT(!IsRendering);
 	IsRendering = true;
@@ -1332,293 +1303,6 @@ void WW3D::Make_Screen_Shot( const char * filename_base )
 
 	delete [] image;
 
-}
-
-
-/***********************************************************************************************
- * WW3D::Start_Movie_Capture -- begins dumping frames to a movie                               *
- *                                                                                             *
- * INPUT:                                                                                      *
- *                                                                                             *
- * OUTPUT:                                                                                     *
- *                                                                                             *
- * WARNINGS:                                                                                   *
- *                                                                                             *
- * HISTORY:                                                                                    *
- *   5/19/99    GTH : Created.                                                                 *
- *   2/26/2001  hy : updated to dx8                                                            *
- *=============================================================================================*/
-void WW3D::Start_Movie_Capture( const char * filename_base, float frame_rate )
-{
-#ifdef _WINDOWS
-	if (IsCapturing) {
-		Stop_Movie_Capture();
-	}
-	WWASSERT( !IsCapturing);
-	IsCapturing = true;
-
-	RECT bounds;
-	GetWindowRect(_Hwnd,&bounds);
-	int height=bounds.bottom-bounds.top;
-	int width=bounds.right-bounds.left;
-	int depth=24;
-
-	WWASSERT( Movie == NULL);
-
-	if (frame_rate == 0.0f) {
-		frame_rate = 1.0f;
-		PauseRecord = true;
-	} else {
-		PauseRecord = false;
-	}
-
-	Movie = new FrameGrabClass( filename_base, FrameGrabClass::AVI, width, height, depth, frame_rate);
-
-	WWDEBUG_SAY(( "Starting Movie %s\n", filename_base ));
-#endif
-}
-
-
-/***********************************************************************************************
- * WW3D::Stop_Movie_Capture -- ends dumping frames to a movie                                  *
- *                                                                                             *
- * INPUT:                                                                                      *
- *                                                                                             *
- * OUTPUT:                                                                                     *
- *                                                                                             *
- * WARNINGS:                                                                                   *
- *                                                                                             *
- * HISTORY:                                                                                    *
- *   5/19/99    GTH : Created.                                                                 *
- *=============================================================================================*/
-void WW3D::Stop_Movie_Capture( void )
-{
-#ifdef _WINDOWS
-	if (IsCapturing) {
-		IsCapturing = false;
-		WWDEBUG_SAY(( "Stoping Movie\n" ));
-
-		WWASSERT( Movie != NULL);
-		delete Movie;
-		Movie = NULL;
-	}
-#endif
-}
-
-
-/***********************************************************************************************
- * WW3D::Toggle_Movie_Capture -- toggles movie capture...                                      *
- *                                                                                             *
- * INPUT:                                                                                      *
- *                                                                                             *
- * OUTPUT:                                                                                     *
- *                                                                                             *
- * WARNINGS:                                                                                   *
- *                                                                                             *
- * HISTORY:                                                                                    *
- *   5/19/99    GTH : Created.                                                                 *
- *=============================================================================================*/
-void WW3D::Toggle_Movie_Capture( const char * filename_base, float frame_rate )
-{
-	if (IsCapturing) {
-		Stop_Movie_Capture();
-	} else {
-		Start_Movie_Capture( filename_base, frame_rate);
-	}
-}
-
-
-/***********************************************************************************************
- * WW3D::Start_Single_Frame_Movie_Capture -- starts capturing a single frame movie             *
- *                                                                                             *
- * INPUT:                                                                                      *
- *                                                                                             *
- * OUTPUT:                                                                                     *
- *                                                                                             *
- * WARNINGS:                                                                                   *
- *                                                                                             *
- * HISTORY:                                                                                    *
- *   5/19/99    GTH : Created.                                                                 *
- *=============================================================================================*/
-void WW3D::Start_Single_Frame_Movie_Capture(const char *filename_base)
-{
-	Start_Movie_Capture(filename_base, 0.0f);
-}
-
-
-/***********************************************************************************************
- * WW3D::Capture_Next_Movie_Frame -- tells ww3d to grab another frame for the movie            *
- *                                                                                             *
- * INPUT:                                                                                      *
- *                                                                                             *
- * OUTPUT:                                                                                     *
- *                                                                                             *
- * WARNINGS:                                                                                   *
- *                                                                                             *
- * HISTORY:                                                                                    *
- *   5/19/99    GTH : Created.                                                                 *
- *=============================================================================================*/
-void WW3D::Capture_Next_Movie_Frame()
-{
-	RecordNextFrame = true;
-}
-
-
-/***********************************************************************************************
- * WW3D::Pause_Movie -- pauses/unpauses movie capturing                                        *
- *                                                                                             *
- * INPUT:                                                                                      *
- *                                                                                             *
- * OUTPUT:                                                                                     *
- *                                                                                             *
- * WARNINGS:                                                                                   *
- *                                                                                             *
- * HISTORY:                                                                                    *
- *   5/19/99    GTH : Created.                                                                 *
- *=============================================================================================*/
-void WW3D::Pause_Movie(bool mode)
-{
-	PauseRecord = mode;
-}
-
-
-/***********************************************************************************************
- * WW3D::Is_Movie_Paused -- returns whether the movie capture system is paused                 *
- *                                                                                             *
- * INPUT:                                                                                      *
- *                                                                                             *
- * OUTPUT:                                                                                     *
- *                                                                                             *
- * WARNINGS:                                                                                   *
- *                                                                                             *
- * HISTORY:                                                                                    *
- *   5/19/99    GTH : Created.                                                                 *
- *=============================================================================================*/
-bool WW3D::Is_Movie_Paused()
-{
-	return PauseRecord;
-}
-
-
-/***********************************************************************************************
- * WW3D::Is_Recording_Next_Frame -- returns whether the next frame will be dumped to a movie   *
- *                                                                                             *
- * INPUT:                                                                                      *
- *                                                                                             *
- * OUTPUT:                                                                                     *
- *                                                                                             *
- * WARNINGS:                                                                                   *
- *                                                                                             *
- * HISTORY:                                                                                    *
- *   5/19/99    GTH : Created.                                                                 *
- *=============================================================================================*/
-bool WW3D::Is_Recording_Next_Frame()
-{
-	return (Movie != 0) && (!PauseRecord || RecordNextFrame);
-}
-
-
-/***********************************************************************************************
- * WW3D::Is_Movie_Ready -- returns whether the movie capture system is ready                   *
- *                                                                                             *
- * INPUT:                                                                                      *
- *                                                                                             *
- * OUTPUT:                                                                                     *
- *                                                                                             *
- * WARNINGS:                                                                                   *
- *                                                                                             *
- * HISTORY:                                                                                    *
- *   5/19/99    GTH : Created.                                                                 *
- *=============================================================================================*/
-bool WW3D::Is_Movie_Ready()
-{
-	return Movie != 0;
-}
-
-
-/***********************************************************************************************
- * WW3D::Update_Movie_Capture -- dumps the current frame into the movie                        *
- *                                                                                             *
- * INPUT:                                                                                      *
- *                                                                                             *
- * OUTPUT:                                                                                     *
- *                                                                                             *
- * WARNINGS:                                                                                   *
- *                                                                                             *
- * HISTORY:                                                                                    *
- *   5/19/99    GTH : Created.                                                                 *
- *   2/26/2001  hy : Updated to dx8                                                            *
- *=============================================================================================*/
-void WW3D::Update_Movie_Capture( void )
-{
-#ifdef _WINDOWS
-	WWASSERT( IsCapturing);
-	WWPROFILE("WW3D::Update_Movie_Capture");
-	WWDEBUG_SAY(( "Updating\n"));
-
-		// Lock front buffer and copy
-
-	IDirect3DSurface8 *fb;
-	fb=DX8Wrapper::_Get_DX8_Front_Buffer();
-	D3DSURFACE_DESC desc;
-	fb->GetDesc(&desc);
-
-	RECT bounds;
-	GetWindowRect(_Hwnd,&bounds);
-
-	D3DLOCKED_RECT lrect;
-
-	DX8_ErrorCode(fb->LockRect(&lrect,&bounds,D3DLOCK_READONLY));
-
-	unsigned int x,y,index,index2,width,height;
-
-	width=bounds.right-bounds.left;
-	height=bounds.bottom-bounds.top;
-
-	char *image=(char *)Movie->GetBuffer();
-
-	for (y=0; y<height; y++)
-	{
-		for (x=0; x<width; x++)
-		{
-			// index for image
-			index=3*(x+(height-y-1)*width);
-			// index for fb
-			index2=y*lrect.Pitch+4*x;
-
-			image[index]=*((char *) lrect.pBits + index2+0);
-			image[index+1]=*((char *) lrect.pBits + index2+1);
-			image[index+2]=*((char *) lrect.pBits + index2+2);
-		}
-	}
-
-	fb->Release();
-
-	Movie->Grab(image);
-#endif
-}
-
-
-/***********************************************************************************************
- * WW3D::Get_Movie_Capture_Frame_Rate -- returns the framerate at which the movie is being cap *
- *                                                                                             *
- * INPUT:                                                                                      *
- *                                                                                             *
- * OUTPUT:                                                                                     *
- *                                                                                             *
- * WARNINGS:                                                                                   *
- *                                                                                             *
- * HISTORY:                                                                                    *
- *   5/19/99    GTH : Created.                                                                 *
- *=============================================================================================*/
-float	WW3D::Get_Movie_Capture_Frame_Rate( void )
-{
-#ifdef _WINDOWS
-	if (IsCapturing) {
-		return Movie->GetFrameRate();
-	}
-#endif
-	return 0;
 }
 
 
